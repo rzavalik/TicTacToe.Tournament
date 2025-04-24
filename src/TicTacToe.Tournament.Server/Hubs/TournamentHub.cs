@@ -50,6 +50,14 @@ public class TournamentHub : Hub
     {
         var result = _tournamentManager
             .GetAllTournaments()
+            .OrderByDescending(t=> t.Status)
+            .OrderBy(t => GetStatusRank(t.Status))
+            .ThenByDescending(t => 
+                t.Status == TournamentStatus.Ongoing || 
+                t.Status == TournamentStatus.Finished || 
+                t.Status == TournamentStatus.Cancelled 
+                ? t.StartTime 
+                : null)
             .Select(t => new TournamentSummaryDto
             {
                 Id = t.Id,
@@ -60,6 +68,18 @@ public class TournamentHub : Hub
             });
 
         return Task.FromResult(result);
+    }
+
+    private static int GetStatusRank(TournamentStatus status)
+    {
+        return status switch
+        {
+            TournamentStatus.Planned => 0,
+            TournamentStatus.Ongoing => 1,
+            TournamentStatus.Finished => 2,
+            TournamentStatus.Cancelled => 3,
+            _ => 4
+        };
     }
 
     public async Task CreateTournament(Guid tournamentId)
