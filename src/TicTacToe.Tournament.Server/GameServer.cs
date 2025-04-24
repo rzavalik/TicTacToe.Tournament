@@ -314,6 +314,7 @@ public class GameServer : IGameServer
             foreach (var match in tournament.Matches)
             {
                 await RunMatchAsync(tournament.Id, match);
+                await Task.Delay(TimeSpan.FromSeconds(10));
             }
 
             tournament.Status = TournamentStatus.Finished;

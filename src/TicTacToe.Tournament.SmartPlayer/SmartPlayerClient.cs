@@ -52,6 +52,11 @@ public class SmartPlayerClient : BasePlayerClient
 
     protected override async Task<(int row, int col)> MakeMoveAsync(Mark[][] board)
     {
+        Console.WriteLine("");
+        Console.WriteLine("It's your time to make a move!");
+        Console.WriteLine("");
+        Console.WriteLine("");
+
         int row = -1, col = -1;
         var timeout = TimeSpan.FromSeconds(50);
         var startTime = DateTime.UtcNow;
@@ -82,7 +87,7 @@ public class SmartPlayerClient : BasePlayerClient
             Console.WriteLine("Invalid move. Try again.");
         }
 
-        Console.WriteLine("Timeout or invalid input. You lost by WO.");
+        Console.WriteLine("Timeout or invalid input. You've lost by WO.");
         throw new TimeoutException();
     }
 
