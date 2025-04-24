@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TicTacToe.Tournament.DumbPlayer": {
+      "commandName": "Project",
+      "commandLineArgs": "--test"
+    }
+  }
+}

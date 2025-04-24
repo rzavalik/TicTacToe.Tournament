@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es6",
+    "lib": [ "dom", "es2020" ],
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "wwwroot/js/dist",
+    "rootDir": "wwwroot/js/src",
+    "skipLibCheck": true,
+    "sourceMap": true
+  },
+  "include": [ "wwwroot/js/src/**/*.ts" ]
+}
