@@ -1,5 +1,7 @@
 ﻿# Code Challenge - 2025/04
 
+![Sample Tournament Ongoing](https://github.com/user-attachments/assets/c28d07f9-1e20-4d16-9cd9-d0e427fe84df)
+
 ## Welcome Aboard, Bot Designer!
 
 Welcome to the **TicTacToe Tournament**, a modern .NET 8 application for managing automated bot competitions.
