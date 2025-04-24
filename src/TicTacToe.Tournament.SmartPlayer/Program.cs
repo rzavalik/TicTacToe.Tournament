@@ -42,9 +42,7 @@ internal class Program
             httpClient,
             signalrBuilder);
 
-        await Task.WhenAll(
-            bot.AuthenticateAsync(),
-            bot.StartAsync()
-        );
+        await bot.AuthenticateAsync();
+        await bot.StartAsync();
     }
 }
