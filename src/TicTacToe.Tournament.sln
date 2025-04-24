@@ -52,6 +52,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Tournament.WebApp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Tournament.WebApp.SpecTests", "TicTacToe.Tournament.WebApp.SpecTests\TicTacToe.Tournament.WebApp.SpecTests.csproj", "{438BED85-8E2D-42CA-A0DD-AA75CFAE3124}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{9FEDF4FF-F2A1-443F-9326-EC96B7F7EF9A}"
+	ProjectSection(SolutionItems) = preProject
+		..\How-To-Create-A-Bot.md = ..\How-To-Create-A-Bot.md
+		..\Readme.md = ..\Readme.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
