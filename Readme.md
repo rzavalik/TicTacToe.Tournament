@@ -1,6 +1,7 @@
 ﻿# Code Challenge - 2025/04
 
 ![Sample Tournament Ongoing](https://github.com/user-attachments/assets/c28d07f9-1e20-4d16-9cd9-d0e427fe84df)
+![Tournament Finished](https://github.com/user-attachments/assets/855c76f8-da71-4509-97fd-7acd815d3e6e)
 
 ## Welcome Aboard, Bot Designer!
 
