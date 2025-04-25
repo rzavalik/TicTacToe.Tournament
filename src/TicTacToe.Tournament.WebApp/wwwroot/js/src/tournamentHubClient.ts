@@ -8,7 +8,7 @@ declare global {
 
 type Guid = string;
 type Board = number[][];
-type AnyHandler<T = any> = (payload: T) => void;
+type AnyHandler = (...args: any[]) => void;
 
 export class TournamentHubClient {
     private connection: any;
@@ -52,10 +52,10 @@ export class TournamentHubClient {
         });
 
         Object.keys(this.handlers).forEach(event => {
-            this.connection.on(event, (payload: any) => {
-                console.log(`🔹 ${event}`, payload);
-                this.handlers[event]?.(payload);
-                this.notifyGlobal(event, payload);
+            this.connection.on(event, (...args: any[]) => {
+                console.log(`🔹 ${event}`, ...args);
+                this.handlers[event]?.(...args);
+                this.notifyGlobal(event, args);
             });
         });
     }
@@ -93,51 +93,51 @@ export class TournamentHubClient {
         }
     }
 
-    onRegistered(handler: AnyHandler<Guid>): void {
+    onRegistered(handler: (...args: any[]) => void): void {
         this.handlers.OnRegistered = handler;
     }
 
-    onPlayerRegistered(handler: AnyHandler<any>): void {
+    onPlayerRegistered(handler: (...args: any[]) => void): void {
         this.handlers.OnPlayerRegistered = handler;
     }
 
-    onTournamentCreated(handler: AnyHandler<any>): void {
+    onTournamentCreated(handler: (...args: any[]) => void): void {
         this.handlers.OnTournamentCreated = handler;
     }
 
-    onTournamentUpdated(handler: AnyHandler<any>): void {
+    onTournamentUpdated(handler: (...args: any[]) => void): void {
         this.handlers.OnTournamentUpdated = handler;
     }
 
-    onTournamentCancelled(handler: AnyHandler<Guid>): void {
+    onTournamentCancelled(handler: (...args: any[]) => void): void {
         this.handlers.OnTournamentCancelled = handler;
     }
 
-    onTournamentStarted(handler: AnyHandler<Guid>): void {
+    onTournamentStarted(handler: (...args: any[]) => void): void {
         this.handlers.OnTournamentStarted = handler;
     }
 
-    onMatchStarted(handler: AnyHandler<any>): void {
+    onMatchStarted(handler: (...args: any[]) => void): void {
         this.handlers.OnMatchStarted = handler;
     }
 
-    onMatchEnded(handler: AnyHandler<any>): void {
+    onMatchEnded(handler: (...args: any[]) => void): void {
         this.handlers.OnMatchEnded = handler;
     }
 
-    onOpponentMoved(handler: AnyHandler<any>): void {
+    onOpponentMoved(handler: (...args: any[]) => void): void {
         this.handlers.OnOpponentMoved = handler;
     }
 
-    onYourTurn(handler: AnyHandler<Guid>): void {
+    onYourTurn(handler: (...args: any[]) => void): void {
         this.handlers.OnYourTurn = handler;
     }
 
-    onReceiveBoard(handler: AnyHandler<Board>): void {
+    onReceiveBoard(handler: (...args: any[]) => void): void {
         this.handlers.OnReceiveBoard = handler;
     }
 
-    onRefreshLeaderboard(handler: AnyHandler<Record<Guid, number>>): void {
+    onRefreshLeaderboard(handler: (...args: any[]) => void): void {
         this.handlers.OnRefreshLeaderboard = handler;
     }
 }

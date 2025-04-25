@@ -9,7 +9,7 @@
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-	<script>window.SIGNALR_HUB_URL = "@Environment.GetEnvironmentVariable("SIGNALR_HUB_URL")";</script>
+	<script>window.SIGNALR_HUB_URL = "@(Environment.GetEnvironmentVariable("SIGNALR_HUB_URL") ?? Program.HubUrl)";</script>
 	<script type="module" src="~/js/dist/main.js"></script>
 </head>
 <body>
@@ -34,7 +34,7 @@
 			</div>
 		</nav>
 	</header>
-	<div class="container">
+	<div class="container-fluid">
 		<main role="main" class="pb-3">
 			@RenderBody()
 		</main>

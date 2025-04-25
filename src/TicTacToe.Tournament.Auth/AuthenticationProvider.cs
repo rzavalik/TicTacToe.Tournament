@@ -12,15 +12,17 @@ public class AuthenticationProvider : IAuthenticationProvider
         IHttpClient httpClient,
         string baseEndpoint)
     {
-        _httpClient = httpClient;
-        _baseEndpoint = baseEndpoint;
+        _httpClient = httpClient
+            ?? throw new ArgumentNullException(nameof(httpClient), "HttpClient must be provided");
+        _baseEndpoint = baseEndpoint
+            ?? throw new ArgumentNullException(nameof(baseEndpoint), "BaseEndpoint must be provided");
     }
 
     public Guid? PlayerId { get; set; }
 
     public Guid? TournamentId { get; set; }
 
-    public string LastMessage { get; set; }
+    public string? LastMessage { get; set; }
 
     public async Task<string> GetTokenAsync(Guid tournamentId)
     {

@@ -58,6 +58,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{9FEDF4FF
 		..\Readme.md = ..\Readme.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Tournament.OpenAIClientPlayer", "TicTacToe.Tournament.OpenAIClientPlayer\TicTacToe.Tournament.OpenAIClientPlayer.csproj", "{05457C2F-B67D-425E-89A2-08184980FF22}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Tournament.MyBotPlayer", "TicTacToe.Tournament.MyBotPlayer\TicTacToe.Tournament.MyBotPlayer.csproj", "{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +128,14 @@ Global
 		{438BED85-8E2D-42CA-A0DD-AA75CFAE3124}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{438BED85-8E2D-42CA-A0DD-AA75CFAE3124}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{438BED85-8E2D-42CA-A0DD-AA75CFAE3124}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05457C2F-B67D-425E-89A2-08184980FF22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05457C2F-B67D-425E-89A2-08184980FF22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05457C2F-B67D-425E-89A2-08184980FF22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05457C2F-B67D-425E-89A2-08184980FF22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -147,6 +159,8 @@ Global
 		{A56B8ACB-8B42-3BF8-23E4-B94F22A587F8} = {5F047D68-8E0A-43E8-A489-9B6D18914F05}
 		{50617D4F-9092-BAC5-3980-E688612C972A} = {5F047D68-8E0A-43E8-A489-9B6D18914F05}
 		{438BED85-8E2D-42CA-A0DD-AA75CFAE3124} = {5F047D68-8E0A-43E8-A489-9B6D18914F05}
+		{05457C2F-B67D-425E-89A2-08184980FF22} = {EBB234C1-F622-4571-A689-0888093F1994}
+		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC} = {EBB234C1-F622-4571-A689-0888093F1994}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44DD7814-250D-44BB-A370-ECD331D398DC}

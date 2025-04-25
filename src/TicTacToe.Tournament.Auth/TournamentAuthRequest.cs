@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace TicTacToe.Tournament.Auth;
+﻿namespace TicTacToe.Tournament.Auth;
 
 public class TournamentAuthRequest
 {
@@ -8,7 +6,7 @@ public class TournamentAuthRequest
 
     public string? PlayerName { get; set; }
 
-    public string AgentName { get; set; }
+    public string? AgentName { get; set; }
 
-    public string MachineName { get; set; }
+    public string? MachineName { get; set; }
 }

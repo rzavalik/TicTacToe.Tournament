@@ -8,20 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TicTacToe.Tournament.Auth\TicTacToe.Tournament.Auth.csproj" />
-    <ProjectReference Include="..\TicTacToe.Tournament.BasePlayer\TicTacToe.Tournament.BasePlayer.csproj" />
-    <ProjectReference Include="..\TicTacToe.Tournament.Models\TicTacToe.Tournament.Models.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ApplicationDefinition Include="appSettings.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,9 +21,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TicTacToe.Tournament.BasePlayer\TicTacToe.Tournament.BasePlayer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
+  
 </Project>

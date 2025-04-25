@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TicTacToe.Tournament.Auth;
 using TicTacToe.Tournament.Models;
 using TicTacToe.Tournament.Server;
+using TicTacToe.Tournament.Server.DTOs;
 using TicTacToe.Tournament.Server.Interfaces;
 using TicTacToe.Tournament.Server.Security;
 
@@ -148,6 +150,14 @@ namespace TicTacToe.Tournament.WebApp.Controllers
             return Ok(matches);
         }
 
+        [HttpGet("tournament/{tournamentId}/match/{matchId}")]
+        public async Task<IActionResult> GetMatch(Guid tournamentId, Guid matchId)
+        {
+            var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
+
+            return ResultMatchDto(tournament, matchId);
+        }
+
         [HttpGet("tournament/{tournamentId}/match/current/board")]
         public async Task<IActionResult> GetCurrentBoard(Guid tournamentId)
         {
@@ -184,28 +194,7 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         public async Task<IActionResult> GetCurrentMatch(Guid tournamentId)
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
-            if (tournament == null)
-                return NotFound();
-
-            if (tournament.Status == TournamentStatus.Planned.ToString("G"))
-                return NoContent();
-
-            var match = tournament.Matches
-                .FirstOrDefault(m => m.Status == MatchStatus.Ongoing);
-
-            if (match == null)
-                return NoContent();
-
-            return Ok(new
-            {
-                id = match.Id,
-                playerAId = match.PlayerAId,
-                playerAName = match.PlayerAName,
-                playerBId = match.PlayerBId,
-                playerBName = match.PlayerBName,
-                board = match.Board,
-                status = match.Status.ToString()
-            });
+            return ResultMatchDto(tournament);
         }
 
         [HttpGet("tournament/{tournamentId}/players")]
@@ -270,6 +259,40 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 : Ok(player);
         }
 
+        private IActionResult ResultMatchDto(TournamentDto? tournament, Guid? matchId = null)
+        {
+            if (tournament == null)
+                return NotFound();
 
+            if (tournament.Status == TournamentStatus.Planned.ToString("G"))
+                return NoContent();
+
+            var match = tournament.Matches
+                .Where(m => matchId.HasValue
+                    ? m.Id == matchId.Value
+                    : m.Status == MatchStatus.Ongoing)
+                .OrderBy(m => m.StartTime)
+                .FirstOrDefault();
+
+            if (match == null)
+                return NoContent();
+
+            var playerAName = tournament.RegisteredPlayers.TryGetValue(match.PlayerAId, out var nameA) ? nameA : "Unknown";
+            var playerBName = tournament.RegisteredPlayers.TryGetValue(match.PlayerBId, out var nameB) ? nameB : "Unknown";
+
+            return Ok(new
+            {
+                id = match.Id,
+                playerAId = match.PlayerAId,
+                playerAName = playerAName,
+                playerBId = match.PlayerBId,
+                playerBName = playerBName,
+                board = match.Board,
+                status = match.Status,
+                startTime = match.StartTime,
+                endTime = match.EndTime,
+                duration = match.Duration
+            });
+        }
     }
 }

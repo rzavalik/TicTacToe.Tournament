@@ -46,6 +46,18 @@ public class SignalRClient : ISignalRClient
         return Task.CompletedTask;
     }
 
+    public Task SubscribeAsync<T1, T2, T3>(string method, Action<T1, T2, T3> handler)
+    {
+        _conn.On(method, handler);
+        return Task.CompletedTask;
+    }
+
+    public Task SubscribeAsync<T1, T2, T3, T4>(string method, Action<T1, T2, T3, T4> handler)
+    {
+        _conn.On(method, handler);
+        return Task.CompletedTask;
+    }
+
     public Task SubscribeAsync<T1, T2, T3, T4, T5>(string method, Action<T1, T2, T3, T4, T5> handler)
     {
         _conn.On(method, handler);

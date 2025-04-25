@@ -29,7 +29,7 @@ public class SignalRAccessHelper
         if (tournamentId.HasValue)
         {
             claims = claims
-                .Append(new Claim("tournamentId", tournamentId.ToString()))
+                .Append(new Claim("tournamentId", tournamentId.Value.ToString()))
                 .ToArray();
         }
 

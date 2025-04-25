@@ -31,17 +31,19 @@ public interface IPlayerBot
     /// <summary>
     /// Event called when the opponent makes a move.
     /// </summary>
+    /// <param name="matchId">Match ID.</param>
     /// <param name="row">Row indicating where the player has moved</param>
     /// <param name="column">Column indicating where the player has moved</param>
-    void OnOpponentMoved(int row, int column);
+    void OnOpponentMoved(Guid matchId, int row, int column);
 
     /// <summary>
     /// Called when it's the player's turn to make a move.
     /// Receives the current board state and should return the row and column of the move.
     /// </summary>
+    /// <param name="matchId">Match ID.</param>
     /// <param name="board">A 3x3 matrix representing the current board state.</param>
     /// <returns>A tuple (row, column) indicating the player's move.</returns>
-    Task<(int row, int col)> MakeMoveAsync(Mark[][] board);
+    Task<(int row, int col)> MakeMoveAsync(Guid matchId, Mark[][] board);
 
     /// <summary>
     /// Event called when the match ends.

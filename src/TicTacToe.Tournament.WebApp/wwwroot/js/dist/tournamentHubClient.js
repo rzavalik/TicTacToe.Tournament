@@ -34,10 +34,10 @@ export class TournamentHubClient {
             console.warn("SignalR Reconnecting...");
         });
         Object.keys(this.handlers).forEach(event => {
-            this.connection.on(event, (payload) => {
-                console.log(`🔹 ${event}`, payload);
-                this.handlers[event]?.(payload);
-                this.notifyGlobal(event, payload);
+            this.connection.on(event, (...args) => {
+                console.log(`🔹 ${event}`, ...args);
+                this.handlers[event]?.(...args);
+                this.notifyGlobal(event, args);
             });
         });
     }

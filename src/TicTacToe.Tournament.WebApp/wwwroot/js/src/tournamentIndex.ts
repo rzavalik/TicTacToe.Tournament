@@ -23,7 +23,7 @@ async function loadTournaments() {
             }
 
             row.innerHTML = `
-                <td><a href="/tournament/view/${t.id}">${t.id}</a></td>
+                <td><a href="/tournament/view/${t.id}">${t.name}</a></td>
                 <td><span class="badge ${color}">${t.status}</span></td>
                 <td>${t.registeredPlayersCount}</td>
                 <td>${t.matchCount}</td>

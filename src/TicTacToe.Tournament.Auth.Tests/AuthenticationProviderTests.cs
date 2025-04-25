@@ -72,7 +72,7 @@ namespace TicTacToe.Tournament.Auth.Tests
             {
                 Success = true,
                 Message = "Missing token",
-                Token = null,
+                Token = string.Empty,
                 PlayerId = Guid.NewGuid(),
                 TournamentId = tournamentId
             };

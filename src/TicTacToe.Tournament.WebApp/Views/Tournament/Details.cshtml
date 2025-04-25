@@ -1,36 +1,39 @@
 ﻿@{
-    ViewData["Title"] = "Tournament Details";
-    var tournamentId = ViewData["TournamentId"];
+	ViewData["Title"] = "Tournament Details";
+	var tournamentId = ViewData["TournamentId"];
 }
 
 <div class="container-fluid">
-    <div id="tournamentMeta"></div>
-    <div id="tournament" data-tournament-id="@tournamentId" class="row">
-        <!-- Left Column: Players -->
-        <div class="col-md-3" id="left">
-            <h4>Players</h4>
-            <div class="text-muted">Loading...</div>
-        </div>
+	<div id="tournamentMeta"></div>
+	<div id="tournament" data-tournament-id="@tournamentId" class="row">
+		<!-- Left Column: Players -->
+		<div class="col-md-3" id="left">
+			<h4>Players</h4>
+			<div class="text-muted">Loading...</div>
+		</div>
 
-        <!-- Center Column: Match or Controls -->
-        <div class="col-md-6 text-center" id="center">
-            <h4>Match</h4>
-            <div class="text-muted">Loading...</div>
-        </div>
+		<!-- Center Column: Match or Controls -->
+		<div class="col-md-6 text-center" id="center">
+			<h4>Match</h4>
+			<div class="text-muted">Loading...</div>
+		</div>
 
-        <!-- Right Column: Leaderboard -->
-        <div class="col-md-3" id="right">
-            <h4>Leaderboard</h4>
-            <div class="text-muted">Loading...</div>
-        </div>
-    </div>
-    <br />
-    <hr />
-    <blockquote>
-        <p>Use this ID to register to this tournament: <code style="border:1px solid #666">@tournamentId</code></p>
-    </blockquote>
+		<!-- Right Column: Leaderboard -->
+		<div class="col-md-3" id="right">
+			<h4>Leaderboard</h4>
+			<div class="text-muted">Loading...</div>
+		</div>
+	</div>
+	<div class="row d-none" id="matches">
+		<div class="col-12">
+			<button class="btn btn-outline-primary" onclick="toggleMatchesPanel('@ViewData["TournamentId"]')">
+				Show / Hide Matches
+			</button>
+			<div id="matchesPanel" class="mt-3 row"></div>
+		</div>
+	</div>
 </div>
 
 @section Scripts {
-    <script type="module" src="~/js/dist/tournamentDetails.js"></script>
+	<script type="module" src="~/js/dist/tournamentDetails.js"></script>
 }

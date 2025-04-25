@@ -11,6 +11,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 COPY TicTacToe.Tournament.sln ./
+COPY Directory.Build.props ./
 COPY TicTacToe.Tournament.Models/ ./TicTacToe.Tournament.Models/
 COPY TicTacToe.Tournament.Auth/ ./TicTacToe.Tournament.Auth/
 COPY TicTacToe.Tournament.Server/ ./TicTacToe.Tournament.Server/

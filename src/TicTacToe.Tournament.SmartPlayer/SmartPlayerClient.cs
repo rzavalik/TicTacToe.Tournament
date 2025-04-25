@@ -7,6 +7,8 @@ namespace TicTacToe.Tournament.SmartPlayer;
 
 public class SmartPlayerClient : BasePlayerClient
 {
+    private IPlayerStrategy? _strategy;
+
     public SmartPlayerClient()
     : base(
         botName: "SmartBot",
@@ -36,11 +38,16 @@ public class SmartPlayerClient : BasePlayerClient
     protected override void OnMatchStarted(Guid matchId, Guid playerId, Guid opponentId, Mark mark, bool starts)
     {
         base.OnMatchStarted(matchId, playerId, opponentId, mark, starts);
+
+        _strategy = new SmartClientStrategy(
+            playerMark: mark,
+            opponentMark: mark == Mark.X ? Mark.O : Mark.X
+        );
     }
 
-    protected override void OnOpponentMoved(int row, int col)
+    protected override void OnOpponentMoved(Guid matchId, int row, int col)
     {
-        base.OnOpponentMoved(row, col);
+        base.OnOpponentMoved(matchId, row, col);
     }
 
     protected override void OnMatchEnded(GameResult result)
@@ -50,57 +57,24 @@ public class SmartPlayerClient : BasePlayerClient
         Console.WriteLine("Match ended!" + (result.IsDraw ? "It's a draw!" : $"Winner: {result.WinnerId}"));
     }
 
-    protected override async Task<(int row, int col)> MakeMoveAsync(Mark[][] board)
+    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
     {
-        Console.WriteLine("");
-        Console.WriteLine("It's your time to make a move!");
-        Console.WriteLine("");
-        Console.WriteLine("");
-
-        int row = -1, col = -1;
-        var timeout = TimeSpan.FromSeconds(50);
-        var startTime = DateTime.UtcNow;
-
-        while (DateTime.UtcNow - startTime < timeout)
+        try
         {
-            var timeLeft = timeout - (DateTime.UtcNow - startTime);
-
-            Console.Write($"\nEnter row (0-2), {timeLeft.Seconds}s left: ");
-            var rowInput = await ReadLineWithTimeoutAsync(timeLeft);
-            if (rowInput == null) break;
-
-            timeLeft = timeout - (DateTime.UtcNow - startTime);
-            Console.Write($"Enter column (0-2), {timeLeft.Seconds}s left: ");
-            var colInput = await ReadLineWithTimeoutAsync(timeLeft);
-            if (colInput == null) break;
-
-            if (int.TryParse(rowInput, out row) &&
-                int.TryParse(colInput, out col) &&
-                row is >= 0 and <= 2 &&
-                col is >= 0 and <= 2 &&
-                board[row][col] == Mark.Empty)
+            if (_strategy != null)
             {
-                CurrentBoard[row][col] = Mark;
-                return ((row, col));
+                return Task.FromResult(_strategy!.MakeMove(board));
             }
-
-            Console.WriteLine("Invalid move. Try again.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
         }
 
-        Console.WriteLine("Timeout or invalid input. You've lost by WO.");
-        throw new TimeoutException();
+        return Task.FromResult((-1, -1));
     }
 
-    private static async Task<string?> ReadLineWithTimeoutAsync(TimeSpan timeout)
-    {
-        var inputTask = Task.Run(() => Console.ReadLine());
-        var timeoutTask = Task.Delay(timeout);
-
-        var completedTask = await Task.WhenAny(inputTask, timeoutTask);
-        return completedTask == inputTask ? await inputTask : null;
-    }
-
-    protected override void OnBoardUpdated(Mark[][] board)
+    protected override void OnBoardUpdated(Guid matchId, Mark[][] board)
     {
         DrawBoard();
     }

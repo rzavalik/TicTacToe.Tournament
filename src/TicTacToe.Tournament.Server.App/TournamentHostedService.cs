@@ -36,6 +36,7 @@ public class TournamentHostedService : BackgroundService
         }
 
         Console.WriteLine("[TournamentHostedService] All tournaments loaded.");
+
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 }

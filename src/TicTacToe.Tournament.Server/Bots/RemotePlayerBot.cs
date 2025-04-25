@@ -30,9 +30,9 @@ public class RemotePlayerBot : IPlayerBot
         _client.SendAsync("OnMatchStarted", matchId, playerId, opponentId, mark.ToString("G"), starts);
     }
 
-    public void OnOpponentMoved(int row, int col)
+    public void OnOpponentMoved(Guid matchId, int row, int col)
     {
-        _client.SendAsync("OnOpponentMoved", row, col);
+        _client.SendAsync("OnOpponentMoved", matchId, row, col);
     }
 
     public void OnMatchEnded(GameResult result)
@@ -40,11 +40,11 @@ public class RemotePlayerBot : IPlayerBot
         _client.SendAsync("OnMatchEnded", result);
     }
 
-    public async Task<(int row, int col)> MakeMoveAsync(Mark[][] board)
+    public async Task<(int row, int col)> MakeMoveAsync(Guid matchId, Mark[][] board)
     {
         _moveSource = new TaskCompletionSource<(int row, int col)>();
 
-        await _client.SendAsync("OnBoardUpdated", board);
+        await _client.SendAsync("OnBoardUpdated", matchId, board);
 
         var completed = await Task.WhenAny(_moveSource.Task, Task.Delay(TimeSpan.FromSeconds(60)));
 

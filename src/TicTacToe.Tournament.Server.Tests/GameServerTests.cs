@@ -15,7 +15,6 @@ public class GameServerTests
     private readonly Mock<IClientProxy> _clientProxyMock = new();
     private readonly Mock<IPlayerBot> _botMock = new();
     private readonly List<(Guid playerId, MatchScore score)> _leaderboardCalls = new();
-    private bool _tournamentSaved;
 
     private IGameServer MakeSut()
     {
@@ -28,7 +27,7 @@ public class GameServerTests
             _tournamentId,
             _hubContextMock.Object,
             (playerId, score) => _leaderboardCalls.Add((playerId, score)),
-            () => { _tournamentSaved = true; return Task.CompletedTask; });
+            () => { return Task.CompletedTask; });
     }
 
     [Fact]

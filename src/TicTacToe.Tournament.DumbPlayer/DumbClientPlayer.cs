@@ -7,6 +7,8 @@ namespace TicTacToe.Tournament.DumbPlayer;
 
 public class DumbPlayerClient : BasePlayerClient
 {
+    private IPlayerStrategy? _strategy;
+
     public DumbPlayerClient()
     : base(
         botName: "DumbBot",
@@ -33,16 +35,30 @@ public class DumbPlayerClient : BasePlayerClient
             signalRBuilder)
     { }
 
-    protected override Task<(int row, int col)> MakeMoveAsync(Mark[][] board)
+    protected override void OnMatchStarted(Guid matchId, Guid playerId, Guid opponentId, Mark mark, bool starts)
     {
-        var _rng = new Random();
+        base.OnMatchStarted(matchId, playerId, opponentId, mark, starts);
 
-        var moves = new List<(int row, int col)>();
-        for (int r = 0; r < 3; r++)
-            for (int c = 0; c < 3; c++)
-                if (board[r][c] == Mark.Empty)
-                    moves.Add((r, c));
+        _strategy = new DumbPlayerStrategy(
+            playerMark: mark,
+            opponentMark: mark == Mark.X ? Mark.O : Mark.X
+        );
+    }
 
-        return Task.FromResult(moves.OrderBy(r => _rng.NextDouble()).FirstOrDefault());
+    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+    {
+        try
+        {
+            if (_strategy != null)
+            {
+                return Task.FromResult(_strategy.MakeMove(board));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
+        }
+
+        return Task.FromResult((-1, -1));
     }
 }

@@ -28,7 +28,7 @@ public class TestPlayerClient : BasePlayerClient
             signalRBuilder)
     { }
 
-    protected override Task<(int row, int col)> MakeMoveAsync(Mark[][] board) => Task.FromResult((0, 0));
+    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board) => Task.FromResult((0, 0));
 }
 
 public class BasePlayerClientTests
@@ -63,7 +63,7 @@ public class BasePlayerClientTests
             .ReturnsAsync(fakeResponse);
 
         signalRBuilderMock
-            .Setup(b => b.Build(It.IsAny<string>(), It.IsAny<Func<Task<string>>>()))
+            .Setup(b => b.Build(It.IsAny<string>(), It.IsAny<Func<Task<string?>>>()))
             .Returns(() => signalRClientMock.Object);
 
         var sut = new TestPlayerClient(
@@ -111,7 +111,7 @@ public class BasePlayerClientTests
             .ReturnsAsync(response);
 
         signalRBuilderMock
-            .Setup(b => b.Build(It.IsAny<string>(), It.IsAny<Func<Task<string>>>()))
+            .Setup(b => b.Build(It.IsAny<string>(), It.IsAny<Func<Task<string?>>>()))
             .Returns(signalRClientMock.Object);
 
         var sut = new TestPlayerClient(

@@ -12,14 +12,14 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
     const string TournamentHubName = "tournamentHub";
     private readonly string _signalREndpoint;
     private readonly string _signalRAccessKey;
-    private readonly ITournamentOrchestratorService _orchestrator;
-    private readonly IConfiguration _configuration;
 
     public TournamentOrchestratorService(
         IConfiguration config)
     {
-        _configuration = config
-            ?? throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
+        if (config == null)
+        {
+            throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
+        }
 
         _signalREndpoint = config["Azure:SignalR:Endpoint"]
             ?? throw new ArgumentNullException(nameof(config), "SignalR Endpoint must be present in the ConnectionString.");
@@ -27,9 +27,9 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
             ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
 
         var authResponse = SignalRAccessHelper.GenerateSignalRAccessToken(
-            _signalREndpoint, 
+            _signalREndpoint,
             _signalRAccessKey,
-            TournamentHubName, 
+            TournamentHubName,
             "Server");
 
         const string endpoint = "https://tictactoe-signalr.service.signalr.net/client/";
@@ -37,7 +37,7 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
         _connection = new HubConnectionBuilder()
             .WithUrl($"{endpoint}?hub=tournamentHub", options =>
             {
-                options.AccessTokenProvider = () => Task.FromResult(authResponse);
+                options.AccessTokenProvider = () => Task.FromResult((string?)authResponse);
             })
             .WithAutomaticReconnect()
             .Build();
@@ -51,7 +51,7 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
     public async Task SpectateTournamentAsync(Guid tournamentId)
     {
         await EnsureConnectionAsync();
-        
+
         await _connection.InvokeAsync<TournamentDto>(
             "SpectateTournament",
             tournamentId

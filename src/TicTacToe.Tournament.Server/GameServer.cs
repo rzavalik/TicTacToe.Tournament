@@ -154,7 +154,7 @@ public class GameServer : IGameServer
 
             Console.WriteLine($"[GameServer] Waiting for move from {currentPlayer.Id}...");
 
-            await OnYourTurn(currentPlayer.Id, match.Board);
+            await OnYourTurn(match.Id, currentPlayer.Id, match.Board);
 
             (int row, int col)? move = null;
 
@@ -183,6 +183,7 @@ public class GameServer : IGameServer
 
                 return new GameResult
                 {
+                    MatchId = match.Id,
                     WinnerId = match.PlayerA == currentPlayer.Id
                         ? match.PlayerB
                         : match.PlayerA,
@@ -208,8 +209,8 @@ public class GameServer : IGameServer
                     Console.WriteLine($"[GameServer] Move played by {currentPlayer.Id} at ({row},{col})");
 
                     await Task.WhenAll(
-                        OnOpponentMoved(opponent.Id, row, col),
-                        OnReceiveBoard(match.Board)
+                        OnOpponentMoved(match.Id, opponent.Id, row, col),
+                        OnReceiveBoard(match.Id, match.Board)
                     );
 
                     turn++;
@@ -237,6 +238,7 @@ public class GameServer : IGameServer
 
         var gameResult = new GameResult
         {
+            MatchId = match.Id,
             WinnerId = match.WinnerMark.HasValue ? players[match.WinnerMark.Value].Id : null,
             Board = board.GetState(),
             IsDraw = !match.WinnerMark.HasValue
@@ -296,25 +298,14 @@ public class GameServer : IGameServer
         throw new TimeoutException("You lose if not responding in time.");
     }
 
-    private async Task<(int row, int col)> GetPlayerMoveWithTimeoutAsync(IPlayerBot player, Board board)
-    {
-        var moveTask = player.MakeMoveAsync(board.GetState());
-        var completed = await Task.WhenAny(moveTask, Task.Delay(TimeSpan.FromSeconds(60)));
-
-        if (completed != moveTask)
-            throw new TimeoutException("Move not received in time.");
-
-        return await moveTask;
-    }
-
     private Task RunMatches(Models.Tournament tournament)
     {
         return Task.Run(async () =>
         {
             foreach (var match in tournament.Matches)
             {
+                await Task.Delay(TimeSpan.FromSeconds(5));
                 await RunMatchAsync(tournament.Id, match);
-                await Task.Delay(TimeSpan.FromSeconds(10));
             }
 
             tournament.Status = TournamentStatus.Finished;
@@ -396,28 +387,28 @@ public class GameServer : IGameServer
             });
     }
 
-    private Task OnReceiveBoard(Mark[][] board)
+    private Task OnReceiveBoard(Guid matchId, Mark[][] board)
     {
         return _hubContext
             .Clients
             .Group(_tournamentId.ToString())
-            .SendAsync("OnReceiveBoard", board);
+            .SendAsync("OnReceiveBoard", matchId, board);
     }
 
-    private Task OnOpponentMoved(Guid opponentId, int row, int col)
+    private Task OnOpponentMoved(Guid matchId, Guid opponentId, int row, int col)
     {
         return _hubContext
             .Clients
             .User(opponentId.ToString())
-            .SendAsync("OnOpponentMoved", row, col);
+            .SendAsync("OnOpponentMoved", matchId, row, col);
     }
 
-    private Task OnYourTurn(Guid playerId, Mark[][] board)
+    private Task OnYourTurn(Guid matchId, Guid playerId, Mark[][] board)
     {
         return _hubContext
             .Clients
             .User(playerId.ToString())
-            .SendAsync("OnYourTurn", playerId, board);
+            .SendAsync("OnYourTurn", matchId, playerId, board);
     }
 
     private Task OnTournamentUpdated(Guid tournamentId)

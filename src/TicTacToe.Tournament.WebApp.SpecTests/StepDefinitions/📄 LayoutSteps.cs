@@ -25,7 +25,10 @@ public class LayoutSteps
     [AfterScenario]
     public async Task TearDownAsync()
     {
-        await _browser?.CloseAsync();
+        if (_browser != null)
+        {
+            await _browser.CloseAsync();
+        }
     }
 
     [Given("the home page is opened")]
@@ -45,7 +48,7 @@ public class LayoutSteps
         };
 
         var isVisible = await locator.IsVisibleAsync();
-        
+
         isVisible.ShouldBeTrue();
     }
 }

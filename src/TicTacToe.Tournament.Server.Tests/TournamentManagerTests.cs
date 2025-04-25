@@ -23,7 +23,7 @@ public class TournamentManagerTests
         DateTime? endTime = null,
         DateTime? startTime = null,
         string name = "Test Tournament",
-        Dictionary<Guid, string> registeredPlayers = null,
+        Dictionary<Guid, string>? registeredPlayers = null,
         TournamentStatus tournamentStatus = TournamentStatus.Planned)
     {
         tournamentId ??= Guid.NewGuid();
@@ -44,13 +44,14 @@ public class TournamentManagerTests
 
     private DummyPlayerBot GetDummyBot(
         Guid? playerId = null,
-        string name = null)
+        string? name = null)
     {
         playerId ??= Guid.NewGuid();
+        name ??= "DummyBot";
 
         return new DummyPlayerBot(
             playerId.Value!,
-            name);
+            name!);
     }
 
     private ITournamentManager MakeSut(

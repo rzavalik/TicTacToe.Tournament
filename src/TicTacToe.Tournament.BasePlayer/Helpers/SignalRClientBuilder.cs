@@ -5,7 +5,7 @@ namespace TicTacToe.Tournament.BasePlayer.Helpers;
 
 public class SignalRClientBuilder : ISignalRClientBuilder
 {
-    public ISignalRClient Build(string endpoint, Func<Task<string>> accessTokenProvider)
+    public ISignalRClient? Build(string endpoint, Func<Task<string?>> accessTokenProvider)
     {
         var hub = new HubConnectionBuilder()
             .WithUrl(endpoint, options =>

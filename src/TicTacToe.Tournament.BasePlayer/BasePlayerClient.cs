@@ -82,6 +82,10 @@ public abstract class BasePlayerClient : IBot
         }
 
         var auth = await response.Content.ReadFromJsonAsync<TournamentAuthResponse>();
+        if (auth == null)
+        {
+            throw new Exception($"Authentication failed: could not deserialize TournamentAuthResponse.");
+        }
 
         PlayerId = auth.PlayerId;
         Authenticated = true;
@@ -96,6 +100,11 @@ public abstract class BasePlayerClient : IBot
             _signalREndpoint,
             () => Task.FromResult(Token)
         );
+
+        if (_signalRClient == null)
+        {
+            throw new ArgumentNullException(nameof(_signalRClient), "SignalR client cannot be null.");
+        }
 
         _signalRClient.Reconnecting += error =>
         {
@@ -152,13 +161,13 @@ public abstract class BasePlayerClient : IBot
             OnMatchStarted(matchId, playerId, opponentId, Mark, starts);
         });
 
-        await _signalRClient.SubscribeAsync<Guid, Mark[][]>("OnYourTurn", async (playerId, board) =>
+        await _signalRClient.SubscribeAsync<Guid, Guid, Mark[][]>("OnYourTurn", async (matchId, playerId, board) =>
         {
             try
             {
                 CurrentBoard = board;
                 Console.WriteLine($"It's your turn {playerId}!");
-                var move = await MakeMoveAsync(board);
+                var move = await MakeMove(matchId, board);
                 Console.WriteLine($"Playing at ({move.row},{move.col})");
                 await _signalRClient!.InvokeAsync("SubmitMove", _tournamentId, move.row, move.col);
             }
@@ -168,10 +177,10 @@ public abstract class BasePlayerClient : IBot
             }
         });
 
-        await _signalRClient.SubscribeAsync<int, int>("OnOpponentMoved", (row, col) =>
+        await _signalRClient.SubscribeAsync<Guid, int, int>("OnOpponentMoved", (matchId, row, col) =>
         {
             Console.WriteLine($"Opponent moved at ({row},{col})");
-            OnOpponentMoved(row, col);
+            OnOpponentMoved(matchId, row, col);
         });
 
         await _signalRClient.SubscribeAsync<GameResult>("OnMatchEnded", result =>
@@ -180,10 +189,10 @@ public abstract class BasePlayerClient : IBot
             OnMatchEnded(result);
         });
 
-        await _signalRClient.SubscribeAsync<Mark[][]>("OnReceiveBoard", board =>
+        await _signalRClient.SubscribeAsync<Guid, Mark[][]>("OnReceiveBoard", (matchId, board) =>
         {
             CurrentBoard = board;
-            OnBoardUpdated(CurrentBoard);
+            OnBoardUpdated(matchId, CurrentBoard);
         });
 
         await _signalRClient.SubscribeAsync<Dictionary<Guid, int>>("OnRefreshLeaderboard", leaderboard =>
@@ -237,7 +246,7 @@ public abstract class BasePlayerClient : IBot
         Console.WriteLine($"Match started {playerId} (Player) vs {opponentId} | Player is {mark} | Starts = {starts}");
     }
 
-    protected virtual void OnOpponentMoved(int row, int col)
+    protected virtual void OnOpponentMoved(Guid matchId, int row, int col)
     {
         Console.WriteLine($"Opponent played at ({row}, {col})");
     }
@@ -247,21 +256,21 @@ public abstract class BasePlayerClient : IBot
         Console.WriteLine($"Match ended. Winner: {result.WinnerId?.ToString() ?? "Draw"}");
     }
 
-    protected virtual void OnBoardUpdated(Mark[][] board)
+    protected virtual void OnBoardUpdated(Guid matchId, Mark[][] board)
     {
         Console.WriteLine("Board updated.");
     }
 
-    protected abstract Task<(int row, int col)> MakeMoveAsync(Mark[][] board);
+    protected abstract Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board);
 
     protected virtual void OnAuthenticated(TournamentAuthResponse auth)
     {
         Console.WriteLine($"Authenticated as {PlayerId}");
     }
 
-    Task<(int row, int col)> IBot.MakeMoveAsync(Mark[][] board)
+    Task<(int row, int col)> IBot.MakeMoveAsync(Guid matchId, Mark[][] board)
     {
-        return MakeMoveAsync(board);
+        return MakeMove(matchId, board);
     }
 
     void IBot.OnMatchStarted(Guid matchId, Guid playerId, Guid opponentId, Mark mark, bool starts)
@@ -269,9 +278,9 @@ public abstract class BasePlayerClient : IBot
         OnMatchStarted(matchId, playerId, opponentId, mark, starts);
     }
 
-    void IBot.OnOpponentMoved(int row, int col)
+    void IBot.OnOpponentMoved(Guid matchId, int row, int col)
     {
-        OnOpponentMoved(row, col);
+        OnOpponentMoved(matchId, row, col);
     }
 
     void IBot.OnMatchEnded(GameResult result)
@@ -279,8 +288,8 @@ public abstract class BasePlayerClient : IBot
         OnMatchEnded(result);
     }
 
-    void IBot.OnBoardUpdated(Mark[][] board)
+    void IBot.OnBoardUpdated(Guid matchId, Mark[][] board)
     {
-        OnBoardUpdated(board);
+        OnBoardUpdated(matchId, board);
     }
 }

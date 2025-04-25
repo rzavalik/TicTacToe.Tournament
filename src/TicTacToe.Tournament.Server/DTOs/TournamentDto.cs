@@ -2,6 +2,13 @@
 
 public class TournamentDto
 {
+    public TournamentDto()
+    {
+        RegisteredPlayers = new Dictionary<Guid, string>();
+        Leaderboard = new Dictionary<Guid, int>();
+        Matches = [];
+    }
+
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
     public string Status { get; set; } = default!;

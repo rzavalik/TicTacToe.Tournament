@@ -50,13 +50,13 @@ public class TournamentHub : Hub
     {
         var result = _tournamentManager
             .GetAllTournaments()
-            .OrderByDescending(t=> t.Status)
+            .OrderByDescending(t => t.Status)
             .OrderBy(t => GetStatusRank(t.Status))
-            .ThenByDescending(t => 
-                t.Status == TournamentStatus.Ongoing || 
-                t.Status == TournamentStatus.Finished || 
-                t.Status == TournamentStatus.Cancelled 
-                ? t.StartTime 
+            .ThenByDescending(t =>
+                t.Status == TournamentStatus.Ongoing ||
+                t.Status == TournamentStatus.Finished ||
+                t.Status == TournamentStatus.Cancelled
+                ? t.StartTime
                 : null)
             .Select(t => new TournamentSummaryDto
             {
@@ -138,7 +138,7 @@ public class TournamentHub : Hub
             Clients.Caller);
 
         await Task.WhenAll(
-            _tournamentManager.RegisterPlayerAsync(tournamentId,remoteBot),
+            _tournamentManager.RegisterPlayerAsync(tournamentId, remoteBot),
             Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString()),
             Clients.Group(tournamentId.ToString()).SendAsync("OnPlayerRegistered", playerId),
             Clients.Caller.SendAsync("OnRegistered", playerId)
@@ -162,6 +162,7 @@ public class TournamentHub : Hub
             PlayerBId = m.PlayerB,
             PlayerBName = tournament.RegisteredPlayers[m.PlayerB] ?? "Unknown",
             Status = m.Status,
+            Board = m.Board,
             StartTime = m.StartTime,
             EndTime = m.EndTime,
             Duration = m.Duration?.ToString(@"hh\:mm\:ss"),
@@ -179,9 +180,7 @@ public class TournamentHub : Hub
         if (tournament == null)
             return null;
 
-        var match = tournament!
-            .Matches
-            .FirstOrDefault(m => m.Status == MatchStatus.Ongoing);
+        var match = GetCurrentMatch(tournament);
 
         if (match == null)
         {
@@ -204,7 +203,7 @@ public class TournamentHub : Hub
             return null;
         }
 
-        var match = tournament?.Matches.FirstOrDefault(m => m.Status == MatchStatus.Ongoing);
+        var match = GetCurrentMatch(tournament);
 
         if (match == null)
         {
@@ -267,9 +266,9 @@ public class TournamentHub : Hub
         {
             MatchId = match.Id,
             PlayerAId = match.PlayerA,
-            PlayerAName = tournament.RegisteredPlayers[match.PlayerA] ?? "Unknown",
+            PlayerAName = tournament?.RegisteredPlayers[match.PlayerA] ?? "Unknown",
             PlayerBId = match.PlayerB,
-            PlayerBName = tournament.RegisteredPlayers[match.PlayerB] ?? "Unknown"
+            PlayerBName = tournament?.RegisteredPlayers[match.PlayerB] ?? "Unknown"
         };
     }
 
@@ -320,5 +319,14 @@ public class TournamentHub : Hub
         gameServer.SubmitMove(playerId, row, col);
 
         Console.WriteLine($"[TournamentHub] Move received from {playerId}: ({row},{col})");
+    }
+
+    private Match? GetCurrentMatch(Models.Tournament tournament)
+    {
+        return tournament!
+            .Matches
+            .Where(m => m.Status == MatchStatus.Ongoing)
+            .OrderBy(m => m.StartTime)
+            .FirstOrDefault();
     }
 }

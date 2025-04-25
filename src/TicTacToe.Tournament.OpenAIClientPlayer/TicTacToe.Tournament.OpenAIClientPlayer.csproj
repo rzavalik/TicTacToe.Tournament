@@ -15,18 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ApplicationDefinition Include="appSettings.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\TicTacToe.Tournament.Auth\TicTacToe.Tournament.Auth.csproj" />
     <ProjectReference Include="..\TicTacToe.Tournament.BasePlayer\TicTacToe.Tournament.BasePlayer.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appSettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

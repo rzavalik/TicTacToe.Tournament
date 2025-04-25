@@ -67,9 +67,19 @@ public class TournamentManager : ITournamentManager
 
             if (tournament is not null)
             {
-                _tournaments[tournamentId] = tournament;
+                if (!_tournaments.TryAdd(tournamentId, tournament))
+                {
+                    _tournaments[tournamentId] = tournament;
+                }
+
                 _playerTournamentMap.Clear();
-                if (map != null) foreach (var kv in map) _playerTournamentMap[kv.Key] = kv.Value;
+                if (map != null)
+                {
+                    foreach (var kv in map)
+                    {
+                        _playerTournamentMap[kv.Key] = kv.Value;
+                    }
+                }
 
                 _players[tournamentId] = new();
                 if (playerInfos != null)
@@ -84,7 +94,7 @@ public class TournamentManager : ITournamentManager
                     }
                 }
 
-                _gameServers[tournamentId] = new GameServer(
+                var gameServer = new GameServer(
                     tournamentId,
                     _hubContext,
                     async (playerId, matchScore) =>
@@ -103,8 +113,15 @@ public class TournamentManager : ITournamentManager
                         await SaveStateAsync(tournament);
                     });
 
+                if (!_gameServers.TryAdd(tournamentId, gameServer))
+                {
+                    _gameServers[tournamentId] = gameServer;
+                }
+
                 if (moves != null)
+                {
                     _gameServers[tournamentId].LoadPendingMoves(moves);
+                }
 
                 await SaveStateUnsafeAsync(tournament);
 
@@ -333,6 +350,7 @@ public class TournamentManager : ITournamentManager
     private async Task SaveStateUnsafeAsync(Models.Tournament tournament)
     {
         _gameServers.TryGetValue(tournament.Id, out var gameServer);
+
         var pendingMoves = gameServer?.GetPendingMoves() ?? new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>();
 
         await _storageService.SaveTournamentStateAsync(

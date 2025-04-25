@@ -24,12 +24,12 @@ namespace TicTacToe.Tournament.Server.Bots
             // No-op
         }
 
-        public void OnOpponentMoved(int row, int column)
+        public void OnOpponentMoved(Guid matchId, int row, int column)
         {
             // No-op
         }
 
-        public Task<(int row, int col)> MakeMoveAsync(Mark[][] board)
+        public Task<(int row, int col)> MakeMoveAsync(Guid matchId, Mark[][] board)
         {
             // Dummy implementation always returns an invalid move
             return Task.FromResult((-1, -1));

@@ -1,5 +1,79 @@
 const hub = window.tournamentHub;
 const tournamentId = document.getElementById("tournament").dataset.tournamentId;
+const MatchStatus = {
+    0: "Planned",
+    1: "Ongoing",
+    2: "Finished",
+    3: "Cancelled"
+};
+const symbolMap = {
+    "32": " ",
+    "88": "X",
+    "79": "O"
+};
+let matchesExpanded = false;
+async function fetchMatches(tournamentId) {
+    const res = await fetch(/tournament/$, { tournamentId } / matches);
+    if (!res.ok)
+        return [];
+    return await res.json();
+}
+async function toggleMatchesPanel(tournamentId) {
+    const container = document.getElementById("matchesPanel");
+    if (matchesExpanded) {
+        container.innerHTML = "";
+        matchesExpanded = false;
+        return;
+    }
+    const matches = await fetchMatches(tournamentId);
+    container.innerHTML = matches.map((match, idx) => class {
+    }, "match-entry col-md-3 mt-3", data - match - id, "${match.id}" >
+        class {
+        }, "small" >
+        Match, $, { idx } + 1);
+}
+/strong></div >
+    $;
+{
+    match.playerAName;
+}
+vs;
+$;
+{
+    match.playerBName;
+}
+/div>
+    < div > Status;
+/strong> ${MatchStatus[match.status as keyof typeof MatchStatus] ?? match.status}</div >
+    Duration;
+/strong> ${match.duration || '-'}</div >
+    /div>;
+$;
+{
+    renderMatchBoard(match.board);
+}
+/div>;
+join('');
+matchesExpanded = true;
+window.toggleMatchesPanel = toggleMatchesPanel;
+function renderMatchBoard(board) {
+    const emptyRow = ["", "", ""];
+    const emptyBoard = [emptyRow, emptyRow, emptyRow];
+    if (!board || board.every(row => row === null)) {
+        board = emptyBoard;
+    }
+    return;
+    class {
+    };
+    "match-board" >
+        $;
+    {
+        board.map(row => $, { row, : .map(cell => $, { cell } === "Empty" ? "" : symbolMap[cell] ?? cell ?? " ") } < /td>).join('');
+    }
+    /tr>;
+    join('');
+}
+/table>;
 function drawBoard(board) {
     let container = document.getElementById("boardContainer");
     if (!container) {
@@ -16,19 +90,8 @@ function drawBoard(board) {
         const row = document.createElement("tr");
         for (let c = 0; c < 3; c++) {
             const cell = document.createElement("td");
-            const value = board[r]?.[c];
-            if (value == null || value == '32') {
-                cell.textContent = ' ';
-            }
-            else if (value == '88') {
-                cell.textContent = 'X';
-            }
-            else if (value == '79') {
-                cell.textContent = 'O';
-            }
-            else {
-                cell.textContent = value;
-            }
+            const raw = board[r]?.[c];
+            cell.textContent = symbolMap[raw] ?? raw ?? " ";
             cell.classList.add("tic-cell");
             if (c < 2)
                 cell.classList.add("border-right");
@@ -41,54 +104,210 @@ function drawBoard(board) {
     container.appendChild(table);
 }
 async function loadPlayers() {
-    const res = await fetch(`/tournament/${tournamentId}/players`);
+    const res = await fetch(/tournament/$, { tournamentId } / players);
     const players = await res.json();
     const left = document.getElementById("left");
     left.innerHTML = "<h4>Players</h4>";
     const ul = document.createElement("ul");
+    ul.className = "small";
     for (const p of players) {
         const li = document.createElement("li");
-        li.innerHTML = `<span title="${p.name} (${p.id})">${p.name}</span>`;
+        li.innerHTML = title;
+        "${p.name} (${p.id})" > $;
+        {
+            p.name;
+        }
+        /span>;
         ul.appendChild(li);
     }
     left.appendChild(ul);
 }
 async function loadLeaderboard() {
-    const res = await fetch(`/tournament/${tournamentId}/leaderboard`);
+    const res = await fetch(/tournament/$, { tournamentId } / leaderboard);
     const leaderboard = await res.json();
     const right = document.getElementById("right");
     right.innerHTML = "<h4>Leaderboard</h4>";
     const table = document.createElement("table");
-    table.className = "table table-striped";
+    table.className = "table table-striped small";
     const tbody = document.createElement("tbody");
     leaderboard.forEach((entry, idx) => {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${idx + 1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
+        row.innerHTML = $;
+        {
+            idx + 1;
+        }
+        /td><td>${entry.name}</td > $;
+        {
+            entry.score;
+        }
+        /td>;
         tbody.appendChild(row);
     });
     table.appendChild(tbody);
     right.appendChild(table);
+}
+function renderPodium(sorted, players) {
+    const podium = [
+        { place: 2, color: 'blue', height: 120, medal: '🥈' },
+        { place: 1, color: 'gold', height: 180, medal: '🥇' },
+        { place: 3, color: 'green', height: 80, medal: '🥉' },
+    ];
+    return podium.map((p, i) => {
+        const [playerId, score] = sorted[p.place - 1] || [null, null];
+        const name = playerId ? players[playerId] ?? "Unknown" : "-";
+        return;
+        class {
+        };
+        "text-center mx-2" >
+            style;
+        "font-weight:bold;" > $;
+        {
+            name;
+        }
+        /div>
+            < div;
+        style = ";
+        height: $;
+        {
+            p.height;
+        }
+        px;
+        width: 80;
+        px;
+        background: $;
+        {
+            p.color;
+        }
+        ;
+        display: flex;
+        justify - content;
+        center;
+        align - items;
+        center;
+        color: white;
+        font - size;
+        2e;
+        m;
+        font - weight;
+        bold;
+        ">${p.medal}</div>
+            < /div>;
+    }).join('');
+}
+async function updateMatch(matchId) {
+    const res = await fetch(/tournament/$, { tournamentId } / match / $, { matchId });
+    if (!res.ok)
+        return;
+    const match = await res.json();
+    const matchDiv = document.querySelector([data - match - id, "${matchId}"]);
+    if (!matchDiv)
+        return;
+    matchDiv.innerHTML =
+        class {
+        };
+    "small" >
+        $;
+    {
+        match.playerAName;
+    }
+    vs;
+    $;
+    {
+        match.playerBName;
+    }
+    /strong></div >
+        Status;
+    /strong> ${MatchStatus[match.status as keyof typeof MatchStatus] ?? match.status}</div >
+        Duration;
+    /strong> ${match.duration ?? "-"}</div >
+        /div>;
+    $;
+    {
+        renderMatchBoard(match.board);
+    }
+    ;
 }
 async function updateTournamentUI(status, data) {
     const center = document.getElementById("center");
     const leaderboardContainer = document.getElementById("right");
     center.innerHTML = "";
     leaderboardContainer.innerHTML = "";
+    const matchesContainer = document.getElementById("matches");
+    if (matchesContainer) {
+        if (["Ongoing", "Finished", "Cancelled"].includes(status)) {
+            matchesContainer.classList.remove("d-none");
+        }
+        else {
+            matchesContainer.classList.add("d-none");
+        }
+    }
     if (status === "Planned") {
         const numPlayers = Object.keys(data.registeredPlayers).length;
         const canStart = numPlayers >= 2;
-        center.innerHTML = `
-            <h3>Match not started</h3>
-            <button id="startBtn" class="btn btn-success" ${!canStart ? "disabled" : ""}>Start Tournament</button>
-            <button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>
-            ${!canStart ? `<p class="text-muted mt-2">At least 2 players are required to start the tournament.</p>` : ""}
-        `;
+        center.innerHTML =
+            Match;
+        not;
+        started < /h3>
+            < blockquote;
+        class {
+        }
+        "blockquote text-center" >
+            Use;
+        this;
+        ID;
+        to;
+        register;
+        to;
+        this;
+        tournament: /p>
+            < h6;
+        style = "border:1px solid #666" > $;
+        {
+            tournamentId;
+        }
+        /h6>
+            < /blockquote>
+            < br /  >
+            />
+            < button;
+        id = "startBtn";
+        class {
+        }
+        "btn btn-success";
+        $;
+        {
+            !canStart ? "disabled" : "";
+        }
+         > Start;
+        Tournament < /button>
+            < button;
+        id = "cancelBtn";
+        class {
+        }
+        "btn btn-danger" > Cancel;
+        Tournament < /button>;
+        $;
+        {
+            !canStart ? class {
+            } : ;
+            "text-muted mt-2" > At;
+            least;
+            2;
+            players;
+            are;
+            required;
+            to;
+            start;
+            the;
+            tournament. < /p> : "";
+        }
+        ;
         document.getElementById("startBtn")?.addEventListener("click", async () => {
             try {
-                const response = await fetch(`/tournament/${tournamentId}/start`, { method: "POST" });
+                const response = await fetch(/tournament/$, { tournamentId } / start, { method: "POST" });
                 if (!response.ok) {
                     const message = await response.text();
-                    alert(`⚠️ Failed to start tournament: ${message}`);
+                    alert(Failed, to, start, tournament, $, { message });
                     return;
                 }
             }
@@ -99,10 +318,10 @@ async function updateTournamentUI(status, data) {
         });
         document.getElementById("cancelBtn")?.addEventListener("click", async () => {
             try {
-                const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
+                const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
                 if (!response.ok) {
                     const message = await response.text();
-                    alert(`⚠️ Failed to cancel tournament: ${message}`);
+                    alert(Failed, to, cancel, tournament, $, { message });
                     return;
                 }
             }
@@ -123,7 +342,49 @@ async function updateTournamentUI(status, data) {
             title.textContent = "Current Match";
             center.appendChild(title);
         }
-        const match = await (await fetch(`/tournament/${tournamentId}/match/current`)).json();
+        const res = await fetch(/tournament/$, { tournamentId } / match / current);
+        if (res.status != 200) {
+            center.innerHTML =
+                class {
+                };
+            "d-flex flex-column align-items-center justify-content-center";
+            style = "min-height: 200px;" >
+                class {
+                };
+            "display-1 text-muted" > ;
+            /div>
+                < div;
+            class {
+            }
+            "text-muted" > Waiting;
+            for (the; next; match)
+                ;
+            /div>
+                < /div>
+                < br /  >
+                id;
+            "cancelBtn";
+            class {
+            }
+            "btn btn-danger" > Cancel;
+            Tournament < /button>;
+            document.getElementById("cancelBtn")?.addEventListener("click", async () => {
+                try {
+                    const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
+                    if (!response.ok) {
+                        const message = await response.text();
+                        alert(Failed, to, cancel, tournament, $, { message });
+                        return;
+                    }
+                }
+                catch (err) {
+                    console.error("Unexpected error:", err);
+                    alert("❌ An unexpected error occurred while cancelling the tournament.");
+                }
+            });
+            return;
+        }
+        const match = await res.json();
         drawBoard(match.board);
         const playerA = data.registeredPlayers[match.playerAId] ?? match.playerAId;
         const playerB = data.registeredPlayers[match.playerBId] ?? match.playerBId;
@@ -133,7 +394,16 @@ async function updateTournamentUI(status, data) {
             subtitle.id = "matchSubtitle";
             center.appendChild(subtitle);
         }
-        subtitle.textContent = `${playerA} vs ${playerB}`;
+        subtitle.textContent = $;
+        {
+            playerA;
+        }
+        vs;
+        $;
+        {
+            playerB;
+        }
+        ;
         let cancelBtn = document.getElementById("cancelBtn");
         if (!cancelBtn) {
             cancelBtn = document.createElement("button");
@@ -142,10 +412,10 @@ async function updateTournamentUI(status, data) {
             cancelBtn.className = "btn btn-danger mt-3 d-block mx-auto";
             cancelBtn.addEventListener("click", async () => {
                 try {
-                    const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
+                    const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
                     if (!response.ok) {
                         const message = await response.text();
-                        alert(`⚠️ Failed to cancel tournament: ${message}`);
+                        alert(Failed, to, cancel, tournament, $, { message });
                         return;
                     }
                 }
@@ -163,7 +433,15 @@ async function updateTournamentUI(status, data) {
         Object.entries(data.leaderboard).forEach(([playerId, score], idx) => {
             const name = data.registeredPlayers[playerId] ?? "Unknown";
             const row = document.createElement("tr");
-            row.innerHTML = `<td>${idx + 1}</td><td>${name}</td><td>${score}</td>`;
+            row.innerHTML = $;
+            {
+                idx + 1;
+            }
+            /td><td>${name}</td > $;
+            {
+                score;
+            }
+            /td>;
             tbody.appendChild(row);
         });
         table.appendChild(tbody);
@@ -172,22 +450,19 @@ async function updateTournamentUI(status, data) {
     else if (status === "Finished") {
         const sorted = Object.entries(data.leaderboard)
             .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
-        center.innerHTML = "<h3>🏁 Tournament Finished</h3><ul style='list-style: none;'>" +
-            sorted.slice(0, 3).map(([playerId, score], i) => {
-                const name = data.registeredPlayers?.[playerId] ?? "Unknown";
-                var medal = '';
-                if (i == 0) {
-                    medal = '🥇';
-                }
-                else if (i == 1) {
-                    medal = '🥈';
-                }
-                else if (i == 2) {
-                    medal = '🥉';
-                }
-                return `<li><strong>${medal}</strong> ${name} (${score} pts)</li>`;
-            }).join("") +
-            "</ul>";
+        center.innerHTML =
+        ;
+        Tournament;
+        Finished < /h3>
+            < div;
+        class {
+        }
+        "podium-container d-flex justify-content-center align-items-end mt-4" >
+            $;
+        {
+            renderPodium(sorted, data.registeredPlayers);
+        }
+        /div>;
     }
     else if (status === "Cancelled") {
         center.innerHTML = "<h3 class='text-danger'>Tournament Cancelled</h3>";
@@ -195,21 +470,21 @@ async function updateTournamentUI(status, data) {
     const meta = document.getElementById("tournamentMeta");
     if (meta != null) {
         if (status === "Planned") {
-            meta.innerHTML = ``;
-        }
-        else {
             meta.innerHTML = `
+        } else {
+            meta.innerHTML = 
                 <p class="small text-center"><strong>Start:</strong> ${data.startTime ? new Date(data.startTime).toLocaleString() : '-'}  
                    <strong>End:</strong> ${data.endTime ? new Date(data.endTime).toLocaleString() : '-'}  
                    <strong>Duration:</strong> ${data.duration || '-'}</p>
-            `;
+            ;
         }
     }
 }
+
 hub.onPlayerRegistered(() => loadPlayers());
 hub.onRefreshLeaderboard(() => loadLeaderboard());
 hub.onTournamentUpdated(async () => {
-    const res = await fetch(`/tournament/${tournamentId}`);
+    const res = await fetch(/tournament/${tournamentId});
     if (res.ok) {
         const data = await res.json();
         await updateTournamentUI(data.status, data);
@@ -218,18 +493,34 @@ hub.onTournamentUpdated(async () => {
     loadLeaderboard();
 });
 hub.onTournamentCancelled(() => updateTournamentUI("Cancelled", {}));
-hub.onMatchStarted(() => updateTournamentUI("Ongoing", {}));
-hub.onMatchEnded(() => updateTournamentUI("Ongoing", {}));
-hub.onReceiveBoard((board) => drawBoard(board));
+hub.onMatchStarted(async (matchId: string) => {
+    await updateMatch(matchId);
+});
+
+hub.onMatchEnded(async (matchId: string) => {
+    await updateMatch(matchId);
+});
+
+hub.onReceiveBoard(async (matchId: string, board: string[][]) => {
+    await updateMatch(matchId);
+    await drawBoard(board);
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
-    const res = await fetch(`/tournament/${tournamentId}`);
+
+    const res = await fetch(/tournament/${tournamentId});
     if (res.ok) {
         const data = await res.json();
         await updateTournamentUI(data.status, data);
     }
+
     loadPlayers();
     loadLeaderboard();
+
     setTimeout(() => hub.subscribeToTournament(tournamentId), 2000);
-});
+});;
+        }
+    }
+}
 export {};
 //# sourceMappingURL=tournamentDetails.js.map

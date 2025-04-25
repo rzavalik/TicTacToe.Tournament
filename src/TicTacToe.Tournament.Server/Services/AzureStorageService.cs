@@ -11,7 +11,7 @@ namespace TicTacToe.Tournament.Server.Services;
 
 public class AzureStorageService : IAzureStorageService
 {
-    private BlobContainerClient _containerClient;
+    private BlobContainerClient? _containerClient;
     private readonly string _connectionString;
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -21,7 +21,8 @@ public class AzureStorageService : IAzureStorageService
 
     public AzureStorageService(string connectionString)
     {
-        _connectionString = connectionString;
+        _connectionString = connectionString
+            ?? throw new ArgumentNullException(nameof(connectionString), "ConnectionString must be provided.");
 
         Initialize();
     }
@@ -43,16 +44,40 @@ public class AzureStorageService : IAzureStorageService
 
     private async Task UploadAsync<T>(string path, T obj)
     {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
         Console.WriteLine($"[AzureStorageService] Uploading {path}...");
+
         var blobClient = _containerClient.GetBlobClient(path);
-        var content = JsonSerializer.Serialize(obj, _jsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        var newContent = JsonSerializer.Serialize(obj, _jsonOptions);
+
+        if (await blobClient.ExistsAsync())
+        {
+            var existing = await blobClient.DownloadContentAsync();
+            var existingContent = existing.Value.Content.ToString();
+
+            if (existingContent == newContent)
+            {
+                Console.WriteLine($"[AzureStorageService] Skipping upload: no changes in {path}.");
+                return;
+            }
+        }
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
         await blobClient.UploadAsync(stream, overwrite: true);
         Console.WriteLine($"[AzureStorageService] Uploaded {path}");
     }
 
     private async Task<T?> DownloadAsync<T>(string path)
     {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
         var blobClient = _containerClient.GetBlobClient(path);
         if (!await blobClient.ExistsAsync()) return default;
 
@@ -62,6 +87,11 @@ public class AzureStorageService : IAzureStorageService
 
     public async Task<IEnumerable<Guid>> ListTournamentsAsync()
     {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
         var result = new HashSet<Guid>();
 
         await foreach (var blob in _containerClient.GetBlobsByHierarchyAsync(delimiter: "/"))
@@ -81,6 +111,11 @@ public class AzureStorageService : IAzureStorageService
         Dictionary<Guid, Guid> playerTournamentMap,
         ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> pendingMoves)
     {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
         var folder = $"{tournamentId}/";
         var playerInfos = players.Select(p => new PlayerInfo
         {
@@ -97,6 +132,11 @@ public class AzureStorageService : IAzureStorageService
     public async Task<(Models.Tournament? Tournament, List<PlayerInfo>? PlayerInfos, Dictionary<Guid, Guid>? Map, ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>? Moves)>
         LoadTournamentStateAsync(Guid tournamentId)
     {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
         var folder = $"{tournamentId}/";
 
         var tournament = await DownloadAsync<Models.Tournament>($"{folder}tournament.json");

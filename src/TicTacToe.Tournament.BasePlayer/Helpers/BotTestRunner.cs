@@ -23,6 +23,7 @@ public class BotTestRunner
         var boardRenderer = new BoardRenderer(Console.Out);
         var hasFailed = false;
         var cases = BoardTestCases;
+        var matchId = Guid.NewGuid();
 
         for (var i = 0; i < cases.Count; i++)
         {
@@ -37,7 +38,7 @@ public class BotTestRunner
             Console.WriteLine("");
             Console.WriteLine("");
 
-            var (row, col) = await _bot.MakeMoveAsync(board);
+            var (row, col) = await _bot.MakeMoveAsync(matchId, board);
 
             if (row < 0 || row > 2 || col < 0 || col > 2)
             {
@@ -85,8 +86,9 @@ public class BotTestRunner
         Console.ForegroundColor = ConsoleColor.White;
         var boardRenderer = new BoardRenderer(Console.Out);
         var hasFailed = false;
+        var matchId = Guid.NewGuid();
 
-        _bot.OnMatchStarted(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Mark.X, true);
+        _bot.OnMatchStarted(matchId, Guid.NewGuid(), Guid.NewGuid(), Mark.X, true);
 
         var board = EmptyBoard;
 
@@ -97,20 +99,20 @@ public class BotTestRunner
 
         for (int turn = 0; turn < 9; turn++)
         {
-            var (row, col) = await _bot.MakeMoveAsync(board);
+            var (row, col) = await _bot.MakeMoveAsync(matchId, board);
 
             if (board[row][col] != Mark.Empty)
             {
                 hasFailed = true;
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[ERR] Invalid move at ({row},{col}). Cell already occupied. You've lost your turn.");
-                continue; 
+                continue;
             }
 
             board[row][col] = turn % 2 == 0 ? Mark.X : Mark.O;
 
-            _bot.OnOpponentMoved(row, col);
-            _bot.OnBoardUpdated(board);
+            _bot.OnOpponentMoved(matchId, row, col);
+            _bot.OnBoardUpdated(matchId, board);
 
             Console.WriteLine("");
             boardRenderer.Draw(board);
@@ -120,7 +122,12 @@ public class BotTestRunner
 
         Console.ForegroundColor = ConsoleColor.Green;
 
-        _bot.OnMatchEnded(new GameResult { WinnerId = null });
+        _bot.OnMatchEnded(new GameResult
+        {
+            WinnerId = null,
+            MatchId = Guid.Empty,
+            Board = board,
+        });
 
         if (hasFailed)
         {
