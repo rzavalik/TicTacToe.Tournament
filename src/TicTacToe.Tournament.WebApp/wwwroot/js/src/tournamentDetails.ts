@@ -175,8 +175,11 @@ async function updateMatch(matchId: string) {
     const matchDiv = document.querySelector(`[data-match-id="${matchId}"]`) as HTMLDivElement | null;
     if (!matchDiv) return;
 
+    const playerNamesHtml = matchDiv.querySelector('.small div:first-child')?.outerHTML;
+
     matchDiv.innerHTML = `
         <div class="small">
+            ${playerNamesHtml}
             <div><strong>${match.playerAName} vs ${match.playerBName}</strong></div>
             <div><strong>Status:</strong> ${MatchStatus[match.status as keyof typeof MatchStatus] ?? match.status}</div>
             <div><strong>Duration:</strong> ${match.duration ?? "-"}</div>
