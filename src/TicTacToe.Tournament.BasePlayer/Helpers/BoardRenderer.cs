@@ -14,19 +14,28 @@ public class BoardRenderer : IBoardRenderer
 
     public void Draw(Mark[][] board)
     {
-        for (int row = 0; row < 3; row++)
+        for (int r = 0; r < 3; r++)
         {
-            _output?.WriteLine($"{RenderMark(board[row][0])} | {RenderMark(board[row][1])} | {RenderMark(board[row][2])}");
+            for (int c = 0; c < 3; c++)
+            {
+                var mark = board[r][c];
+                var symbol = mark switch
+                {
+                    Mark.X => "X",
+                    Mark.O => "O",
+                    _ => " "
+                };
+                _output.Write($" {symbol} ");
+                if (c < 2)
+                {
+                    _output.Write("|");
+                }
+            }
+            _output.WriteLine();
+            if (r < 2)
+            {
+                _output.WriteLine("---+---+---");
+            }
         }
-    }
-
-    private string RenderMark(Mark mark)
-    {
-        return mark switch
-        {
-            Mark.X => "X",
-            Mark.O => "O",
-            _ => " "
-        };
     }
 }

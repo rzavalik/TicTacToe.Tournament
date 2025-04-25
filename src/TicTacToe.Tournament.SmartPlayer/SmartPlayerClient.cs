@@ -110,23 +110,8 @@ public class SmartPlayerClient : BasePlayerClient
         Console.WriteLine();
         Console.WriteLine("Current board:");
 
-        for (int r = 0; r < 3; r++)
-        {
-            for (int c = 0; c < 3; c++)
-            {
-                var mark = CurrentBoard[r][c];
-                var symbol = mark switch
-                {
-                    Mark.X => "X",
-                    Mark.O => "O",
-                    _ => " "
-                };
-                Console.Write($" {symbol} ");
-                if (c < 2) Console.Write("|");
-            }
-            Console.WriteLine();
-            if (r < 2) Console.WriteLine("---+---+---");
-        }
+        var boardRenderer = new BoardRenderer(Console.Out);
+        boardRenderer.Draw(CurrentBoard);
 
         Console.WriteLine();
         Console.WriteLine();
