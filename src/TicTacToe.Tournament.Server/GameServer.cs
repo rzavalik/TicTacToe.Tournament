@@ -173,8 +173,8 @@ public class GameServer : IGameServer
                 match.WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
                 match.Board = board.GetState();
 
-                _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA, MatchScore.Win);
-                _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB, MatchScore.Walkover);
+                _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB, MatchScore.Win);
+                _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA, MatchScore.Walkover);
 
                 await Task.WhenAll(
                     OnTournamentUpdated(_tournamentId),

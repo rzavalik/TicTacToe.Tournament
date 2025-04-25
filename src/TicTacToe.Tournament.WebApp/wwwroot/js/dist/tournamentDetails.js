@@ -13,7 +13,7 @@ const symbolMap = {
 };
 let matchesExpanded = false;
 async function fetchMatches(tournamentId) {
-    const res = await fetch(/tournament/$, { tournamentId } / matches);
+    const res = await fetch(`/tournament/${tournamentId}/matches`);
     if (!res.ok)
         return [];
     return await res.json();
@@ -26,35 +26,19 @@ async function toggleMatchesPanel(tournamentId) {
         return;
     }
     const matches = await fetchMatches(tournamentId);
-    container.innerHTML = matches.map((match, idx) => class {
-    }, "match-entry col-md-3 mt-3", data - match - id, "${match.id}" >
-        class {
-        }, "small" >
-        Match, $, { idx } + 1);
+    container.innerHTML = matches.map((match, idx) => `
+        <div class="match-entry col-md-3 mt-3" data-match-id="${match.id}">
+            <div class="small">
+                <div><strong>Match ${idx + 1}:</strong></div>
+                <div>${match.playerAName} vs ${match.playerBName}</div>
+                <div><strong>Status:</strong> ${MatchStatus[match.status] ?? match.status}</div>
+                <div><strong>Duration:</strong> ${match.duration || '-'}</div>
+            </div>
+            ${renderMatchBoard(match.board)}
+        </div>
+    `).join('');
+    matchesExpanded = true;
 }
-/strong></div >
-    $;
-{
-    match.playerAName;
-}
-vs;
-$;
-{
-    match.playerBName;
-}
-/div>
-    < div > Status;
-/strong> ${MatchStatus[match.status as keyof typeof MatchStatus] ?? match.status}</div >
-    Duration;
-/strong> ${match.duration || '-'}</div >
-    /div>;
-$;
-{
-    renderMatchBoard(match.board);
-}
-/div>;
-join('');
-matchesExpanded = true;
 window.toggleMatchesPanel = toggleMatchesPanel;
 function renderMatchBoard(board) {
     const emptyRow = ["", "", ""];
@@ -62,18 +46,15 @@ function renderMatchBoard(board) {
     if (!board || board.every(row => row === null)) {
         board = emptyBoard;
     }
-    return;
-    class {
-    };
-    "match-board" >
-        $;
-    {
-        board.map(row => $, { row, : .map(cell => $, { cell } === "Empty" ? "" : symbolMap[cell] ?? cell ?? " ") } < /td>).join('');
-    }
-    /tr>;
-    join('');
+    return `
+        <table class="match-board">
+            ${board.map(row => `
+                <tr>
+                    ${row.map(cell => `<td>${cell === "Empty" ? "" : symbolMap[cell] ?? cell ?? " "}</td>`).join('')}
+                </tr>`).join('')}
+        </table>
+    `;
 }
-/table>;
 function drawBoard(board) {
     let container = document.getElementById("boardContainer");
     if (!container) {
@@ -104,7 +85,7 @@ function drawBoard(board) {
     container.appendChild(table);
 }
 async function loadPlayers() {
-    const res = await fetch(/tournament/$, { tournamentId } / players);
+    const res = await fetch(`/tournament/${tournamentId}/players`);
     const players = await res.json();
     const left = document.getElementById("left");
     left.innerHTML = "<h4>Players</h4>";
@@ -112,18 +93,13 @@ async function loadPlayers() {
     ul.className = "small";
     for (const p of players) {
         const li = document.createElement("li");
-        li.innerHTML = title;
-        "${p.name} (${p.id})" > $;
-        {
-            p.name;
-        }
-        /span>;
+        li.innerHTML = `<span title="${p.name} (${p.id})">${p.name}</span>`;
         ul.appendChild(li);
     }
     left.appendChild(ul);
 }
 async function loadLeaderboard() {
-    const res = await fetch(/tournament/$, { tournamentId } / leaderboard);
+    const res = await fetch(`/tournament/${tournamentId}/leaderboard`);
     const leaderboard = await res.json();
     const right = document.getElementById("right");
     right.innerHTML = "<h4>Leaderboard</h4>";
@@ -132,15 +108,7 @@ async function loadLeaderboard() {
     const tbody = document.createElement("tbody");
     leaderboard.forEach((entry, idx) => {
         const row = document.createElement("tr");
-        row.innerHTML = $;
-        {
-            idx + 1;
-        }
-        /td><td>${entry.name}</td > $;
-        {
-            entry.score;
-        }
-        /td>;
+        row.innerHTML = `<td>${idx + 1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
         tbody.appendChild(row);
     });
     table.appendChild(tbody);
@@ -155,77 +123,40 @@ function renderPodium(sorted, players) {
     return podium.map((p, i) => {
         const [playerId, score] = sorted[p.place - 1] || [null, null];
         const name = playerId ? players[playerId] ?? "Unknown" : "-";
-        return;
-        class {
-        };
-        "text-center mx-2" >
-            style;
-        "font-weight:bold;" > $;
-        {
-            name;
-        }
-        /div>
-            < div;
-        style = ";
-        height: $;
-        {
-            p.height;
-        }
-        px;
-        width: 80;
-        px;
-        background: $;
-        {
-            p.color;
-        }
-        ;
-        display: flex;
-        justify - content;
-        center;
-        align - items;
-        center;
-        color: white;
-        font - size;
-        2e;
-        m;
-        font - weight;
-        bold;
-        ">${p.medal}</div>
-            < /div>;
+        return `
+            <div class="text-center mx-2">
+                <div style="font-weight:bold;">${name}</div>
+                <div style="
+                    height: ${p.height}px;
+                    width: 80px;
+                    background: ${p.color};
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    color: white;
+                    font-size: 2em;
+                    font-weight: bold;
+                ">${p.medal}</div>
+            </div>
+        `;
     }).join('');
 }
 async function updateMatch(matchId) {
-    const res = await fetch(/tournament/$, { tournamentId } / match / $, { matchId });
+    const res = await fetch(`/tournament/${tournamentId}/match/${matchId}`);
     if (!res.ok)
         return;
     const match = await res.json();
-    const matchDiv = document.querySelector([data - match - id, "${matchId}"]);
+    const matchDiv = document.querySelector(`[data-match-id="${matchId}"]`);
     if (!matchDiv)
         return;
-    matchDiv.innerHTML =
-        class {
-        };
-    "small" >
-        $;
-    {
-        match.playerAName;
-    }
-    vs;
-    $;
-    {
-        match.playerBName;
-    }
-    /strong></div >
-        Status;
-    /strong> ${MatchStatus[match.status as keyof typeof MatchStatus] ?? match.status}</div >
-        Duration;
-    /strong> ${match.duration ?? "-"}</div >
-        /div>;
-    $;
-    {
-        renderMatchBoard(match.board);
-    }
-    ;
+    matchDiv.innerHTML = `
+        <div class="small">
+            <div><strong>${match.playerAName} vs ${match.playerBName}</strong></div>
+            <div><strong>Status:</strong> ${MatchStatus[match.status] ?? match.status}</div>
+            <div><strong>Duration:</strong> ${match.duration ?? "-"}</div>
+        </div>
+        ${renderMatchBoard(match.board)}
+    `;
 }
 async function updateTournamentUI(status, data) {
     const center = document.getElementById("center");
@@ -244,70 +175,24 @@ async function updateTournamentUI(status, data) {
     if (status === "Planned") {
         const numPlayers = Object.keys(data.registeredPlayers).length;
         const canStart = numPlayers >= 2;
-        center.innerHTML =
-            Match;
-        not;
-        started < /h3>
-            < blockquote;
-        class {
-        }
-        "blockquote text-center" >
-            Use;
-        this;
-        ID;
-        to;
-        register;
-        to;
-        this;
-        tournament: /p>
-            < h6;
-        style = "border:1px solid #666" > $;
-        {
-            tournamentId;
-        }
-        /h6>
-            < /blockquote>
-            < br /  >
-            />
-            < button;
-        id = "startBtn";
-        class {
-        }
-        "btn btn-success";
-        $;
-        {
-            !canStart ? "disabled" : "";
-        }
-         > Start;
-        Tournament < /button>
-            < button;
-        id = "cancelBtn";
-        class {
-        }
-        "btn btn-danger" > Cancel;
-        Tournament < /button>;
-        $;
-        {
-            !canStart ? class {
-            } : ;
-            "text-muted mt-2" > At;
-            least;
-            2;
-            players;
-            are;
-            required;
-            to;
-            start;
-            the;
-            tournament. < /p> : "";
-        }
-        ;
+        center.innerHTML = `
+            <h3>Match not started</h3>
+            <blockquote class="blockquote text-center">
+                <p>Use this ID to register to this tournament:</p>
+                <h6 style="border:1px solid #666">${tournamentId}</h6>
+            </blockquote>
+            <br/>
+            <br/>
+            <button id="startBtn" class="btn btn-success" ${!canStart ? "disabled" : ""}>Start Tournament</button>
+            <button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>
+            ${!canStart ? `<p class="text-muted mt-2">At least 2 players are required to start the tournament.</p>` : ""}
+        `;
         document.getElementById("startBtn")?.addEventListener("click", async () => {
             try {
-                const response = await fetch(/tournament/$, { tournamentId } / start, { method: "POST" });
+                const response = await fetch(`/tournament/${tournamentId}/start`, { method: "POST" });
                 if (!response.ok) {
                     const message = await response.text();
-                    alert(Failed, to, start, tournament, $, { message });
+                    alert(`⚠️ Failed to start tournament: ${message}`);
                     return;
                 }
             }
@@ -318,10 +203,10 @@ async function updateTournamentUI(status, data) {
         });
         document.getElementById("cancelBtn")?.addEventListener("click", async () => {
             try {
-                const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
+                const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
                 if (!response.ok) {
                     const message = await response.text();
-                    alert(Failed, to, cancel, tournament, $, { message });
+                    alert(`⚠️ Failed to cancel tournament: ${message}`);
                     return;
                 }
             }
@@ -342,38 +227,22 @@ async function updateTournamentUI(status, data) {
             title.textContent = "Current Match";
             center.appendChild(title);
         }
-        const res = await fetch(/tournament/$, { tournamentId } / match / current);
+        const res = await fetch(`/tournament/${tournamentId}/match/current`);
         if (res.status != 200) {
-            center.innerHTML =
-                class {
-                };
-            "d-flex flex-column align-items-center justify-content-center";
-            style = "min-height: 200px;" >
-                class {
-                };
-            "display-1 text-muted" > ;
-            /div>
-                < div;
-            class {
-            }
-            "text-muted" > Waiting;
-            for (the; next; match)
-                ;
-            /div>
-                < /div>
-                < br /  >
-                id;
-            "cancelBtn";
-            class {
-            }
-            "btn btn-danger" > Cancel;
-            Tournament < /button>;
+            center.innerHTML = `
+                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px;">
+                    <div class="display-1 text-muted">🕒</div>
+                    <div class="text-muted">Waiting for the next match...</div>
+                </div>
+                <br/>
+                <button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>
+            `;
             document.getElementById("cancelBtn")?.addEventListener("click", async () => {
                 try {
-                    const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
+                    const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
                     if (!response.ok) {
                         const message = await response.text();
-                        alert(Failed, to, cancel, tournament, $, { message });
+                        alert(`⚠️ Failed to cancel tournament: ${message}`);
                         return;
                     }
                 }
@@ -394,16 +263,7 @@ async function updateTournamentUI(status, data) {
             subtitle.id = "matchSubtitle";
             center.appendChild(subtitle);
         }
-        subtitle.textContent = $;
-        {
-            playerA;
-        }
-        vs;
-        $;
-        {
-            playerB;
-        }
-        ;
+        subtitle.textContent = `${playerA} vs ${playerB}`;
         let cancelBtn = document.getElementById("cancelBtn");
         if (!cancelBtn) {
             cancelBtn = document.createElement("button");
@@ -412,10 +272,10 @@ async function updateTournamentUI(status, data) {
             cancelBtn.className = "btn btn-danger mt-3 d-block mx-auto";
             cancelBtn.addEventListener("click", async () => {
                 try {
-                    const response = await fetch(/tournament/$, { tournamentId } / cancel, { method: "POST" });
+                    const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
                     if (!response.ok) {
                         const message = await response.text();
-                        alert(Failed, to, cancel, tournament, $, { message });
+                        alert(`⚠️ Failed to cancel tournament: ${message}`);
                         return;
                     }
                 }
@@ -433,15 +293,7 @@ async function updateTournamentUI(status, data) {
         Object.entries(data.leaderboard).forEach(([playerId, score], idx) => {
             const name = data.registeredPlayers[playerId] ?? "Unknown";
             const row = document.createElement("tr");
-            row.innerHTML = $;
-            {
-                idx + 1;
-            }
-            /td><td>${name}</td > $;
-            {
-                score;
-            }
-            /td>;
+            row.innerHTML = `<td>${idx + 1}</td><td>${name}</td><td>${score}</td>`;
             tbody.appendChild(row);
         });
         table.appendChild(tbody);
@@ -450,19 +302,12 @@ async function updateTournamentUI(status, data) {
     else if (status === "Finished") {
         const sorted = Object.entries(data.leaderboard)
             .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
-        center.innerHTML =
-        ;
-        Tournament;
-        Finished < /h3>
-            < div;
-        class {
-        }
-        "podium-container d-flex justify-content-center align-items-end mt-4" >
-            $;
-        {
-            renderPodium(sorted, data.registeredPlayers);
-        }
-        /div>;
+        center.innerHTML = `
+            <h3>🏁 Tournament Finished</h3>
+            <div class="podium-container d-flex justify-content-center align-items-end mt-4">
+                ${renderPodium(sorted, data.registeredPlayers)}
+            </div>
+        `;
     }
     else if (status === "Cancelled") {
         center.innerHTML = "<h3 class='text-danger'>Tournament Cancelled</h3>";
@@ -470,21 +315,21 @@ async function updateTournamentUI(status, data) {
     const meta = document.getElementById("tournamentMeta");
     if (meta != null) {
         if (status === "Planned") {
+            meta.innerHTML = ``;
+        }
+        else {
             meta.innerHTML = `
-        } else {
-            meta.innerHTML = 
                 <p class="small text-center"><strong>Start:</strong> ${data.startTime ? new Date(data.startTime).toLocaleString() : '-'}  
                    <strong>End:</strong> ${data.endTime ? new Date(data.endTime).toLocaleString() : '-'}  
                    <strong>Duration:</strong> ${data.duration || '-'}</p>
-            ;
+            `;
         }
     }
 }
-
 hub.onPlayerRegistered(() => loadPlayers());
 hub.onRefreshLeaderboard(() => loadLeaderboard());
 hub.onTournamentUpdated(async () => {
-    const res = await fetch(/tournament/${tournamentId});
+    const res = await fetch(`/tournament/${tournamentId}`);
     if (res.ok) {
         const data = await res.json();
         await updateTournamentUI(data.status, data);
@@ -493,34 +338,25 @@ hub.onTournamentUpdated(async () => {
     loadLeaderboard();
 });
 hub.onTournamentCancelled(() => updateTournamentUI("Cancelled", {}));
-hub.onMatchStarted(async (matchId: string) => {
+hub.onMatchStarted(async (matchId) => {
     await updateMatch(matchId);
 });
-
-hub.onMatchEnded(async (matchId: string) => {
+hub.onMatchEnded(async (matchId) => {
     await updateMatch(matchId);
 });
-
-hub.onReceiveBoard(async (matchId: string, board: string[][]) => {
+hub.onReceiveBoard(async (matchId, board) => {
     await updateMatch(matchId);
     await drawBoard(board);
 });
-
 document.addEventListener("DOMContentLoaded", async () => {
-
-    const res = await fetch(/tournament/${tournamentId});
+    const res = await fetch(`/tournament/${tournamentId}`);
     if (res.ok) {
         const data = await res.json();
         await updateTournamentUI(data.status, data);
     }
-
     loadPlayers();
     loadLeaderboard();
-
     setTimeout(() => hub.subscribeToTournament(tournamentId), 2000);
-});;
-        }
-    }
-}
+});
 export {};
 //# sourceMappingURL=tournamentDetails.js.map
