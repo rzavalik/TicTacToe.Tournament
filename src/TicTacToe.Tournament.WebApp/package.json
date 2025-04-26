@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@microsoft/signalr": "^8.0.7",
+    "sweetalert2": "^11.19.1",
     "typescript": "^5.8.3"
   }
 }

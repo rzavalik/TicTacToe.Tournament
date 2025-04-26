@@ -15,13 +15,17 @@ public class TournamentHub : Hub
         _tournamentManager = tournamentManager;
     }
 
-    public async Task<TournamentDto?> GetTournament(Guid tournamentId)
+    public async Task<TournamentDto?> GetTournamentAsync(Guid tournamentId)
     {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-            return null;
+        var tContext = await _tournamentManager.GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
+        {
+            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+        }
 
-        var dto = new TournamentDto
+        var tournament = tContext.Tournament;
+
+        return new TournamentDto
         {
             Id = tournament.Id,
             Name = tournament.Name,
@@ -42,11 +46,49 @@ public class TournamentHub : Hub
                 EndTime = m.EndTime
             }).ToList()
         };
-
-        return dto;
     }
 
-    public Task<IEnumerable<TournamentSummaryDto>> GetAllTournaments()
+    public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
+    {
+        var tContext = await _tournamentManager.GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
+        {
+            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+        }
+
+        await _tournamentManager.RenamePlayerAsync(tournamentId, playerId, newName);
+
+
+        await Task.WhenAll(
+            OnTournamentUpdated(tContext.Tournament.Id),
+            OnRefreshLeaderboard(tContext.Tournament)
+        );
+    }
+
+    public async Task RenameTournamentAsync(Guid tournamentId, string newName)
+    {
+        var tContext = await _tournamentManager.GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
+        {
+            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+        }
+
+        tContext.Tournament.Name = newName;
+
+        await _tournamentManager.RenameTournamentAsync(tournamentId, newName);
+        await OnTournamentUpdated(tournamentId);
+    }
+
+    public async Task DeleteTournamentAsync(Guid tournamentId)
+    {
+        Console.WriteLine($"[TournamentHub] Request to delete tournament {tournamentId}");
+
+        await _tournamentManager.DeleteTournamentAsync(tournamentId);
+
+        await OnTournamentDeleted(tournamentId);
+    }
+
+    public Task<IEnumerable<TournamentSummaryDto>> GetAllTournamentsAsync()
     {
         var result = _tournamentManager
             .GetAllTournaments()
@@ -70,63 +112,61 @@ public class TournamentHub : Hub
         return Task.FromResult(result);
     }
 
-    private static int GetStatusRank(TournamentStatus status)
-    {
-        return status switch
-        {
-            TournamentStatus.Planned => 0,
-            TournamentStatus.Ongoing => 1,
-            TournamentStatus.Finished => 2,
-            TournamentStatus.Cancelled => 3,
-            _ => 4
-        };
-    }
-
-    public async Task CreateTournament(Guid tournamentId)
+    public async Task CreateTournamentAsync(Guid tournamentId, string name = null, uint? matchRepetition = null)
     {
         Console.WriteLine($"[TournamentHub] Received CreateTournament for ID: {tournamentId}");
 
+        var tournament = new Models.Tournament
+        {
+            Id = tournamentId,
+            Name = name ??= "Tournament",
+            MatchRepetition = matchRepetition ??= 1,
+        };
+
+        tournament.MatchRepetition = Math.Min(matchRepetition.Value, 9);
+
+        await _tournamentManager.SaveTournamentAsync(tournament);
+
+        await _tournamentManager.InitializeTournamentAsync(tournamentId, name, matchRepetition.Value);
+
         await Task.WhenAll(
-            _tournamentManager.InitializeTournamentAsync(tournamentId),
-            Clients.Caller.SendAsync("OnTournamentCreated", tournamentId),
-            Clients.All.SendAsync("OnTournamentCreated", tournamentId)
+            OnTournamentCreatedCaller(tournamentId),
+            OnTournamentCreated(tournamentId)
         );
     }
 
-    public async Task StartTournament(Guid tournamentId)
+    public async Task StartTournamentAsync(Guid tournamentId)
     {
         Console.WriteLine($"[TournamentHub] Request to start tournament {tournamentId}");
 
         _ = Task.Run(() => _tournamentManager.StartTournamentAsync(tournamentId));
 
-        await Clients.All.SendAsync("OnTournamentUpdated", tournamentId);
+        await OnTournamentUpdated(tournamentId);
     }
 
-    public Task CancelTournament(Guid tournamentId)
+    public async Task CancelTournamentAsync(Guid tournamentId)
     {
         Console.WriteLine($"[TournamentHub] Request to cancel tournament {tournamentId}");
 
-        _tournamentManager.CancelTournament(tournamentId);
+        await _tournamentManager.CancelTournamentAsync(tournamentId);
 
-        return Clients.All.SendAsync("OnTournamentCancelled", tournamentId);
+        await OnTournamentCancelled(tournamentId);
     }
 
-    public async Task<bool> TournamentExists(Guid tournamentId)
+    public async Task<bool> TournamentExistsAsync(Guid tournamentId)
     {
         Console.WriteLine($"[TournamentHub] Checking if tournament {tournamentId} exists...");
 
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-
-        return tournament != null;
+        return await _tournamentManager.TournamentExistsAsync(tournamentId);
     }
 
-    public async Task SpectateTournament(Guid tournamentId)
+    public async Task SpectateTournamentAsync(Guid tournamentId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString());
         Console.WriteLine($"[TournamentHub] UI client joined group {tournamentId}");
     }
 
-    public async Task RegisterPlayer(string playerName, Guid tournamentId)
+    public async Task RegisterPlayerAsync(string playerName, Guid tournamentId)
     {
         Console.WriteLine($"[TournamentHub] RegisterPlayer called: {playerName} in tournament {tournamentId}");
 
@@ -137,196 +177,81 @@ public class TournamentHub : Hub
             playerName,
             Clients.Caller);
 
+        await _tournamentManager.RegisterPlayerAsync(tournamentId, remoteBot);
+        await Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString());
+
         await Task.WhenAll(
-            _tournamentManager.RegisterPlayerAsync(tournamentId, remoteBot),
-            Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString()),
-            Clients.Group(tournamentId.ToString()).SendAsync("OnPlayerRegistered", playerId),
-            Clients.Caller.SendAsync("OnRegistered", playerId)
+            OnPlayerRegistered(tournamentId, playerId),
+            OnRegistered(playerId)
         );
     }
 
-    public async Task<IEnumerable<MatchDto>> GetMatches(Guid tournamentId)
+    public async Task<IList<MatchDto>> GetMatchesAsync(Guid tournamentId)
     {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
+        var tContext = await _tournamentManager.GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
         {
-            Console.WriteLine($"[TournamentHub] Tournament {tournamentId} not found in GetMatches().");
-            return [];
+            throw new ArgumentNullException(nameof(tournamentId), $"Tournament {tournamentId} not found.");
         }
 
-        var result = tournament.Matches.Select(m => new MatchDto
+        return tContext.Tournament.Matches.Select(m => new MatchDto
         {
             Id = m.Id,
+            PlayerAName = tContext.Tournament.RegisteredPlayers[m.PlayerA],
             PlayerAId = m.PlayerA,
-            PlayerAName = tournament.RegisteredPlayers[m.PlayerA] ?? "Unknown",
+            PlayerBName = tContext.Tournament.RegisteredPlayers[m.PlayerB],
             PlayerBId = m.PlayerB,
-            PlayerBName = tournament.RegisteredPlayers[m.PlayerB] ?? "Unknown",
             Status = m.Status,
             Board = m.Board,
             StartTime = m.StartTime,
-            EndTime = m.EndTime,
-            Duration = m.Duration?.ToString(@"hh\:mm\:ss"),
-            Winner = m.WinnerMark?.ToString()
-        });
-
-        return result;
+            EndTime = m.EndTime
+        }).ToList();
     }
 
-    public async Task<MatchBoardDto?> GetCurrentMatchBoard(Guid tournamentId)
-    {
-        Console.WriteLine($"[TournamentManager] Loading tournament {tournamentId} on demand...");
-
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-            return null;
-
-        var match = GetCurrentMatch(tournament);
-
-        if (match == null)
-        {
-            return null;
-        }
-
-        return new MatchBoardDto
-        {
-            MatchId = match.Id,
-            Board = match.Board,
-            CurrentTurn = match.CurrentTurn
-        };
-    }
-
-    public async Task<MatchPlayersDto?> GetCurrentMatchPlayers(Guid tournamentId)
-    {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-        {
-            return null;
-        }
-
-        var match = GetCurrentMatch(tournament);
-
-        if (match == null)
-        {
-            return null;
-        }
-
-        return new MatchPlayersDto
-        {
-            MatchId = match.Id,
-            PlayerAId = match.PlayerA,
-            PlayerAName = tournament!.RegisteredPlayers[match.PlayerA] ?? "Unknown",
-            PlayerBId = match.PlayerB,
-            PlayerBName = tournament!.RegisteredPlayers[match.PlayerB] ?? "Unknown"
-        };
-    }
-
-    public async Task<MatchBoardDto?> GetMatchBoard(Guid tournamentId, Guid matchId)
-    {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-        {
-            return null;
-        }
-
-        var match = tournament
-            .Matches
-            .FirstOrDefault(m => m.Id == matchId);
-
-        if (match == null)
-        {
-            return null;
-        }
-
-        return new MatchBoardDto
-        {
-            MatchId = match.Id,
-            Board = match.Board,
-            CurrentTurn = match.CurrentTurn
-        };
-    }
-
-    public async Task<MatchPlayersDto?> GetMatchPlayers(Guid tournamentId, Guid matchId)
-    {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-        {
-            return null;
-        }
-
-        var match = tournament?
-            .Matches
-            .FirstOrDefault(m => m.Id == matchId);
-
-        if (match == null)
-        {
-            return null;
-        }
-
-        return new MatchPlayersDto
-        {
-            MatchId = match.Id,
-            PlayerAId = match.PlayerA,
-            PlayerAName = tournament?.RegisteredPlayers[match.PlayerA] ?? "Unknown",
-            PlayerBId = match.PlayerB,
-            PlayerBName = tournament?.RegisteredPlayers[match.PlayerB] ?? "Unknown"
-        };
-    }
-
-    public async Task<PlayerDto?> GetPlayer(Guid tournamentId, Guid playerId)
-    {
-        var tournament = await _tournamentManager.GetOrLoadTournamentAsync(tournamentId);
-        if (tournament == null)
-        {
-            return null;
-        }
-
-        if (!tournament.RegisteredPlayers.ContainsKey(playerId))
-        {
-            return null;
-        }
-
-        var name = tournament.RegisteredPlayers[playerId];
-        var leaderboard = _tournamentManager.GetLeaderboard(tournamentId);
-        var score = leaderboard.GetValueOrDefault(playerId, 0);
-
-        return new PlayerDto
-        {
-            Id = playerId,
-            Name = name,
-            Score = score
-        };
-    }
-
-    public async Task SubmitMove(Guid tournamentId, int row, int col)
+    public async Task SubmitMoveAsync(Guid tournamentId, int row, int col)
     {
         Console.WriteLine($"[TournamentHub] SubmitMove called: {tournamentId} ({row},{col})");
 
-        var playerIdString = Context.UserIdentifier;
-
-        if (!Guid.TryParse(playerIdString, out var playerId))
+        if (!RequestingPlayerId.HasValue)
         {
-            Console.WriteLine($"[TournamentHub] Invalid UserIdentifier.");
+            Console.WriteLine("[TournamentHub] Invalid UserIdentifier.");
             return;
         }
 
-        var gameServer = await _tournamentManager.GetOrLoadGameServerAsync(tournamentId);
-        if (gameServer == null)
-        {
-            Console.WriteLine($"[TournamentHub] No game server found for tournament {tournamentId}.");
-            return;
-        }
+        await _tournamentManager.SubmitMove(tournamentId, RequestingPlayerId.Value, row, col);
 
-        gameServer.SubmitMove(playerId, row, col);
-
-        Console.WriteLine($"[TournamentHub] Move received from {playerId}: ({row},{col})");
+        Console.WriteLine($"[TournamentHub] Move received from {RequestingPlayerId.Value}: ({row},{col})");
     }
 
-    private Match? GetCurrentMatch(Models.Tournament tournament)
+    private Guid? RequestingPlayerId
     {
-        return tournament!
-            .Matches
-            .Where(m => m.Status == MatchStatus.Ongoing)
-            .OrderBy(m => m.StartTime)
-            .FirstOrDefault();
+        get
+        {
+            if (!Guid.TryParse(Context.UserIdentifier, out var playerId))
+            {
+                Console.WriteLine("[TournamentHub] Invalid UserIdentifier.");
+                return null;
+            }
+
+            return playerId;
+        }
     }
+
+    private Task OnRefreshLeaderboard(Models.Tournament tournament) => Clients.Group(tournament.Id.ToString()).SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
+    private Task OnTournamentUpdated(Guid tournamentId) => Clients.All.SendAsync("OnTournamentUpdated", tournamentId);
+    private Task OnTournamentDeleted(Guid tournamentId) => Clients.All.SendAsync("OnTournamentDeleted", tournamentId);
+    private Task OnTournamentCreated(Guid tournamentId) => Clients.All.SendAsync("OnTournamentCreated", tournamentId);
+    private Task OnTournamentCreatedCaller(Guid tournamentId) => Clients.All.SendAsync("OnTournamentCreated", tournamentId);
+    private Task OnTournamentCancelled(Guid tournamentId) => Clients.All.SendAsync("OnTournamentCancelled", tournamentId);
+    private Task OnPlayerRegistered(Guid tournamentId, Guid playerId) => Clients.Group(tournamentId.ToString()).SendAsync("OnPlayerRegistered", playerId);
+    private Task OnRegistered(Guid playerId) => Clients.Caller.SendAsync("OnRegistered", playerId);
+
+    private static int GetStatusRank(TournamentStatus status) => status switch
+    {
+        TournamentStatus.Planned => 0,
+        TournamentStatus.Ongoing => 1,
+        TournamentStatus.Finished => 2,
+        TournamentStatus.Cancelled => 3,
+        _ => 4
+    };
 }

@@ -7,9 +7,13 @@
 	<title>@ViewData["Title"] - TicTacToe</title>
 	<script type="importmap"></script>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 	<script>window.SIGNALR_HUB_URL = "@(Environment.GetEnvironmentVariable("SIGNALR_HUB_URL") ?? Program.HubUrl)";</script>
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
 	<script type="module" src="~/js/dist/main.js"></script>
 </head>
 <body>
@@ -43,19 +47,17 @@
 	<footer class="border-top footer text-muted">
 		<div class="container">
 			&copy; 2025 - TicTacToe Tournament v
-			
+
 			@(
-				System.Reflection.Assembly
-				.GetExecutingAssembly()
-				.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?
-				.InformationalVersion
-			)
-				- <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+						System.Reflection.Assembly
+						.GetExecutingAssembly()
+						.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?
+						.InformationalVersion
+						)
+			- <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
 		</div>
 	</footer>
 
-	<script src="~/lib/jquery/dist/jquery.min.js"></script>
-	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="~/js/site.js" asp-append-version="true"></script>
 	@await RenderSectionAsync("Scripts", required: false)
 </body>

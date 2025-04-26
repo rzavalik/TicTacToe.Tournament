@@ -154,7 +154,7 @@ public class GameConsoleUI
 
             if (TotalPlayers > 0 || TotalMatches.HasValue)
             {
-                sb.Append($"(");
+                sb.Append($" (");
 
                 if (TotalPlayers > 0)
                 {

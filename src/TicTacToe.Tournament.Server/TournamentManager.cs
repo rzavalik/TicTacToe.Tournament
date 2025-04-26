@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using TicTacToe.Tournament.Models;
+using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Models.Interfaces;
 using TicTacToe.Tournament.Server.Bots;
 using TicTacToe.Tournament.Server.Hubs;
@@ -12,12 +14,8 @@ namespace TicTacToe.Tournament.Server;
 public class TournamentManager : ITournamentManager
 {
     private readonly IAzureStorageService _storageService;
-    private readonly Dictionary<Guid, Models.Tournament> _tournaments = new();
-    private readonly Dictionary<Guid, GameServer> _gameServers = new();
-    private readonly Dictionary<Guid, Dictionary<Guid, IPlayerBot>> _players = new();
-    private readonly Dictionary<Guid, Guid> _playerTournamentMap = new();
-    private readonly Dictionary<Guid, SemaphoreSlim> _locks = new();
     private readonly IHubContext<TournamentHub> _hubContext;
+    private readonly ConcurrentDictionary<Guid, TournamentContext> _tournamentContext;
 
     public TournamentManager(
         IHubContext<TournamentHub> hubContext,
@@ -25,273 +23,262 @@ public class TournamentManager : ITournamentManager
     {
         _hubContext = hubContext;
         _storageService = storageService;
+        _tournamentContext = new ConcurrentDictionary<Guid, TournamentContext>();
     }
 
-    private SemaphoreSlim GetLock(Guid tournamentId)
+    public async Task LoadFromDataSourceAsync()
     {
-        lock (_locks)
-        {
-            if (!_locks.ContainsKey(tournamentId))
-                _locks[tournamentId] = new SemaphoreSlim(1, 1);
-
-            return _locks[tournamentId];
-        }
+        var tournaments = await _storageService.ListTournamentsAsync();
+        var tasks = tournaments.Select(tId => GetTournamentContextAsync(tId));
+        await Task.WhenAll(tasks);
     }
 
-    public GameServer? GetGameServerForPlayer(Guid playerId)
+    public async Task SaveTournamentAsync(Models.Tournament tournament)
     {
-        if (_playerTournamentMap.TryGetValue(playerId, out var tournamentId))
-        {
-            if (_gameServers.TryGetValue(tournamentId, out var server))
-            {
-                return server;
-            }
-        }
-
-        return null;
+        await InitializeContextAsync(tournament);
     }
 
-    public async Task InitializeTournamentAsync(Guid tournamentId, string? name = null)
+
+    public async Task InitializeTournamentAsync(Guid tournamentId, string? name, uint? matchRepetition)
     {
-        var sem = GetLock(tournamentId);
-        await sem.WaitAsync();
-
-        try
+        var tContext = await GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
         {
-            if (_tournaments.ContainsKey(tournamentId))
+            if (name == null)
             {
-                return;
+                throw new ArgumentNullException(nameof(name), "Tournament name cannot be null when creating a new tournament.");
             }
 
-            var (tournament, playerInfos, map, moves) = await _storageService.LoadTournamentStateAsync(tournamentId);
-
-            if (tournament is not null)
+            if (matchRepetition == null)
             {
-                if (!_tournaments.TryAdd(tournamentId, tournament))
-                {
-                    _tournaments[tournamentId] = tournament;
-                }
-
-                _playerTournamentMap.Clear();
-                if (map != null)
-                {
-                    foreach (var kv in map)
-                    {
-                        _playerTournamentMap[kv.Key] = kv.Value;
-                    }
-                }
-
-                _players[tournamentId] = new();
-                if (playerInfos != null)
-                {
-                    foreach (var info in playerInfos)
-                    {
-                        var bot = new DummyPlayerBot(
-                            info.PlayerId,
-                            info.Name);
-
-                        _players[tournamentId][info.PlayerId] = bot;
-                    }
-                }
-
-                var gameServer = new GameServer(
-                    tournamentId,
-                    _hubContext,
-                    async (playerId, matchScore) =>
-                    {
-                        tournament.UpdateLeaderboard(
-                            playerId,
-                            matchScore);
-
-                        await _hubContext
-                            .Clients
-                            .Group(tournament.Id.ToString())
-                            .SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
-                    },
-                    async () =>
-                    {
-                        await SaveStateAsync(tournament);
-                    });
-
-                if (!_gameServers.TryAdd(tournamentId, gameServer))
-                {
-                    _gameServers[tournamentId] = gameServer;
-                }
-
-                if (moves != null)
-                {
-                    _gameServers[tournamentId].LoadPendingMoves(moves);
-                }
-
-                await SaveStateUnsafeAsync(tournament);
-
-                return;
+                throw new ArgumentNullException(nameof(matchRepetition), "Match repetition cannot be null when creating a new tournament.");
             }
 
-            var newTournament = new Models.Tournament
+
+            var tournament = new Models.Tournament
             {
                 Id = tournamentId,
-                Name = name ?? $"Tournament {tournamentId}",
-                Status = TournamentStatus.Planned
+                Name = name ?? $"Tournament {DateTime.Now.ToShortDateString()}",
+                Status = TournamentStatus.Planned,
+                RegisteredPlayers = new Dictionary<Guid, string>(),
+                Matches = new List<Match>(),
+                MatchRepetition = matchRepetition.Value,
+                Leaderboard = new Dictionary<Guid, int>(),
             };
 
-            _tournaments[tournamentId] = newTournament;
-            _players[tournamentId] = new();
-
-            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} initialized.");
-
-            await SaveStateUnsafeAsync(newTournament);
+            tContext = await InitializeContextAsync(tournament);
         }
-        finally
+
+        if (tContext == null)
         {
-            sem.Release();
+            throw new ArgumentNullException(nameof(tContext), "Tournament could not be initialized.");
         }
+
+        await SaveStateAsync(tContext);
+
+        Console.WriteLine($"[TournamentManager] Tournament {tournamentId} initialized.");
+
+        //notify everybody that a new tournament was created
+        await _hubContext.Clients.All.SendAsync("OnTournamentCreated", tContext.Tournament.Id);
+    }
+
+    private async Task<TournamentContext> InitializeContextAsync(Models.Tournament tournament)
+    {
+        var tContext = new TournamentContext(_hubContext, tournament);
+
+        await SaveStateAsync(tContext);
+
+        return tContext;
     }
 
     public async Task RegisterPlayerAsync(Guid tournamentId, IPlayerBot bot)
     {
-        if (!_tournaments.TryGetValue(tournamentId, out var tournament))
+        var tContext = await GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
         {
-            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} not found.");
-            return;
+            throw new ArgumentNullException(nameof(tournamentId), $"Tournament {tournamentId} not found.");
         }
 
-        if (tournament.Status != TournamentStatus.Planned)
+        if (tContext.Tournament.Status != TournamentStatus.Planned)
         {
             Console.WriteLine($"[TournamentManager] Cannot register player after tournament started.");
             return;
         }
 
-        if (!tournament.RegisteredPlayers.ContainsKey(bot.Id))
-        {
-            tournament.RegisteredPlayers[bot.Id] = bot.Name;
-            Console.WriteLine($"[TournamentManager] Player {bot.Name} registered with ID {bot.Id}.");
-        }
+        tContext.GameServer.RegisterPlayer(bot);
+        
+        await SaveStateAsync(tContext);
 
-        _playerTournamentMap[bot.Id] = tournamentId;
-        _players[tournamentId][bot.Id] = bot;
+        //lets notify the bot itself he's in
+        bot.OnRegistered(bot.Id);
 
-        if (!_gameServers.ContainsKey(tournamentId))
-        {
-            _gameServers[tournamentId] = new GameServer(
-                tournamentId,
-                _hubContext,
-                async (playerId, matchScore) =>
-                {
-
-                    tournament.UpdateLeaderboard(playerId, matchScore);
-
-                    await _hubContext
-                        .Clients
-                        .Group(tournament.Id.ToString())
-                        .SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
-                },
-                async () =>
-                {
-                    await SaveStateAsync(tournament);
-                });
-        }
-
-        _gameServers[tournamentId].RegisterPlayer(bot);
-
-        await Task.WhenAll(
-            _hubContext.Clients
-                .Group(tournament.Id.ToString())
-                .SendAsync(
-                    "OnRefreshLeaderboard",
-                    tournament.Leaderboard),
-
-            _hubContext
-                .Clients
-                .All
-                .SendAsync(
-                    "OnTournamentUpdated",
-                    tournamentId),
-
-            SaveStateAsync(tournament)
-        );
+        //lets notify the tournament
+        await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRegistered", bot.Id);
+        //leaderboard updated
+        await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard);
     }
 
-    public async Task StartTournamentAsync(Guid tournamentId)
+    public Task SubmitMove(Guid tournamentId, Guid player, int row, int col)
     {
-        if (!_tournaments.TryGetValue(tournamentId, out var tournament))
+        if (!_tournamentContext.TryGetValue(tournamentId, out var tContext))
         {
             Console.WriteLine($"[TournamentManager] Tournament {tournamentId} not found.");
-            return;
+            return Task.CompletedTask;
         }
 
-        if (tournament.Status != TournamentStatus.Planned)
+        tContext.GameServer.SubmitMove(player, row, col);
+
+        return Task.CompletedTask;
+    }
+    
+    public async Task StartTournamentAsync(Guid tournamentId)
+    {
+        var tContext = await GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
+        {
+            throw new ArgumentNullException(nameof(tournamentId), $"Tournament {tournamentId} not found.");
+        }
+
+        if (tContext.Tournament.Status != TournamentStatus.Planned)
         {
             Console.WriteLine($"[TournamentManager] Tournament {tournamentId} already started or finished.");
             return;
         }
 
-        tournament.Status = TournamentStatus.Ongoing;
-        tournament.StartTime = DateTime.UtcNow;
+        tContext.Tournament.Status = TournamentStatus.Ongoing;
+        tContext.Tournament.StartTime = DateTime.UtcNow;
+        tContext.Tournament.InitializeLeaderboard();
 
-        foreach (var playerId in tournament.RegisteredPlayers.Keys)
-        {
-            tournament.UpdateLeaderboard(playerId, 0);
-        }
+        await SaveStateAsync(tContext);
 
-        Console.WriteLine($"[TournamentManager] Starting tournament {tournamentId} with {tournament.RegisteredPlayers.Count} players.");
-
-        var server = _gameServers[tournamentId];
+        Console.WriteLine($"[TournamentManager] Starting tournament {tournamentId} with {tContext.Tournament.RegisteredPlayers.Count} players.");
 
         await Task.WhenAll(
-            server.StartTournamentAsync(tournament, _players[tournamentId]),
-            _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tournament.Leaderboard),
-            SaveStateAsync(tournament)
+            tContext.GameServer.StartTournamentAsync(tContext.Tournament),
+            _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard),
+            OnTournamentStarted(tContext.Tournament)
         );
     }
 
-    public async Task CancelTournament(Guid tournamentId)
+    public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
     {
-        if (_tournaments.TryGetValue(tournamentId, out var tournament))
+        if (!_tournamentContext.TryGetValue(tournamentId, out var tContext))
         {
-            tournament.Status = TournamentStatus.Cancelled;
-            tournament.EndTime = DateTime.UtcNow;
-
-            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} cancelled.");
-
-            await SaveStateAsync(tournament);
+            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
         }
 
-        _gameServers.Remove(tournamentId);
-        _players.Remove(tournamentId);
+        if (!tContext.Tournament.RegisteredPlayers.ContainsKey(playerId))
+        {
+            throw new InvalidOperationException($"Player {playerId} not found in tournament {tournamentId}.");
+        }
+
+        tContext.Tournament.RegisteredPlayers[playerId] = newName;
+
+        await SaveStateAsync(tContext);
     }
 
-    public async Task<Models.Tournament?> GetOrLoadTournamentAsync(Guid tournamentId)
+    public async Task CancelTournamentAsync(Guid tournamentId)
     {
-        if (!_tournaments.ContainsKey(tournamentId))
-            await InitializeTournamentAsync(tournamentId);
+        var tContext = await GetTournamentContextAsync(tournamentId);
+        if (tContext == null)
+        {
+            throw new ArgumentNullException(nameof(tournamentId), $"Tournament {tournamentId} not found.");
+        }
 
-        return _tournaments.TryGetValue(tournamentId, out var tournament)
-            ? tournament
-            : null;
+        if (tContext.Tournament.Status == TournamentStatus.Finished ||
+            tContext.Tournament.Status == TournamentStatus.Cancelled)
+        {
+            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} already cancelled or finished.");
+            return;
+        }
+
+        tContext.Tournament.Status = TournamentStatus.Cancelled;
+        tContext.Tournament.EndTime = DateTime.UtcNow;
+
+        await SaveStateAsync(tContext);
+
+        Console.WriteLine($"[TournamentManager] Tournament {tournamentId} cancelled.");
+
+        await OnTournamentCancelled(tournamentId);
     }
 
-    public async Task<GameServer?> GetOrLoadGameServerAsync(Guid tournamentId)
+    public async Task DeleteTournamentAsync(Guid tournamentId)
     {
-        await GetOrLoadTournamentAsync(tournamentId);
+        lock (_tournamentContext)
+        {
+            _tournamentContext.TryRemove(tournamentId, out _);
 
-        return _gameServers.TryGetValue(tournamentId, out var server)
-            ? server
-            : null;
+            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} deleted from memory.");
+        }
+
+        try
+        {
+            await _storageService.DeleteTournamentAsync(tournamentId);
+            Console.WriteLine($"[TournamentManager] Tournament {tournamentId} deleted from Azure Blob Storage.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TournamentManager] Failed to delete tournament {tournamentId} from storage: {ex.Message}");
+        }
     }
 
-    public bool TournamentExists(Guid tournamentId) => _tournaments.ContainsKey(tournamentId);
+    public async Task<TournamentContext?> GetTournamentContextAsync(Guid tournamentId)
+    {
+        lock (_tournamentContext)
+        {
+            TournamentContext? tContext;
+
+            if (!_tournamentContext.TryGetValue(tournamentId, out tContext))
+            {
+                try
+                {
+                    var storageRequest = _storageService.LoadTournamentStateAsync(tournamentId);
+                    storageRequest.Wait();
+
+                    if (storageRequest.Result.Tournament != null)
+                    {
+                        tContext = new TournamentContext(_hubContext, storageRequest.Result.Tournament);
+                        _tournamentContext.AddOrUpdate(
+                            tournamentId,
+                            tContext,
+                            (key, oldValue) => oldValue = tContext);
+                    }
+                }
+                catch
+                {
+                    tContext = null;
+                }
+            }
+
+            if (tContext == null)
+            {
+                return null;
+            }
+
+            _tournamentContext.AddOrUpdate(
+                tournamentId,
+                tContext,
+                (key, oldValue) => oldValue = tContext);
+
+            return tContext;
+        }
+    }
+
+    public Task<bool> TournamentExistsAsync(Guid tournamentId)
+    {
+        return _storageService.TournamentExistsAsync(tournamentId);
+    }
 
     public Models.Tournament? GetTournament(Guid tournamentId)
-        => _tournaments.TryGetValue(tournamentId, out var tournament)
-        ? tournament
+        => _tournamentContext.TryGetValue(tournamentId, out var tContext)
+        ? tContext.Tournament
         : null;
 
-    public IReadOnlyCollection<Models.Tournament> GetAllTournaments() => _tournaments.Values;
+    public IEnumerable<Models.Tournament> GetAllTournaments() => _tournamentContext.Values.Select(v => v.Tournament);
 
     public Dictionary<Guid, int> GetLeaderboard(Guid tournamentId)
     {
-        if (!_tournaments.TryGetValue(tournamentId, out var tournament))
+        if (!_tournamentContext.TryGetValue(tournamentId, out var tContext))
         {
             Console.WriteLine($"[TournamentManager] Tournament {tournamentId} not found.");
             return new();
@@ -299,7 +286,7 @@ public class TournamentManager : ITournamentManager
 
         var leaderboard = new Dictionary<Guid, int>();
 
-        foreach (var match in tournament.Matches.Where(m => m.Status == MatchStatus.Finished))
+        foreach (var match in tContext.Tournament.Matches.Where(m => m.Status == MatchStatus.Finished))
         {
             var winner = match.WinnerMark;
 
@@ -327,37 +314,69 @@ public class TournamentManager : ITournamentManager
         return leaderboard;
     }
 
-    public GameServer? GetGameServer(Guid tournamentId)
+    private async Task SaveStateAsync(TournamentContext tContext)
     {
-        return _gameServers.TryGetValue(tournamentId, out var server) ? server : null;
-    }
-
-    private async Task SaveStateAsync(Models.Tournament tournament)
-    {
-        var sem = GetLock(tournament.Id);
-        await sem.WaitAsync();
+        await tContext.Lock.WaitAsync();
 
         try
         {
-            await SaveStateUnsafeAsync(tournament);
+            await SaveStateUnsafeAsync(tContext);
+
+            _tournamentContext.AddOrUpdate(
+                tContext.Tournament.Id,
+                tContext,
+                (key, oldValue) => tContext
+            );
         }
         finally
         {
-            sem.Release();
+            tContext.Lock.Release();
         }
     }
 
-    private async Task SaveStateUnsafeAsync(Models.Tournament tournament)
+    private async Task SaveStateUnsafeAsync(TournamentContext tContext)
     {
-        _gameServers.TryGetValue(tournament.Id, out var gameServer);
+        var pendingMoves = tContext?.GameServer?.GetPendingMoves()
+            ?? new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>();
 
-        var pendingMoves = gameServer?.GetPendingMoves() ?? new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>();
-
-        await _storageService.SaveTournamentStateAsync(
-            tournament.Id,
-            tournament,
-            _players[tournament.Id],
-            _playerTournamentMap,
-            pendingMoves);
+        await _storageService.SaveTournamentStateAsync(tContext);
     }
+
+    public async Task RenameTournamentAsync(Guid tournamentId, string newName)
+    {
+        if (_tournamentContext.TryGetValue(tournamentId, out var tContext))
+        {
+            tContext.Tournament.Name = newName;
+            await SaveStateAsync(tContext);
+        }
+
+        throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+    }
+
+
+    private Task OnTournamentCancelled(Guid tournamentId) =>
+        _hubContext.Clients.All.SendAsync("OnTournamentCancelled", tournamentId);
+
+    private Task OnTournamentStarted(Models.Tournament tournament) =>
+        _hubContext.Clients.Group(tournament.Id.ToString()).SendAsync("OnTournamentStarted", new TournamentDto
+        {
+            Id = tournament.Id,
+            Name = tournament.Name,
+            Status = tournament.Status.ToString(),
+            RegisteredPlayers = tournament.RegisteredPlayers,
+            Leaderboard = tournament.Leaderboard,
+            StartTime = tournament.StartTime,
+            Duration = tournament.Duration,
+            EndTime = tournament.EndTime,
+            Matches = tournament.Matches.Select(m => new MatchDto
+            {
+                Id = m.Id,
+                PlayerAId = m.PlayerA,
+                PlayerBId = m.PlayerB,
+                Status = m.Status,
+                Board = m.Board,
+                StartTime = m.StartTime,
+                EndTime = m.EndTime
+            }).ToList()
+        });
 }

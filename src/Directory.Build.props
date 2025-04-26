@@ -1,12 +1,46 @@
 <!-- Directory.Build.props -->
 <Project>
   <PropertyGroup>
-    <Version>1.0.20</Version>
-    <AssemblyVersion>1.0.20.0</AssemblyVersion>
-    <FileVersion>1.0.20.0</FileVersion>
-    <InformationalVersion>1.0.20+c174cea</InformationalVersion>
+    <Version>1.0.54</Version>
+    <AssemblyVersion>1.0.54.0</AssemblyVersion>
+    <FileVersion>1.0.54.0</FileVersion>
+    <InformationalVersion>1.0.54+faa0871</InformationalVersion>
   </PropertyGroup>
 </Project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

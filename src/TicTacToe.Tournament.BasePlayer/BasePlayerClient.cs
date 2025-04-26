@@ -90,7 +90,7 @@ public abstract class BasePlayerClient : IBot
         await ConnectToSignalRAsync();
         await RegisterAsync();
 
-        _consoleUI.Log($"{_botName} is ready. PlayerId = {PlayerId}");
+        _consoleUI.Log($"{_botName} is ready. PlayerId = {UserId}");
 
         await Task.Delay(Timeout.Infinite);
     }
@@ -403,7 +403,7 @@ public abstract class BasePlayerClient : IBot
 
     private async Task SubmitMove(int row, int col)
     {
-        await _signalRClient!.InvokeAsync("SubmitMove", _tournamentId, row, col);
+        await _signalRClient!.InvokeAsync("SubmitMoveAsync", _tournamentId, row, col);
     }
 
     private async Task<TournamentDto?> GetTournamentAsync()
@@ -419,7 +419,7 @@ public abstract class BasePlayerClient : IBot
                 return null;
 
             return await _signalRClient.InvokeAsync<TournamentDto>(
-                "GetTournament",
+                "GetTournamentAsync",
                 tournamentId
             );
         }
@@ -441,7 +441,7 @@ public abstract class BasePlayerClient : IBot
         try
         {
             _consoleUI.Log($"Registering {_botName} ({PlayerId}) to tournament {_tournamentId}...");
-            await _signalRClient.InvokeAsync("RegisterPlayer", _botName, _tournamentId);
+            await _signalRClient.InvokeAsync("RegisterPlayerAsync", _botName, _tournamentId);
             _consoleUI.Log($"Registered to tournament {_tournamentId} successfully.");
         }
         catch (Exception ex)
@@ -452,12 +452,12 @@ public abstract class BasePlayerClient : IBot
 
     private async Task SubscribeTournament(Guid tournamentId)
     {
-        await _signalRClient!.InvokeAsync("SpectateTournament", _tournamentId);
+        await _signalRClient!.InvokeAsync("SpectateTournamentAsync", _tournamentId);
     }
 
     private async Task RegisterAsync()
     {
-        await _signalRClient!.InvokeAsync("RegisterPlayer", _botName, _tournamentId);
+        await _signalRClient!.InvokeAsync("RegisterPlayerAsync", _botName, _tournamentId);
     }
 
     protected virtual void OnMatchStarted(Guid matchId, Guid playerId, Guid opponentId, Mark mark, bool starts)

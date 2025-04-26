@@ -18,13 +18,24 @@ public class Tournament
             ? EndTime - StartTime
             : null;
 
+    public uint MatchRepetition { get; set; } = 1;
+
     public IDictionary<Guid, string> RegisteredPlayers { get; set; } = new Dictionary<Guid, string>();
 
     public IDictionary<Guid, int> Leaderboard { get; set; } = new Dictionary<Guid, int>();
 
     public Guid? Champion { get; set; }
 
-    public void UpdateLeaderboard(Guid playerId, MatchScore score)
+    public void InitializeLeaderboard()
+    {
+        Leaderboard = RegisteredPlayers.ToDictionary
+        (
+            k => k.Key,
+            v => 0
+        );
+    }
+
+    public void AgreggateScoreToPlayer(Guid playerId, MatchScore score)
     {
         if (Leaderboard.ContainsKey(playerId))
         {

@@ -84,78 +84,13 @@ public class TournamentManagerTests
     }
 
     [Fact]
-    public async Task InitializeTournamentAsync_ShouldReuseSavedTournament()
-    {
-        var player1 = new KeyValuePair<Guid, string>(Guid.NewGuid(), "Player1");
-        var player2 = new KeyValuePair<Guid, string>(Guid.NewGuid(), "Player2");
-        var registeredPlayers = new Dictionary<Guid, string>(
-        [
-            player1,
-            player2
-        ]);
-
-        var tournament = GetTournament(
-            registeredPlayers: registeredPlayers
-        );
-
-        var dummyBot = GetDummyBot();
-
-        var sut = MakeSut(tournament, dummyBot);
-
-        await sut.InitializeTournamentAsync(tournament.Id);
-
-        _storageServiceMock.Verify(x => x.SaveTournamentStateAsync(
-            tournament.Id,
-            tournament,
-            It.IsAny<Dictionary<Guid, IPlayerBot>>(),
-            It.IsAny<Dictionary<Guid, Guid>>(),
-            It.IsAny<ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>>()
-        ), Times.Once);
-    }
-
-    [Fact]
-    public async Task InitializeTournamentAsync_ShouldCreateTournament()
-    {
-        var player1 = new KeyValuePair<Guid, string>(Guid.NewGuid(), "Player1");
-        var player2 = new KeyValuePair<Guid, string>(Guid.NewGuid(), "Player2");
-        var registeredPlayers = new Dictionary<Guid, string>(
-        [
-            player1,
-            player2
-        ]);
-
-        var tournament = GetTournament(
-            registeredPlayers: registeredPlayers
-        );
-
-        var dummyBot = GetDummyBot();
-
-        _storageServiceMock.Reset();
-        _storageServiceMock
-            .Setup(s => s.LoadTournamentStateAsync(tournament!.Id))
-            .ReturnsAsync((null, null, null, null));
-
-        var sut = MakeSut(tournament, dummyBot);
-
-        await sut.InitializeTournamentAsync(tournament.Id);
-
-        _storageServiceMock.Verify(x => x.SaveTournamentStateAsync(
-            tournament.Id,
-            tournament,
-            It.IsAny<Dictionary<Guid, IPlayerBot>>(),
-            It.IsAny<Dictionary<Guid, Guid>>(),
-            It.IsAny<ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>>()
-        ), Times.Once);
-    }
-
-    [Fact]
     public async Task RegisterPlayerAsync_ShouldAddPlayerToTournament()
     {
         var tournament = GetTournament();
         var dummyBot = GetDummyBot();
         var sut = MakeSut(tournament, dummyBot);
 
-        await sut.InitializeTournamentAsync(tournament.Id);
+        await sut.InitializeTournamentAsync(tournament.Id, null, null);
         await sut.RegisterPlayerAsync(tournament.Id, dummyBot);
 
         var loaded = await sut.GetOrLoadTournamentAsync(tournament.Id);
@@ -170,7 +105,7 @@ public class TournamentManagerTests
         var dummyBot = GetDummyBot();
         var sut = MakeSut(tournament, dummyBot);
 
-        await sut.InitializeTournamentAsync(tournament.Id);
+        await sut.InitializeTournamentAsync(tournament.Id, null, null);
         sut.TournamentExists(tournament.Id).ShouldBeTrue();
     }
 
@@ -181,25 +116,11 @@ public class TournamentManagerTests
         var dummyBot = GetDummyBot();
         var sut = MakeSut(tournament, dummyBot);
 
-        await sut.InitializeTournamentAsync(tournament.Id);
+        await sut.InitializeTournamentAsync(tournament.Id, null, null);
         var result = sut.GetTournament(tournament.Id);
 
         result.ShouldNotBeNull();
         result!.Id.ShouldBe(tournament.Id);
-    }
-
-    [Fact]
-    public async Task GetGameServerForPlayer_WhenPlayerIsRegistered_ShouldReturnGameServer()
-    {
-        var tournament = GetTournament();
-        var dummyBot = GetDummyBot();
-        var sut = MakeSut(tournament, dummyBot);
-
-        await sut.InitializeTournamentAsync(tournament.Id);
-        await sut.RegisterPlayerAsync(tournament.Id, dummyBot);
-
-        var server = sut.GetGameServerForPlayer(dummyBot.Id);
-        server.ShouldNotBeNull();
     }
 
     [Fact]
@@ -209,9 +130,9 @@ public class TournamentManagerTests
         var dummyBot = GetDummyBot();
         var sut = MakeSut(tournament, dummyBot);
 
-        await sut.InitializeTournamentAsync(tournament.Id);
+        await sut.InitializeTournamentAsync(tournament.Id, null, null);
 
-        await sut.CancelTournament(tournament.Id);
+        await sut.CancelTournamentAsync(tournament.Id);
 
         var cancelled = sut.GetTournament(tournament.Id);
         cancelled.ShouldNotBeNull();

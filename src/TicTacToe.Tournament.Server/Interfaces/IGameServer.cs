@@ -16,5 +16,9 @@ public interface IGameServer
 
     void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves);
 
-    Task StartTournamentAsync(Tournament tournament, Dictionary<Guid, IPlayerBot> registeredBots);
+    Task StartTournamentAsync(Tournament tournament);
+
+    void GenerateMatches();
+
+    void InitializeLeaderboard();
 }

@@ -60,7 +60,7 @@ public class TournamentTests
         var sut = MakeSut();
         var playerId = Guid.NewGuid();
 
-        sut.UpdateLeaderboard(playerId, MatchScore.Win);
+        sut.AgreggateScoreToPlayer(playerId, MatchScore.Win);
 
         sut.Leaderboard.ContainsKey(playerId).ShouldBeTrue();
         sut.Leaderboard[playerId].ShouldBe((int)MatchScore.Win);
@@ -73,7 +73,7 @@ public class TournamentTests
         var playerId = Guid.NewGuid();
         sut.Leaderboard[playerId] = 5;
 
-        sut.UpdateLeaderboard(playerId, MatchScore.Draw);
+        sut.AgreggateScoreToPlayer(playerId, MatchScore.Draw);
 
         sut.Leaderboard[playerId].ShouldBe(5 + (int)MatchScore.Draw);
     }

@@ -110,7 +110,7 @@ public class TournamentHubTests
             out _, 
             out _,
             out _);
-        var exists = await sut.TournamentExists(tournamentId);
+        var exists = sut.TournamentExistsAsync(tournamentId);
         exists.ShouldBeTrue();
     }
 
@@ -128,7 +128,7 @@ public class TournamentHubTests
             out _, 
             out _, 
             out _);
-        var exists = await sut.TournamentExists(tournamentId);
+        var exists = sut.TournamentExistsAsync(tournamentId);
         exists.ShouldBeFalse();
     }
 

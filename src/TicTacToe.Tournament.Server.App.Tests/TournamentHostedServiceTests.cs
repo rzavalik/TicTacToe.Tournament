@@ -25,7 +25,7 @@ public class TournamentHostedServiceTests
         storageMock.Verify(s => s.ListTournamentsAsync(), Times.Once);
         foreach (var id in tournamentIds)
         {
-            managerMock.Verify(m => m.InitializeTournamentAsync(id, null), Times.Once);
+            managerMock.Verify(m => m.InitializeTournamentAsync(id, null, null), Times.Once);
         }
     }
 
@@ -39,8 +39,8 @@ public class TournamentHostedServiceTests
         storageMock.Setup(s => s.ListTournamentsAsync()).ReturnsAsync(new[] { id1, id2 });
 
         var managerMock = new Mock<ITournamentManager>();
-        managerMock.Setup(m => m.InitializeTournamentAsync(id1, null)).ThrowsAsync(new Exception("boom"));
-        managerMock.Setup(m => m.InitializeTournamentAsync(id2, null)).Returns(Task.CompletedTask);
+        managerMock.Setup(m => m.InitializeTournamentAsync(id1, null, null)).ThrowsAsync(new Exception("boom"));
+        managerMock.Setup(m => m.InitializeTournamentAsync(id2, null, null)).Returns(Task.CompletedTask);
 
         var sut = new TournamentHostedService(managerMock.Object, storageMock.Object);
 
@@ -49,7 +49,7 @@ public class TournamentHostedServiceTests
         await sut.StartAsync(cts.Token);
 
         storageMock.Verify(s => s.ListTournamentsAsync(), Times.Once);
-        managerMock.Verify(m => m.InitializeTournamentAsync(id1, null), Times.Once);
-        managerMock.Verify(m => m.InitializeTournamentAsync(id2, null), Times.Once);
+        managerMock.Verify(m => m.InitializeTournamentAsync(id1, null, null), Times.Once);
+        managerMock.Verify(m => m.InitializeTournamentAsync(id2, null, null), Times.Once);
     }
 }

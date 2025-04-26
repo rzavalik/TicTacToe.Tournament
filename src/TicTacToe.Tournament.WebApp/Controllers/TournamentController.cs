@@ -4,6 +4,7 @@ using TicTacToe.Tournament.Models;
 using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Server.Interfaces;
 using TicTacToe.Tournament.Server.Security;
+using TicTacToe.Tournament.WebApp.Models;
 
 namespace TicTacToe.Tournament.WebApp.Controllers
 {
@@ -92,13 +93,44 @@ namespace TicTacToe.Tournament.WebApp.Controllers
             });
         }
 
-        [HttpPost("tournament/new")]
-        public async Task<IActionResult> Create()
+        [HttpGet("tournament/create")]
+        public IActionResult CreateTournamentView()
         {
+            return View("Create");
+        }
+
+        [HttpPost("tournament/new")]
+        public async Task<IActionResult> Create([FromBody] CreateTournamentRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name) || request.MatchRepetition <= 0)
+            {
+                return BadRequest("Invalid Tournament data.");
+            }
+
             var tournamentId = Guid.NewGuid();
-            await _orchestrator.CreateTournamentAsync(tournamentId);
+            await _orchestrator.CreateTournamentAsync(tournamentId, request.Name, request.MatchRepetition);
 
             return Ok(new { id = tournamentId });
+        }
+
+        [HttpPost("tournament/{tournamentId}/rename")]
+        public async Task<IActionResult> RenameTournament(Guid tournamentId, [FromBody] RenameTournamentRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NewName))
+                return BadRequest("Invalid name.");
+
+            await _orchestrator.RenameTournamentAsync(tournamentId, request.NewName);
+            return Ok();
+        }
+
+        [HttpPost("tournament/{tournamentId}/player/{playerId}/rename")]
+        public async Task<IActionResult> RenamePlayer(Guid tournamentId, Guid playerId, [FromBody] RenamePlayerRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NewName))
+                return BadRequest("Invalid name.");
+
+            await _orchestrator.RenamePlayerAsync(tournamentId, playerId, request.NewName);
+            return Ok();
         }
 
         [HttpPost("tournament/{tournamentId}/cancel")]
@@ -131,6 +163,21 @@ namespace TicTacToe.Tournament.WebApp.Controllers
 
             await _orchestrator.StartTournamentAsync(tournamentId);
             return Ok(new { message = $"Tournament {tournamentId} started." });
+        }
+
+        [HttpDelete("tournament/{tournamentId}")]
+        public async Task<IActionResult> DeleteTournament(Guid tournamentId)
+        {
+            var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
+            if (tournament == null)
+                return NotFound();
+
+            if (tournament.Status != TournamentStatus.Finished.ToString("G") &&
+                tournament.Status != TournamentStatus.Cancelled.ToString("G"))
+                return BadRequest("Only Finished or Cancelled tournaments can be deleted.");
+
+            await _orchestrator.DeleteTournamentAsync(tournamentId);
+            return Ok(new { message = $"Tournament {tournamentId} deleted." });
         }
 
         [HttpGet("tournament/{tournamentId}/matches")]
@@ -277,18 +324,18 @@ namespace TicTacToe.Tournament.WebApp.Controllers
             var playerAName = tournament.RegisteredPlayers.TryGetValue(match.PlayerAId, out var nameA) ? nameA : "Unknown";
             var playerBName = tournament.RegisteredPlayers.TryGetValue(match.PlayerBId, out var nameB) ? nameB : "Unknown";
 
-            return Ok(new
+            return Ok(new MatchDto
             {
-                id = match.Id,
-                playerAId = match.PlayerAId,
-                playerAName = playerAName,
-                playerBId = match.PlayerBId,
-                playerBName = playerBName,
-                board = match.Board,
-                status = match.Status,
-                startTime = match.StartTime,
-                endTime = match.EndTime,
-                duration = match.Duration
+                Id = match.Id,
+                PlayerAId = match.PlayerAId,
+                PlayerAName = playerAName,
+                PlayerBId = match.PlayerBId,
+                PlayerBName = playerBName,
+                Board = match.Board,
+                Status = match.Status,
+                StartTime = match.StartTime,
+                EndTime  = match.EndTime,
+                Duration = match.Duration
             });
         }
     }

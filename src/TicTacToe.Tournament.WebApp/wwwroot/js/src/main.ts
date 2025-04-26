@@ -1,4 +1,8 @@
-﻿import { TournamentHubClient } from './tournamentHubClient.js';
+﻿// main.ts
+import { TournamentHubClient } from "./tournament.hub.js";
+import { MatchDto, LeaderboardEntryDto, PlayerDto } from "./models.js";
+import { startSpinner, stopSpinner, safeFetchJson, flashElement } from "./helpers.js";
+import { renderMatches, renderLeaderboard, renderPlayers } from "./renderers.js";
 
 const hub = new TournamentHubClient();
 
@@ -15,3 +19,49 @@ export const connectionReady = hub
         console.error("SignalR connection failed:", err);
         throw err;
     });
+
+// === LOADERS ===
+
+const tournamentId = (document.getElementById("tournament") as HTMLElement)?.dataset?.tournamentId;
+
+export async function loadMatches() {
+    if (!tournamentId) return;
+    startSpinner("reloadMatchesBtn");
+    try {
+        const matches = await safeFetchJson<MatchDto[]>(`/tournament/${tournamentId}/matches`);
+        renderMatches(matches);
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Error', (error as Error).message || "Failed to load matches.", 'error');
+    } finally {
+        stopSpinner("reloadMatchesBtn");
+    }
+}
+
+export async function loadLeaderboard() {
+    if (!tournamentId) return;
+    startSpinner("reloadLeaderboardBtn");
+    try {
+        const players = await safeFetchJson<LeaderboardEntryDto[]>(`/tournament/${tournamentId}/leaderboard`);
+        renderLeaderboard(players);
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Error', (error as Error).message || "Failed to load leaderboard.", 'error');
+    } finally {
+        stopSpinner("reloadLeaderboardBtn");
+    }
+}
+
+export async function loadPlayers() {
+    if (!tournamentId) return;
+    startSpinner("reloadPlayersBtn");
+    try {
+        const players = await safeFetchJson<PlayerDto[]>(`/tournament/${tournamentId}/players`);
+        renderPlayers(players);
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Error', (error as Error).message || "Failed to load players.", 'error');
+    } finally {
+        stopSpinner("reloadPlayersBtn");
+    }
+}

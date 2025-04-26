@@ -6,6 +6,8 @@ using TicTacToe.Tournament.Models.Interfaces;
 using TicTacToe.Tournament.Models;
 using System.Text.Json.Serialization;
 using TicTacToe.Tournament.Server.Interfaces;
+using Azure.Storage.Blobs.Models;
+using System.Linq;
 
 namespace TicTacToe.Tournament.Server.Services;
 
@@ -61,7 +63,6 @@ public class AzureStorageService : IAzureStorageService
 
             if (existingContent == newContent)
             {
-                Console.WriteLine($"[AzureStorageService] Skipping upload: no changes in {path}.");
                 return;
             }
         }
@@ -94,39 +95,90 @@ public class AzureStorageService : IAzureStorageService
 
         var result = new HashSet<Guid>();
 
-        await foreach (var blob in _containerClient.GetBlobsByHierarchyAsync(delimiter: "/"))
+        await foreach (var blob in _containerClient.GetBlobsByHierarchyAsync(prefix: "active/", delimiter: "/"))
         {
-            if (Guid.TryParse(blob.Prefix?.TrimEnd('/'), out var tournamentId))
+            var prefix = blob.Prefix?.TrimEnd('/');
+
+            if (string.IsNullOrEmpty(prefix))
+                continue;
+
+            var parts = prefix.Split('/');
+            if (parts.Length != 2)
+                continue;
+
+            var tournamentIdString = parts[1];
+
+            if (Guid.TryParse(tournamentIdString, out var tournamentId))
             {
-                result.Add(tournamentId);
+                var hasRealBlob = false;
+                await foreach (var item in _containerClient.GetBlobsAsync(prefix: $"{prefix}/"))
+                {
+                    hasRealBlob = true;
+                    break;
+                }
+
+                if (hasRealBlob)
+                {
+                    result.Add(tournamentId);
+                }
             }
         }
 
         return result;
     }
 
-    public async Task SaveTournamentStateAsync(Guid tournamentId,
-        Models.Tournament tournament,
-        Dictionary<Guid, IPlayerBot> players,
-        Dictionary<Guid, Guid> playerTournamentMap,
-        ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> pendingMoves)
+
+    public async Task<bool> TournamentExistsAsync(Guid tournamentId)
     {
         if (_containerClient == null)
         {
             throw new InvalidOperationException("Service is not initialized.");
         }
 
-        var folder = $"{tournamentId}/";
-        var playerInfos = players.Select(p => new PlayerInfo
+        var list = await ListTournamentsAsync();
+        if (list == null)
         {
-            PlayerId = p.Key,
-            Name = p.Value.Name
-        }).ToList();
+            return false;
+        }
 
-        await UploadAsync($"{folder}tournament.json", tournament);
-        await UploadAsync($"{folder}players.json", playerInfos);
-        await UploadAsync($"{folder}playerTournamentMap.json", playerTournamentMap);
-        await UploadAsync($"{folder}pendingMoves.json", pendingMoves);
+        return list.Any(tId => tId == tournamentId);
+    }
+
+    public async Task DeleteTournamentAsync(Guid tournamentId)
+    {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
+        var prefix = $"active/{tournamentId}/";
+
+        await foreach (var blobItem in _containerClient.GetBlobsAsync(prefix: prefix))
+        {
+            var sourceBlob = _containerClient.GetBlobClient(blobItem.Name);
+
+            var newBlobName = blobItem.Name.Replace($"active/", "deleted/");
+
+            var destinationBlob = _containerClient.GetBlobClient(newBlobName);
+
+            await destinationBlob.StartCopyFromUriAsync(sourceBlob.Uri);
+
+            await sourceBlob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+        }
+    }
+
+    public async Task SaveTournamentStateAsync(TournamentContext tContext)
+    {
+        if (_containerClient == null)
+        {
+            throw new InvalidOperationException("Service is not initialized.");
+        }
+
+        var folder = $"{tContext.Tournament.Id}";
+
+        await UploadAsync($"active/{folder}/tournament.json", tContext.Tournament);
+        await UploadAsync($"active/{folder}/pendingMoves.json", tContext.GameServer.GetPendingMoves() ??
+            new ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>());
     }
 
     public async Task<(Models.Tournament? Tournament, List<PlayerInfo>? PlayerInfos, Dictionary<Guid, Guid>? Map, ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>? Moves)>
@@ -137,12 +189,12 @@ public class AzureStorageService : IAzureStorageService
             throw new InvalidOperationException("Service is not initialized.");
         }
 
-        var folder = $"{tournamentId}/";
+        var folder = $"{tournamentId}";
 
-        var tournament = await DownloadAsync<Models.Tournament>($"{folder}tournament.json");
-        var playerInfos = await DownloadAsync<List<PlayerInfo>>($"{folder}players.json");
-        var playerMap = await DownloadAsync<Dictionary<Guid, Guid>>($"{folder}playerTournamentMap.json");
-        var moves = await DownloadAsync<ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>?>($"{folder}pendingMoves.json");
+        var tournament = await DownloadAsync<Models.Tournament>($"active/{folder}/tournament.json");
+        var playerInfos = await DownloadAsync<List<PlayerInfo>>($"active/{folder}/players.json");
+        var playerMap = await DownloadAsync<Dictionary<Guid, Guid>>($"active/{folder}/playerTournamentMap.json");
+        var moves = await DownloadAsync<ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>?>($"active/{folder}/pendingMoves.json");
 
         return (tournament, playerInfos, playerMap, moves);
     }

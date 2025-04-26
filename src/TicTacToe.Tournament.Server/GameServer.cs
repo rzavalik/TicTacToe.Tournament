@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Models.Interfaces;
 using TicTacToe.Tournament.Server.Hubs;
 
@@ -10,137 +9,108 @@ namespace TicTacToe.Tournament.Server;
 
 public class GameServer : IGameServer
 {
-    private readonly Guid _tournamentId;
+    private readonly Models.Tournament _tournament;
     private readonly IHubContext<TournamentHub> _hubContext;
     private readonly Dictionary<Guid, IPlayerBot> _players = new();
     private readonly Action<Guid, MatchScore> _updateLeaderboard;
-    private readonly Func<Task> _saveTournament;
     private readonly ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> _pendingMoves = new();
 
     public GameServer(
-        Guid tournamentId,
+        Models.Tournament tournament,
         IHubContext<TournamentHub> hubContext,
-        Action<Guid, MatchScore> updateLeaderboard,
-        Func<Task> saveTournament)
+        Action<Guid, MatchScore> updateLeaderboard)
     {
-        _tournamentId = tournamentId;
+        _tournament = tournament;
         _hubContext = hubContext;
         _updateLeaderboard = updateLeaderboard;
-        _saveTournament = saveTournament;
     }
 
     public IReadOnlyDictionary<Guid, IPlayerBot> RegisteredPlayers => _players;
 
     public void RegisterPlayer(IPlayerBot player)
     {
-        if (_players.ContainsKey(player.Id))
-        {
-            Console.WriteLine($"[GameServer] Player {player.Name} ({player.Id}) re-registered. Replacing instance.");
-        }
-        else
-        {
-            Console.WriteLine($"[GameServer] Player {player.Name} registered successfully.");
-        }
-
         _players[player.Id] = player;
-
-        player.OnRegistered(_tournamentId);
+        _tournament.RegisteredPlayers[player.Id] = player.Name;
+        InitializeLeaderboard();
+        GenerateMatches();
     }
 
-    public ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves()
+    public void InitializeLeaderboard()
     {
-        return _pendingMoves;
+        _tournament.InitializeLeaderboard();
     }
+
+    public ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves() => _pendingMoves;
 
     public void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves)
     {
         _pendingMoves.Clear();
-
         foreach (var entry in moves)
-        {
-            _pendingMoves[entry.Key] = new ConcurrentQueue<(int Row, int Col)>(entry.Value);
-        }
+            _pendingMoves[entry.Key] = new ConcurrentQueue<(int, int)>(entry.Value);
     }
 
-    public async Task StartTournamentAsync(
-        Models.Tournament tournament,
-        Dictionary<Guid, IPlayerBot> registeredBots)
+    public async Task StartTournamentAsync(Models.Tournament tournament)
     {
-        Console.WriteLine($"[GameServer] Creating matches for tournament {tournament.Id}...");
-
-        GenerateMatches(tournament, registeredBots);
-
-        Console.WriteLine($"[GameServer] Created {tournament.Matches.Count} matches.");
+        InitializeLeaderboard();
+        GenerateMatches();
 
         await Task.WhenAll(
-            OnTournamentStarted(tournament),
             RunMatches(tournament)
         );
     }
 
     public void SubmitMove(Guid playerId, int row, int col)
     {
-        Console.WriteLine($"[GameServer] Move received from {playerId}: ({row},{col})");
-
-        var queue = _pendingMoves
-            .GetOrAdd(playerId, _ => new ConcurrentQueue<(int, int)>());
-
-        queue.Enqueue((row, col));
+        _pendingMoves.AddOrUpdate(playerId, new ConcurrentQueue<(int, int)>(new[] { (row, col) }), (key, oldValue) =>
+        {
+            oldValue.Enqueue((row, col));
+            return oldValue;
+        });
     }
 
-    public IPlayerBot? GetBotById(Guid playerId)
-    {
-        return _players.TryGetValue(playerId, out var bot) ? bot : null;
-    }
+    public IPlayerBot? GetBotById(Guid playerId) => _players.TryGetValue(playerId, out var bot) ? bot : null;
 
-    private void GenerateMatches(
-        Models.Tournament tournament,
-        Dictionary<Guid, IPlayerBot> registeredBots)
+    public void GenerateMatches()
     {
-        var ids = registeredBots.Keys.ToList();
+        _tournament.Matches = new List<Match>();
+
+        var ids = _tournament.RegisteredPlayers.Keys.ToList();
         for (int i = 0; i < ids.Count; i++)
         {
             for (int j = 0; j < ids.Count; j++)
             {
                 if (i == j) continue;
-
-                tournament.Matches.Add(new Models.Match
+                for (int r = 0; r < _tournament.MatchRepetition; r++)
                 {
-                    PlayerA = ids[i],
-                    PlayerB = ids[j],
-                    Status = MatchStatus.Planned
-                });
+                    var match = new Models.Match
+                    {
+                        PlayerA = ids[i],
+                        PlayerB = ids[j],
+                        Status = MatchStatus.Planned
+                    };
+                    match.Board = Board.Empty;
+                    _tournament.Matches.Add(match);
+                }
             }
         }
     }
 
     private async Task<GameResult> PlayMatchAsync(Models.Match match)
     {
-        Console.WriteLine($"[GameServer][Match] Starting match {match.Id}: {match.PlayerA} vs {match.PlayerB}");
-
         match.Status = MatchStatus.Ongoing;
         match.StartTime = DateTime.UtcNow;
-
+        match.Board = Board.Empty;
         var board = new Board();
-        match.Board = board.GetState();
 
         var turn = 0;
-
         var playerX = _players[match.PlayerA];
         var playerO = _players[match.PlayerB];
-
-        var players = new Dictionary<Mark, IPlayerBot>
-        {
-            [Mark.X] = playerX,
-            [Mark.O] = playerO
-        };
-
-        Console.WriteLine($"[GameServer][Match:{match.Id}] Notifying players and spectators...");
+        var players = new Dictionary<Mark, IPlayerBot> { [Mark.X] = playerX, [Mark.O] = playerO };
 
         await Task.WhenAll(
             OnMatchStarted(match, playerX.Id, playerO.Id, Mark.X, true),
             OnMatchStarted(match, playerO.Id, playerX.Id, Mark.O, false),
-            OnTournamentUpdated(_tournamentId)
+            OnTournamentUpdated(_tournament.Id)
         );
 
         while (match.Status == MatchStatus.Ongoing)
@@ -149,76 +119,48 @@ public class GameServer : IGameServer
             var currentPlayer = players[mark];
             var opponent = players[mark == Mark.X ? Mark.O : Mark.X];
 
-            Console.WriteLine($"[GameServer][Match:{match.Id}] CurrentPlayer is {currentPlayer.Id} vs {opponent.Id}");
-
             match.CurrentTurn = currentPlayer.Id;
-
-            Console.WriteLine($"[GameServer] Waiting for move from {currentPlayer.Id}...");
 
             await OnYourTurn(match.Id, currentPlayer.Id, match.Board);
 
             (int row, int col)? move = null;
-
             try
             {
-                move = await WaitForMoveAsync(currentPlayer.Id, timeoutInMs: 60000);
-                Console.WriteLine($"[Validation] Player {currentPlayer.Id} attempted move at ({move.Value.row},{move.Value.col})");
+                move = await WaitForMoveAsync(currentPlayer.Id, 60000);
             }
             catch (TimeoutException)
             {
-                Console.WriteLine($"[GameServer] Timeout! Player {currentPlayer.Id} did not respond.");
-
-                await _hubContext.Clients.All.SendAsync("OnTournamentUpdated", _tournamentId);
-
                 match.Status = MatchStatus.Finished;
                 match.WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
-                match.Board = board.GetState();
 
                 _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB, MatchScore.Win);
                 _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA, MatchScore.Walkover);
 
-                await Task.WhenAll(
-                    OnTournamentUpdated(_tournamentId),
-                    _saveTournament()
-                );
+                await OnTournamentUpdated(_tournament.Id);
 
                 return new GameResult
                 {
                     MatchId = match.Id,
-                    WinnerId = match.PlayerA == currentPlayer.Id
-                        ? match.PlayerB
-                        : match.PlayerA,
-                    Board = board.GetState(),
+                    WinnerId = match.PlayerA == currentPlayer.Id ? match.PlayerB : match.PlayerA,
+                    Board = match.Board,
                     IsDraw = false
                 };
             }
 
             if (move.HasValue)
             {
-                var (row, col) = move.Value;
-
-                if (!board.IsValidMove(row, col))
+                if (board.IsValidMove(move.Value.row, move.Value.col))
                 {
-                    Console.WriteLine($"[Validation] Move rejected — Cell occupied or out of bounds.");
-                }
-                else
-                {
-                    board.ApplyMove(row, col, mark);
-
+                    board.ApplyMove(move.Value.row, move.Value.col, mark);
                     match.Board = board.GetState();
 
-                    Console.WriteLine($"[GameServer] Move played by {currentPlayer.Id} at ({row},{col})");
-
                     await Task.WhenAll(
-                        OnOpponentMoved(match.Id, opponent.Id, row, col),
-                        OnReceiveBoard(match.Id, match.Board)
+                        OnOpponentMoved(match.Id, opponent.Id, move.Value.row, move.Value.col),
+                        OnReceiveBoard(match.Id, board.GetState())
                     );
-
                     turn++;
                 }
             }
-
-            DrawBoard(match.Board);
 
             if (board.IsGameOver())
             {
@@ -229,26 +171,19 @@ public class GameServer : IGameServer
             await Task.Delay(100);
         }
 
-        Console.WriteLine($"[GameServer] Game loop for match {match.Id} completed.");
-
         match.Status = MatchStatus.Finished;
         match.EndTime = DateTime.UtcNow;
-        match.Board = board.GetState();
-
-        Console.WriteLine($"[GameServer] Match {match.Id} finished.");
 
         var gameResult = new GameResult
         {
             MatchId = match.Id,
             WinnerId = match.WinnerMark.HasValue ? players[match.WinnerMark.Value].Id : null,
-            Board = board.GetState(),
+            Board = match.Board,
             IsDraw = !match.WinnerMark.HasValue
         };
 
         if (gameResult.WinnerId != null)
-        {
             _updateLeaderboard(gameResult.WinnerId.Value, MatchScore.Win);
-        }
         else
         {
             _updateLeaderboard(match.PlayerA, MatchScore.Draw);
@@ -261,26 +196,6 @@ public class GameServer : IGameServer
         );
 
         return gameResult;
-    }
-
-    private static void DrawBoard(Mark[][] board)
-    {
-        Console.WriteLine();
-        for (int row = 0; row < 3; row++)
-        {
-            Console.WriteLine($"{RenderMark(board[row][0])} | {RenderMark(board[row][1])} | {RenderMark(board[row][2])}");
-        }
-        Console.WriteLine();
-    }
-
-    private static string RenderMark(Mark mark)
-    {
-        return mark switch
-        {
-            Mark.X => "X",
-            Mark.O => "O",
-            _ => " "
-        };
     }
 
     private async Task<(int row, int col)?> WaitForMoveAsync(Guid playerId, int timeoutInMs)
@@ -299,137 +214,53 @@ public class GameServer : IGameServer
         throw new TimeoutException("You lose if not responding in time.");
     }
 
-    private Task RunMatches(Models.Tournament tournament)
+    private async Task RunMatches(Models.Tournament tournament)
     {
-        return Task.Run(async () =>
+        foreach (var match in tournament.Matches)
         {
-            foreach (var match in tournament.Matches)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(5));
-                await RunMatchAsync(tournament.Id, match);
-            }
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            await RunMatchAsync(tournament.Id, match);
+        }
 
-            tournament.Status = TournamentStatus.Finished;
-            tournament.EndTime = DateTime.UtcNow;
+        tournament.Status = TournamentStatus.Finished;
+        tournament.EndTime = DateTime.UtcNow;
 
-            await Task.WhenAll(
-                OnTournamentUpdated(tournament),
-                _saveTournament()
-            );
-
-            Console.WriteLine($"[GameServer] Tournament {_tournamentId} finished.");
-        });
+        await OnTournamentUpdated(tournament);
     }
 
     private async Task RunMatchAsync(Guid tournamentId, Models.Match match)
     {
-        Console.WriteLine($"[GameServer] Starting match {match.Id} ({match.PlayerA} vs {match.PlayerB})");
-
         match.Status = MatchStatus.Ongoing;
         match.StartTime = DateTime.UtcNow;
-        match.Board = new Mark[3][];
-        for (int i = 0; i < 3; i++)
-        {
-            match.Board[i] = new Mark[3];
-        }
+        match.Board = Board.Empty;
 
         var result = await PlayMatchAsync(match);
 
         match.EndTime = DateTime.UtcNow;
         match.Status = MatchStatus.Finished;
+
         await OnTournamentUpdated(tournamentId);
-
-        Console.WriteLine($"[GameServer] Match {match.Id} finished. Winner: {result.WinnerId?.ToString() ?? "Draw"}");
     }
 
-    private Task OnMatchStarted(
-        Models.Match match,
-        Guid playerId,
-        Guid opponentId,
-        Mark playerMark,
-        bool yourTurn)
-    {
-        return _hubContext
-            .Clients
-            .User(playerId.ToString())
-            .SendAsync("OnMatchStarted",
-                match.Id,
-                playerId,
-                opponentId,
-                playerMark.ToString("G"),
-                yourTurn);
-    }
 
-    private Task OnMatchEnded(GameResult gameResult, Guid playerToNotify)
-    {
-        return _hubContext
-            .Clients
-            .User(playerToNotify.ToString())
-            .SendAsync("OnMatchEnded", gameResult);
-    }
+    private Task OnMatchStarted(Models.Match match, Guid playerId, Guid opponentId, Mark playerMark, bool yourTurn) =>
+        _hubContext.Clients.User(playerId.ToString()).SendAsync("OnMatchStarted", match.Id, playerId, opponentId, playerMark.ToString("G"), yourTurn);
 
-    private Task OnTournamentStarted(Models.Tournament tournament)
-    {
-        return _hubContext
-            .Clients
-            .Group(_tournamentId.ToString())
-            .SendAsync("OnTournamentStarted", new TournamentDto
-            {
-                Id = tournament.Id,
-                Name = tournament.Name,
-                Status = tournament.Status.ToString(),
-                RegisteredPlayers = tournament.RegisteredPlayers,
-                Leaderboard = tournament.Leaderboard,
-                StartTime = tournament.StartTime,
-                Duration = tournament.Duration,
-                EndTime = tournament.EndTime,
-                Matches = tournament.Matches.Select(m => new MatchDto
-                {
-                    Id = m.Id,
-                    PlayerAId = m.PlayerA,
-                    PlayerBId = m.PlayerB,
-                    Status = m.Status,
-                    Board = m.Board,
-                    StartTime = m.StartTime,
-                    EndTime = m.EndTime
-                }).ToList()
-            });
-    }
+    private Task OnMatchEnded(GameResult gameResult, Guid playerToNotify) =>
+        _hubContext.Clients.User(playerToNotify.ToString()).SendAsync("OnMatchEnded", gameResult);
 
-    private Task OnReceiveBoard(Guid matchId, Mark[][] board)
-    {
-        return _hubContext
-            .Clients
-            .Group(_tournamentId.ToString())
-            .SendAsync("OnReceiveBoard", matchId, board);
-    }
+    private Task OnReceiveBoard(Guid matchId, Mark[][] board) =>
+        _hubContext.Clients.Group(_tournament.Id.ToString()).SendAsync("OnReceiveBoard", matchId, board);
 
-    private Task OnOpponentMoved(Guid matchId, Guid opponentId, int row, int col)
-    {
-        return _hubContext
-            .Clients
-            .User(opponentId.ToString())
-            .SendAsync("OnOpponentMoved", matchId, row, col);
-    }
+    private Task OnOpponentMoved(Guid matchId, Guid opponentId, int row, int col) =>
+        _hubContext.Clients.User(opponentId.ToString()).SendAsync("OnOpponentMoved", matchId, row, col);
 
-    private Task OnYourTurn(Guid matchId, Guid playerId, Mark[][] board)
-    {
-        return _hubContext
-            .Clients
-            .User(playerId.ToString())
-            .SendAsync("OnYourTurn", matchId, playerId, board);
-    }
+    private Task OnYourTurn(Guid matchId, Guid playerId, Mark[][] board) =>
+        _hubContext.Clients.User(playerId.ToString()).SendAsync("OnYourTurn", matchId, playerId, board);
 
-    private Task OnTournamentUpdated(Guid tournamentId)
-    {
-        return _hubContext
-            .Clients
-            .Group(_tournamentId.ToString())
-            .SendAsync("OnTournamentUpdated", tournamentId);
-    }
+    private Task OnTournamentUpdated(Guid tournamentId) =>
+        _hubContext.Clients.Group(_tournament.Id.ToString()).SendAsync("OnTournamentUpdated", tournamentId);
 
-    private Task OnTournamentUpdated(Models.Tournament tournament)
-    {
-        return OnTournamentUpdated(tournament.Id);
-    }
+    private Task OnTournamentUpdated(Models.Tournament tournament) =>
+        OnTournamentUpdated(tournament.Id);
 }

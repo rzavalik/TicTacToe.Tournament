@@ -24,10 +24,9 @@ public class GameServerTests
         _hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
 
         return (IGameServer)new GameServer(
-            _tournamentId,
+            null,
             _hubContextMock.Object,
-            (playerId, score) => _leaderboardCalls.Add((playerId, score)),
-            () => { return Task.CompletedTask; });
+            (id, score) => { });
     }
 
     [Fact]
