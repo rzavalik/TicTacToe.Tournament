@@ -41,20 +41,10 @@ public class SmartPlayerClient : BasePlayerClient
 
         _strategy = new SmartClientStrategy(
             playerMark: mark,
-            opponentMark: mark == Mark.X ? Mark.O : Mark.X
+            opponentMark: mark == Mark.X ? Mark.O : Mark.X,
+            (log) => base.ConsoleWrite(log),
+            (message) => base.ConsoleRead<int>(message)
         );
-    }
-
-    protected override void OnOpponentMoved(Guid matchId, int row, int col)
-    {
-        base.OnOpponentMoved(matchId, row, col);
-    }
-
-    protected override void OnMatchEnded(GameResult result)
-    {
-        Console.WriteLine();
-        Console.WriteLine();
-        Console.WriteLine("Match ended!" + (result.IsDraw ? "It's a draw!" : $"Winner: {result.WinnerId}"));
     }
 
     protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
@@ -68,26 +58,9 @@ public class SmartPlayerClient : BasePlayerClient
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
+            base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
         return Task.FromResult((-1, -1));
-    }
-
-    protected override void OnBoardUpdated(Guid matchId, Mark[][] board)
-    {
-        DrawBoard();
-    }
-
-    private void DrawBoard()
-    {
-        Console.WriteLine();
-        Console.WriteLine("Current board:");
-
-        var boardRenderer = new BoardRenderer(Console.Out);
-        boardRenderer.Draw(CurrentBoard);
-
-        Console.WriteLine();
-        Console.WriteLine();
     }
 }

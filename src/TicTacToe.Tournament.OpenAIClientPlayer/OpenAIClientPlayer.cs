@@ -42,14 +42,13 @@ public class OpenAIClientPlayer : BasePlayerClient
         _strategy = new OpenAIStrategy(
             playerMark: mark,
             opponentMark: mark == Mark.X ? Mark.O : Mark.X,
+            (log) => base.ConsoleWrite(log),
             _apiKey
         );
     }
 
     protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
     {
-        DrawBoard(board);
-
         try
         {
             if (_strategy != null)
@@ -59,19 +58,9 @@ public class OpenAIClientPlayer : BasePlayerClient
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
+            base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
         return Task.FromResult((-1, -1));
-    }
-
-    private void DrawBoard(Mark[][] board)
-    {
-        Console.WriteLine("");
-        Console.WriteLine("Current Board");
-        var boardRenderer = new BoardRenderer(Console.Out);
-        boardRenderer.Draw(board);
-        Console.WriteLine("");
-        Console.WriteLine("");
     }
 }

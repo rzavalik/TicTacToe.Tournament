@@ -144,7 +144,7 @@ public class BotTestRunner
         return !hasFailed;
     }
 
-    private Mark[][] EmptyBoard =>
+    public static Mark[][] EmptyBoard =>
     [
         new[] { Mark.Empty, Mark.Empty, Mark.Empty },
         new[] { Mark.Empty, Mark.Empty, Mark.Empty },

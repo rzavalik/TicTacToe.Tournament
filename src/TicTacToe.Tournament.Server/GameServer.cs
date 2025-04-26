@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using TicTacToe.Tournament.Models;
+using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Models.Interfaces;
 using TicTacToe.Tournament.Server.Hubs;
 
@@ -372,18 +373,26 @@ public class GameServer : IGameServer
         return _hubContext
             .Clients
             .Group(_tournamentId.ToString())
-            .SendAsync("OnTournamentStarted", new
+            .SendAsync("OnTournamentStarted", new TournamentDto
             {
-                tournamentId = tournament.Id,
-                playerIds = tournament.RegisteredPlayers.Keys,
-                totalPlayers = tournament.RegisteredPlayers.Count,
-                matches = tournament.Matches.Select(m => new
+                Id = tournament.Id,
+                Name = tournament.Name,
+                Status = tournament.Status.ToString(),
+                RegisteredPlayers = tournament.RegisteredPlayers,
+                Leaderboard = tournament.Leaderboard,
+                StartTime = tournament.StartTime,
+                Duration = tournament.Duration,
+                EndTime = tournament.EndTime,
+                Matches = tournament.Matches.Select(m => new MatchDto
                 {
-                    m.Id,
-                    m.PlayerA,
-                    m.PlayerB,
-                    m.Status
-                })
+                    Id = m.Id,
+                    PlayerAId = m.PlayerA,
+                    PlayerBId = m.PlayerB,
+                    Status = m.Status,
+                    Board = m.Board,
+                    StartTime = m.StartTime,
+                    EndTime = m.EndTime
+                }).ToList()
             });
     }
 

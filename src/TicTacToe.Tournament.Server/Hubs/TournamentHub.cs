@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using TicTacToe.Tournament.Models;
 using TicTacToe.Tournament.Server.Bots;
-using TicTacToe.Tournament.Server.DTOs;
+using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Server.Interfaces;
 
 namespace TicTacToe.Tournament.Server.Hubs;

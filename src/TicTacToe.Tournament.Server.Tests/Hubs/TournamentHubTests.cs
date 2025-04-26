@@ -1,4 +1,5 @@
 ﻿using global::TicTacToe.Tournament.Models;
+using global::TicTacToe.Tournament.Models.DTOs;
 using global::TicTacToe.Tournament.Server.Hubs;
 using global::TicTacToe.Tournament.Server.Interfaces;
 using Microsoft.AspNetCore.SignalR;

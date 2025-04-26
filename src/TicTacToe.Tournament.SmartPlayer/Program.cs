@@ -34,6 +34,8 @@ internal class Program
         var httpClient = (IHttpClient)new HttpClientWrapper();
         var signalrBuilder = new SignalRClientBuilder();
 
+        Console.Clear();
+
         var bot = new SmartPlayerClient(
             name!, 
             tournamentId, 

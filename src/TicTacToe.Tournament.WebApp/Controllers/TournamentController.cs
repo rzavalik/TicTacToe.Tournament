@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TicTacToe.Tournament.Auth;
 using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Server;
-using TicTacToe.Tournament.Server.DTOs;
+using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Server.Interfaces;
 using TicTacToe.Tournament.Server.Security;
 

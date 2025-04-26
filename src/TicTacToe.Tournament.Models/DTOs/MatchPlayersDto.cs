@@ -1,4 +1,4 @@
-﻿namespace TicTacToe.Tournament.Server.DTOs;
+﻿namespace TicTacToe.Tournament.Models.DTOs;
 
 public class MatchPlayersDto
 {

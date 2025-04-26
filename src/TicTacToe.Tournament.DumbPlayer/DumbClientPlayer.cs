@@ -45,20 +45,22 @@ public class DumbPlayerClient : BasePlayerClient
         );
     }
 
-    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+    protected override async Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
     {
         try
         {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
             if (_strategy != null)
             {
-                return Task.FromResult(_strategy.MakeMove(board));
+                return _strategy.MakeMove(board);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
+            base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
-        return Task.FromResult((-1, -1));
+        return (-1, -1);
     }
 }

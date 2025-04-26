@@ -63,4 +63,7 @@ public class SignalRClient : ISignalRClient
         _conn.On(method, handler);
         return Task.CompletedTask;
     }
+
+    public Task<T> InvokeAsync<T>(string method, params object[] args) =>
+        _conn.InvokeCoreAsync<T>(method, args);
 }

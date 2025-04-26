@@ -7,13 +7,19 @@ namespace TicTacToe.Tournament.MyBotPlayer
     {
         private readonly Mark _playerMark;
         private readonly Mark _opponentMark;
+        private readonly Action<string> _consoleWrite;
+        private readonly Func<string, int> _consoleRead;
 
         public MyBotStrategy(
             Mark playerMark,
-            Mark opponentMark)
+            Mark opponentMark,
+            Action<string> consoleWrite,
+            Func<string, int> consoleRead)
         {
             _playerMark = playerMark;
             _opponentMark = opponentMark;
+            _consoleWrite = consoleWrite;
+            _consoleRead = consoleRead;
         }
 
         public (int row, int col) MakeMove(Mark[][] board)

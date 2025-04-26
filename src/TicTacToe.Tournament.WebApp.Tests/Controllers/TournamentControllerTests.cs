@@ -1,5 +1,5 @@
 ﻿using global::TicTacToe.Tournament.Auth;
-using global::TicTacToe.Tournament.Server.DTOs;
+using global::TicTacToe.Tournament.Models.DTOs;
 using global::TicTacToe.Tournament.Server.Interfaces;
 using global::TicTacToe.Tournament.WebApp.Controllers;
 using Microsoft.AspNetCore.Http;

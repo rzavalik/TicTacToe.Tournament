@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
-using TicTacToe.Tournament.Server.DTOs;
+using TicTacToe.Tournament.Models.DTOs;
 using TicTacToe.Tournament.Server.Interfaces;
 using TicTacToe.Tournament.Server.Security;
 

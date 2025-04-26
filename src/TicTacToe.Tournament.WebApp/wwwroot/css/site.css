@@ -112,3 +112,26 @@ button.accept-policy {
 .hidden {
     display: none;
 }
+
+table.match-board tr:first-child td:first-child {
+    border-top: none;
+    border-left: none;
+}
+table.match-board tr:first-child td:nth-child(2) {
+    border-top: none;
+}
+table.match-board tr:first-child td:last-child {
+    border-top: none;
+    border-right: none;
+}
+table.match-board tr:last-child td:first-child {
+    border-bottom: none;
+    border-left: none;
+}
+table.match-board tr:last-child td:nth-child(2) {
+    border-bottom: none;
+}
+table.match-board tr:last-child td:last-child {
+    border-bottom: none;
+    border-right: none;
+}

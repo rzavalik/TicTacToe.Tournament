@@ -5,6 +5,7 @@ namespace TicTacToe.Tournament.BasePlayer.Interfaces;
 public interface ISignalRClient
 {
     Task StartAsync();
+    Task<T> InvokeAsync<T>(string method, params object[] args);
     Task InvokeAsync(string method, params object[] args);
     Task SubscribeAsync<T1>(string method, Action<T1> handler);
     Task SubscribeAsync<T1, T2>(string method, Action<T1, T2> handler);

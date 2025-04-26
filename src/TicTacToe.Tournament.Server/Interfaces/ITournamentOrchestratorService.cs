@@ -1,4 +1,4 @@
-﻿using TicTacToe.Tournament.Server.DTOs;
+﻿using TicTacToe.Tournament.Models.DTOs;
 
 namespace TicTacToe.Tournament.Server.Interfaces
 {

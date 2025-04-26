@@ -30,7 +30,9 @@ namespace TicTacToe.Tournament.MyBotPlayer
 
             _strategy = new MyBotStrategy(
                 playerMark: mark,
-                opponentMark: mark == Mark.X ? Mark.O : Mark.X
+                opponentMark: mark == Mark.X ? Mark.O : Mark.X,
+                (log) => base.ConsoleWrite(log),
+                (prompt) => base.ConsoleRead<int>(prompt)
             );
         }
 
@@ -45,7 +47,7 @@ namespace TicTacToe.Tournament.MyBotPlayer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in MakeMoveAsync: {ex.Message}");
+                base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
             }
 
             return Task.FromResult((-1, -1));
