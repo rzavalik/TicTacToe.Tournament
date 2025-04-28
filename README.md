@@ -4,7 +4,7 @@ Real-time .NET 8 Tic Tac Toe Tournament platform powered by SignalR, Azure, Dock
 
 ![License](https://img.shields.io/github/license/rzavalik/TicTacToe.Tournament?color=blue)
 ![.NET](https://img.shields.io/badge/.NET-8.0-blue)
-![Build Status](https://img.shields.io/github/actions/workflow/status/rzavalik/TicTacToe.Tournament/ci.yml?branch=main)
+![Build Status](https://github.com/rzavalik/TicTacToe.Tournament/actions/workflows/ci.yml/badge.svg)
 
 ---
 
