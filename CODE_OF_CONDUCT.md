@@ -34,7 +34,7 @@ This Code of Conduct applies within all project spaces and also applies when an 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [INSERT EMAIL ADDRESS].
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at zavalik@gmail.com.
 All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
