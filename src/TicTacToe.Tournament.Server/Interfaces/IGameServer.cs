@@ -1,24 +1,28 @@
-﻿using System.Collections.Concurrent;
-
-namespace TicTacToe.Tournament.Models.Interfaces;
-
-public interface IGameServer
+﻿namespace TicTacToe.Tournament.Models.Interfaces
 {
-    IReadOnlyDictionary<Guid, IPlayerBot> RegisteredPlayers { get; }
+    using System.Collections.Concurrent;
+    using TicTacToe.Tournament.Models;
 
-    void RegisterPlayer(IPlayerBot player);
+    public interface IGameServer
+    {
+        Tournament Tournament { get; }
 
-    void SubmitMove(Guid playerId, int row, int col);
+        IReadOnlyDictionary<Guid, IPlayerBot> RegisteredPlayers { get; }
 
-    IPlayerBot? GetBotById(Guid playerId);
+        void RegisterPlayer(IPlayerBot player);
 
-    ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves();
+        void InitializeLeaderboard();
 
-    void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves);
+        ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves();
 
-    Task StartTournamentAsync(Tournament tournament);
+        void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves);
 
-    void GenerateMatches();
+        Task StartTournamentAsync(Tournament tournament);
 
-    void InitializeLeaderboard();
+        void SubmitMove(Guid playerId, int row, int col);
+
+        IPlayerBot? GetBotById(Guid playerId);
+
+        void GenerateMatches();
+    }
 }

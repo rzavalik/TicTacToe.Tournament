@@ -29,8 +29,6 @@ jobs:
 
       - name: Run Unit Tests - All Unit Tests
         run: |
-          dotnet test src/TicTacToe.Tournament.Auth.Tests/TicTacToe.Tournament.Auth.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Models.Tests/TicTacToe.Tournament.Models.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Server.Tests/TicTacToe.Tournament.Server.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Player.Tests/TicTacToe.Tournament.Player.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.SmartPlayer.Tests/TicTacToe.Tournament.Player.Tests.csproj --no-build --configuration Release
+          for proj in $(find src -name "*.Tests.csproj"); do
+            dotnet test "$proj" --no-build --configuration Release
+          done
