@@ -37,14 +37,11 @@ jobs:
         run: |
           mkdir -p TestResults
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
-            proj_dir=$(dirname "$proj")
-            cd "$proj_dir"
-            dotnet test --no-build --configuration Release \
+            dotnet test "$proj" --no-build --configuration Release \
               --logger "trx;LogFileName=$(basename $proj .csproj).trx" \
               /p:CollectCoverage=true \
               /p:CoverletOutputFormat=cobertura \
-              /p:CoverletOutput=../../TestResults/coverage-$(basename $proj .csproj).xml
-            cd -
+              /p:CoverletOutput=TestResults/coverage-$(basename $proj .csproj).xml
           done
           find . -name "*.trx" -exec cp {} TestResults/ \;
 
