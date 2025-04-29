@@ -76,3 +76,5 @@ jobs:
         with:
           path: TestResults/Coverage/*.xml
           minimum_coverage: 0
+          skip_covered: true
+          show_line: false
