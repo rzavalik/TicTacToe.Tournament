@@ -37,12 +37,12 @@ jobs:
         run: |
           mkdir -p TestResults
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
-            projectName=$(basename "$proj" .csproj)
+            name=$(basename $proj .csproj)
             dotnet test "$proj" --no-build --configuration Release \
-              --logger "trx;LogFileName=${projectName}.trx" \
-              /p:CollectCoverage=true \
-              /p:CoverletOutputFormat=cobertura \
-              /p:CoverletOutput="${{ github.workspace }}/TestResults/coverage-${projectName}.xml"
+              --logger "trx;LogFileName=${name}.trx" \
+              --collect:"XPlat Code Coverage" \
+              /p:CoverletOutput=TestResults/coverage-${name}.xml \
+              /p:CoverletOutputFormat=cobertura
           done
           find . -name "*.trx" -exec cp {} TestResults/ \;
 
