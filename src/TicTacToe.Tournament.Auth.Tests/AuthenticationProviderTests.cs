@@ -92,6 +92,50 @@ namespace TicTacToe.Tournament.Auth.Tests
             await Should.ThrowAsync<Exception>(() => sut.GetTokenAsync(tournamentId));
         }
 
+        [Fact]
+        public async Task GetTokenAsync_NullHttpResponse_ThrowsException()
+        {
+            var tournamentId = Guid.NewGuid();
+            var requestUrl = $"{BaseEndpoint}/tournament/{tournamentId}/authenticate";
+
+            var clientMock = new Mock<IHttpClient>();
+            clientMock.Setup(c => c.PostAsJsonAsync<TournamentAuthRequest>(requestUrl, It.IsAny<TournamentAuthRequest>(), null, default))
+                      .ReturnsAsync((HttpResponseMessage?)null);
+
+            var sut = MakeSut(clientMock);
+
+            await Should.ThrowAsync<Exception>(() => sut.GetTokenAsync(tournamentId));
+        }
+
+        [Fact]
+        public async Task GetTokenAsync_InvalidContent_ThrowsException()
+        {
+            var tournamentId = Guid.NewGuid();
+            var requestUrl = $"{BaseEndpoint}/tournament/{tournamentId}/authenticate";
+
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("this-is-not-json")
+            };
+
+            var clientMock = new Mock<IHttpClient>();
+            clientMock.Setup(c => c.PostAsJsonAsync<TournamentAuthRequest>(requestUrl, It.IsAny<TournamentAuthRequest>(), null, default))
+                      .ReturnsAsync(httpResponse);
+
+            var sut = MakeSut(clientMock);
+
+            await Should.ThrowAsync<JsonException>(() => sut.GetTokenAsync(tournamentId));
+        }
+
+        [Fact]
+        public void Constructor_NullHttpClient_ThrowsArgumentNullException()
+        {
+            Should.Throw<ArgumentNullException>(() =>
+            {
+                var sut = new AuthenticationProvider(null!, BaseEndpoint);
+            });
+        }
+
         private AuthenticationProvider MakeSut(Mock<IHttpClient> clientMock)
         {
             return new AuthenticationProvider(

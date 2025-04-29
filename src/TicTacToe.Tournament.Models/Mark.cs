@@ -1,8 +1,9 @@
-﻿namespace TicTacToe.Tournament.Models;
-
-public enum Mark
+﻿namespace TicTacToe.Tournament.Models
 {
-    Empty = ' ',
-    X = 'X',
-    O = 'O'
+    public enum Mark
+    {
+        Empty = ' ',
+        X = 'X',
+        O = 'O'
+    }
 }

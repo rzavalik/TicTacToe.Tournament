@@ -1,9 +1,10 @@
-﻿namespace TicTacToe.Tournament.Models;
-
-public enum TournamentStatus
+﻿namespace TicTacToe.Tournament.Models
 {
-    Planned,
-    Ongoing,
-    Finished,
-    Cancelled
+    public enum TournamentStatus
+    {
+        Planned,
+        Ongoing,
+        Finished,
+        Cancelled
+    }
 }

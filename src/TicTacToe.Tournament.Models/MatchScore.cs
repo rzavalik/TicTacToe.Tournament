@@ -1,9 +1,10 @@
-﻿namespace TicTacToe.Tournament.Models;
-
-public enum MatchScore : int
+﻿namespace TicTacToe.Tournament.Models
 {
-    Win = 3,
-    Draw = 1,
-    Lose = 0,
-    Walkover = -1
+    public enum MatchScore : int
+    {
+        Win = 3,
+        Draw = 1,
+        Lose = 0,
+        Walkover = -1
+    }
 }

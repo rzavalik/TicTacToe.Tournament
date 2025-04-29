@@ -30,6 +30,45 @@ public class TournamentTests
     }
 
     [Fact]
+    public void InitializeLeaderboard_ShouldPopulateLeaderboardFromRegisteredPlayers()
+    {
+        var sut = MakeSut();
+        var playerId = Guid.NewGuid();
+        var playerName = "Player1";
+
+        sut.RegisteredPlayers.Add(playerId, playerName);
+
+        sut.InitializeLeaderboard();
+
+        sut.Leaderboard.ShouldContainKey(playerId);
+        sut.Leaderboard[playerId].ShouldBe(0);
+    }
+
+    [Fact]
+    public void RegisterPlayer_ShouldAddPlayerToRegisteredPlayers()
+    {
+        var sut = MakeSut();
+        var playerId = Guid.NewGuid();
+        var playerName = "TestPlayer";
+
+        sut.RegisteredPlayers.Add(playerId, playerName);
+
+        sut.RegisteredPlayers.ContainsKey(playerId).ShouldBeTrue();
+        sut.RegisteredPlayers[playerId].ShouldBe(playerName);
+    }
+
+    [Fact]
+    public void Champion_Assignment_ShouldSetCorrectly()
+    {
+        var sut = MakeSut();
+        var playerId = Guid.NewGuid();
+
+        sut.Champion = playerId;
+
+        sut.Champion.ShouldBe(playerId);
+    }
+
+    [Fact]
     public void Duration_WhenStartAndEndSet_ShouldReturnTimeSpan()
     {
         var sut = MakeSut();

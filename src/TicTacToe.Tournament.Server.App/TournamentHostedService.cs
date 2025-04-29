@@ -1,30 +1,30 @@
-﻿
-using Microsoft.Extensions.Hosting;
-using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Server.Interfaces;
-
-namespace TicTacToe.Tournament.Server.App;
-public class TournamentHostedService : BackgroundService
+﻿namespace TicTacToe.Tournament.Server.App
 {
-    private readonly ITournamentManager _tournamentManager;
-    private readonly IAzureStorageService _storageService;
+    using Microsoft.Extensions.Hosting;
+    using TicTacToe.Tournament.Server.Interfaces;
 
-    public TournamentHostedService(
-        ITournamentManager tournamentManager,
-        IAzureStorageService storageService)
+    public class TournamentHostedService : BackgroundService
     {
-        _tournamentManager = tournamentManager;
-        _storageService = storageService;
-    }
+        private readonly ITournamentManager _tournamentManager;
+        private readonly IAzureStorageService _storageService;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        Console.WriteLine("[TournamentHostedService] Starting preload of tournaments...");
+        public TournamentHostedService(
+            ITournamentManager tournamentManager,
+            IAzureStorageService storageService)
+        {
+            _tournamentManager = tournamentManager;
+            _storageService = storageService;
+        }
 
-        await _tournamentManager.LoadFromDataSourceAsync();
-        
-        Console.WriteLine("[TournamentHostedService] All tournaments loaded.");
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            Console.WriteLine("[TournamentHostedService] Starting preload of tournaments...");
 
-        await Task.Delay(Timeout.Infinite, stoppingToken);
+            await _tournamentManager.LoadFromDataSourceAsync();
+
+            Console.WriteLine("[TournamentHostedService] All tournaments loaded.");
+
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
     }
 }

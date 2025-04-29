@@ -175,7 +175,8 @@ public class TournamentHub : Hub
         var remoteBot = new RemotePlayerBot(
             playerId,
             playerName,
-            Clients.Caller);
+            Clients.Caller,
+            tournamentId);
 
         await _tournamentManager.RegisterPlayerAsync(tournamentId, remoteBot);
         await Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString());

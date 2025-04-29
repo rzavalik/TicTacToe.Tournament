@@ -52,6 +52,50 @@ public class LeaderboardEntryTests
         sut.GamesPlayed.ShouldBe(1);
     }
 
+    [Fact]
+    public void RegisterResult_MultipleWins_AccumulatesCorrectly()
+    {
+        var sut = MakeSut();
+
+        sut.RegisterResult(MatchScore.Win);
+        sut.RegisterResult(MatchScore.Win);
+        sut.RegisterResult(MatchScore.Win);
+
+        sut.Wins.ShouldBe(3);
+        sut.TotalPoints.ShouldBe(9);
+        sut.GamesPlayed.ShouldBe(3);
+    }
+
+    [Fact]
+    public void RegisterResult_MixedResults_AccumulatesCorrectly()
+    {
+        var sut = MakeSut();
+
+        sut.RegisterResult(MatchScore.Win);         // 3 points
+        sut.RegisterResult(MatchScore.Draw);        // 1 point
+        sut.RegisterResult(MatchScore.Lose);        // 0 points
+        sut.RegisterResult(MatchScore.Walkover);    // 0 points
+
+        sut.Wins.ShouldBe(1);
+        sut.Draws.ShouldBe(1);
+        sut.Losses.ShouldBe(1);
+        sut.Walkovers.ShouldBe(1);
+        sut.TotalPoints.ShouldBe(4);
+        sut.GamesPlayed.ShouldBe(4);
+    }
+
+    [Fact]
+    public void RegisterResult_InvalidMatchScore_ShouldThrowArgumentOutOfRangeException()
+    {
+        var sut = MakeSut();
+
+        Should.Throw<ArgumentOutOfRangeException>(() =>
+        {
+            sut.RegisterResult((MatchScore)999);
+        });
+    }
+
+
     private LeaderboardEntry MakeSut()
     {
         return new LeaderboardEntry();

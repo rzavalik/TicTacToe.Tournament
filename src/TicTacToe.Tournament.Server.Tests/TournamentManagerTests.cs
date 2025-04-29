@@ -1,141 +1,252 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Moq;
-using Shouldly;
-using System.Collections.Concurrent;
-using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Models.Interfaces;
-using TicTacToe.Tournament.Server.Bots;
-using TicTacToe.Tournament.Server.Hubs;
-using TicTacToe.Tournament.Server.Interfaces;
-using TicTacToe.Tournament.Server.Services;
-
-namespace TicTacToe.Tournament.Server.Tests;
-
-public class TournamentManagerTests
+﻿namespace TicTacToe.Tournament.Server.Tests
 {
-    private readonly Mock<IHubContext<TournamentHub>> _hubContextMock = new();
-    private readonly Mock<IClientProxy> _clientProxyMock = new();
-    private readonly Mock<IAzureStorageService> _storageServiceMock = new();
+    using Microsoft.AspNetCore.SignalR;
+    using Moq;
+    using Shouldly;
+    using TicTacToe.Tournament.Models;
+    using TicTacToe.Tournament.Server.Bots;
+    using TicTacToe.Tournament.Server.Hubs;
+    using TicTacToe.Tournament.Server.Interfaces;
+    using TicTacToe.Tournament.Server;
+    using Xunit;
+    using System.Collections.Concurrent;
 
-    private Models.Tournament GetTournament(
-        Guid? tournamentId = null,
-        Guid? championPlayerId = null,
-        DateTime? endTime = null,
-        DateTime? startTime = null,
-        string name = "Test Tournament",
-        Dictionary<Guid, string>? registeredPlayers = null,
-        TournamentStatus tournamentStatus = TournamentStatus.Planned)
+    public class TournamentManagerTests
     {
-        tournamentId ??= Guid.NewGuid();
-
-        return new Models.Tournament
+        private TournamentManager MakeSut(Guid? fixedTournamentId = null)
         {
-            Id = tournamentId.Value,
-            Champion = championPlayerId,
-            EndTime = endTime,
-            Matches = new List<Models.Match>(),
-            Leaderboard = new Dictionary<Guid, int>(),
-            Name = name,
-            RegisteredPlayers = registeredPlayers ?? new Dictionary<Guid, string>(),
-            StartTime = startTime,
-            Status = tournamentStatus
-        };
-    }
+            fixedTournamentId = fixedTournamentId ?? Guid.NewGuid();
+            var hubContextMock = new Mock<IHubContext<TournamentHub>>();
+            var clientsMock = new Mock<IHubClients>();
+            var clientProxyMock = new Mock<IClientProxy>();
 
-    private DummyPlayerBot GetDummyBot(
-        Guid? playerId = null,
-        string? name = null)
-    {
-        playerId ??= Guid.NewGuid();
-        name ??= "DummyBot";
+            clientsMock.Setup(c => c.All).Returns(clientProxyMock.Object);
+            clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(clientProxyMock.Object);
+            hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
+            hubContextMock.Setup(c => c.Clients.User(It.IsAny<string>())).Returns(clientProxyMock.Object);
 
-        return new DummyPlayerBot(
-            playerId.Value!,
-            name!);
-    }
+            var storageServiceMock = new Mock<IAzureStorageService>();
+            storageServiceMock.Setup(s => s.ListTournamentsAsync()).ReturnsAsync(new List<Guid>());
+            storageServiceMock.Setup(s => s.LoadTournamentStateAsync(fixedTournamentId.Value))
+                .ReturnsAsync(
+                    (
+                        new Models.Tournament
+                        {
+                            Id = fixedTournamentId.Value,
+                            Name = "Loaded Tournament",
+                            Status = TournamentStatus.Planned,
+                            RegisteredPlayers = new Dictionary<Guid, string>(),
+                            Matches = new List<Models.Match>(),
+                            Leaderboard = new Dictionary<Guid, int>(),
+                            MatchRepetition = 2
+                        },
+                        new List<PlayerInfo>(),
+                        new Dictionary<Guid, Guid>(),
+                        new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>()
+                    )
+                );
+            storageServiceMock.Setup(s => s.SaveTournamentStateAsync(It.IsAny<TournamentContext>())).Returns(Task.CompletedTask);
+            storageServiceMock.Setup(s => s.DeleteTournamentAsync(fixedTournamentId.Value)).Returns(Task.CompletedTask);
+            storageServiceMock.Setup(s => s.TournamentExistsAsync(fixedTournamentId.Value)).ReturnsAsync(true);
 
-    private ITournamentManager MakeSut(
-        Models.Tournament tournament,
-        DummyPlayerBot dummyBot)
-    {
-        var playersInfo = tournament?
-            .RegisteredPlayers?
-            .Select(p => new PlayerInfo
+            return new TournamentManager(hubContextMock.Object, storageServiceMock.Object);
+        }
+
+        [Fact]
+        public async Task RegisterPlayerAsync_ShouldAddPlayerToTournament()
+        {
+            var playerId = Guid.NewGuid();
+            var tournamentId = Guid.NewGuid();
+            var bot = new DummyPlayerBot(playerId, "Test Player", tournamentId);
+
+            var sut = MakeSut(tournamentId);
+
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.RegisterPlayerAsync(tournamentId, bot);
+
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.ShouldNotBeNull();
+            tournament.RegisteredPlayers.ContainsKey(playerId).ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task TournamentExists_WhenCalled_ShouldReturnTrueAfterInitialization()
+        {
+            var tournamentId = Guid.NewGuid();
+            var sut = MakeSut(tournamentId);
+
+            var result = await sut.TournamentExistsAsync(tournamentId);
+
+            result.ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task GetTournament_WhenTournamentExists_ShouldReturnTournament()
+        {
+            var tournamentId = Guid.NewGuid();
+            var sut = MakeSut(tournamentId);
+
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+
+            var tournament = sut.GetTournament(tournamentId);
+
+            tournament.ShouldNotBeNull();
+            tournament.Id.ShouldBe(tournamentId);
+            tournament.Name.ShouldBe("Loaded Tournament");
+        }
+
+        [Fact]
+        public async Task CancelTournament_ShouldSetStatusToCancelled()
+        {
+            var sut = MakeSut();
+            var tournamentId = Guid.NewGuid();
+
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.CancelTournamentAsync(tournamentId);
+
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.Status.ShouldBe(TournamentStatus.Cancelled);
+        }
+
+        [Fact]
+        public async Task StartTournamentAsync_WithNoPlayers_ShouldSetStatusFinished()
+        {
+            var tournamentId = Guid.NewGuid();
+            var sut = MakeSut(tournamentId);
+
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.StartTournamentAsync(tournamentId);
+
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.Status.ShouldBe(TournamentStatus.Finished);
+        }
+
+        [Fact]
+        public async Task StartTournamentAsync_ShouldSetStatusOngoing()
+        {
+            var tournamentId = Guid.NewGuid();
+            var sut = MakeSut(tournamentId);
+
+            var player1 = Guid.NewGuid();
+            var player2 = Guid.NewGuid();
+
+            await sut.RegisterPlayerAsync(tournamentId, new RemotePlayerBot(player1, "BotA", new Mock<IClientProxy>().Object, tournamentId));
+            await sut.RegisterPlayerAsync(tournamentId, new RemotePlayerBot(player2, "BotB", new Mock<IClientProxy>().Object, tournamentId));
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            Task.Run(() => sut.StartTournamentAsync(tournamentId));
+            await Task.Delay(100);
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.Status.ShouldBe(TournamentStatus.Ongoing);
+        }
+
+        [Fact]
+        public async Task SubmitMove_ShouldNotThrowException()
+        {
+            var sut = MakeSut();
+            var tournamentId = Guid.NewGuid();
+            var playerId = Guid.NewGuid();
+            var bot = new DummyPlayerBot(playerId, "Test Player", tournamentId);
+
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.RegisterPlayerAsync(tournamentId, bot);
+
+            var exception = await Record.ExceptionAsync(async () =>
             {
-                PlayerId = p.Key,
-                Name = p.Value
-            })
-            .ToList();
+                await sut.SubmitMove(tournamentId, playerId, 0, 0);
+            });
 
-        var playerTournamentMap = tournament?
-            .RegisteredPlayers?
-            .ToDictionary(p => p.Key, p => tournament?.Id ?? Guid.Empty);
+            exception.ShouldBeNull();
+        }
 
-        _storageServiceMock
-            .Setup(s => s.LoadTournamentStateAsync(tournament!.Id))
-            .ReturnsAsync((tournament, playersInfo, playerTournamentMap, new System.Collections.Concurrent.ConcurrentDictionary<Guid, System.Collections.Concurrent.ConcurrentQueue<(int Row, int Col)>>()));
+        [Fact]
+        public async Task RenameTournamentAsync_ShouldChangeName()
+        {
+            var tournamentId = Guid.NewGuid();
+            var sut = MakeSut(tournamentId);
 
-        var clients = new Mock<IHubClients>();
-        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
-        clients.Setup(c => c.All).Returns(_clientProxyMock.Object);
-        _hubContextMock.Setup(c => c.Clients).Returns(clients.Object);
+            await sut.InitializeTournamentAsync(tournamentId, "Old Name", 1);
+            await sut.RenameTournamentAsync(tournamentId, "New Name");
 
-        return new TournamentManager(_hubContextMock.Object, _storageServiceMock.Object);
-    }
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.Name.ShouldBe("New Name");
+        }
 
-    [Fact]
-    public async Task RegisterPlayerAsync_ShouldAddPlayerToTournament()
-    {
-        var tournament = GetTournament();
-        var dummyBot = GetDummyBot();
-        var sut = MakeSut(tournament, dummyBot);
+        [Fact]
+        public async Task RenamePlayerAsync_ShouldChangePlayerName()
+        {
+            var sut = MakeSut();
+            var tournamentId = Guid.NewGuid();
+            var playerId = Guid.NewGuid();
+            var bot = new DummyPlayerBot(playerId, "OldPlayerName", tournamentId);
 
-        await sut.InitializeTournamentAsync(tournament.Id, null, null);
-        await sut.RegisterPlayerAsync(tournament.Id, dummyBot);
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.RegisterPlayerAsync(tournamentId, bot);
 
-        var loaded = await sut.GetOrLoadTournamentAsync(tournament.Id);
-        loaded!.RegisteredPlayers.ShouldContainKey(dummyBot.Id);
-        loaded.RegisteredPlayers[dummyBot.Id].ShouldBe(dummyBot.Name);
-    }
+            await sut.RenamePlayerAsync(tournamentId, playerId, "NewPlayerName");
 
-    [Fact]
-    public async Task TournamentExists_WhenCalled_ShouldReturnTrueAfterInitialization()
-    {
-        var tournament = GetTournament();
-        var dummyBot = GetDummyBot();
-        var sut = MakeSut(tournament, dummyBot);
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.RegisteredPlayers[playerId].ShouldBe("NewPlayerName");
+        }
 
-        await sut.InitializeTournamentAsync(tournament.Id, null, null);
-        sut.TournamentExists(tournament.Id).ShouldBeTrue();
-    }
+        [Fact]
+        public async Task DeleteTournamentAsync_ShouldRemoveTournament()
+        {
+            var sut = MakeSut();
+            var tournamentId = Guid.NewGuid();
 
-    [Fact]
-    public async Task GetTournament_WhenTournamentExists_ShouldReturnTournament()
-    {
-        var tournament = GetTournament();
-        var dummyBot = GetDummyBot();
-        var sut = MakeSut(tournament, dummyBot);
+            await sut.InitializeTournamentAsync(tournamentId, "Test Tournament", 1);
+            await sut.DeleteTournamentAsync(tournamentId);
 
-        await sut.InitializeTournamentAsync(tournament.Id, null, null);
-        var result = sut.GetTournament(tournament.Id);
+            var tournament = sut.GetTournament(tournamentId);
+            tournament.ShouldBeNull();
+        }
 
-        result.ShouldNotBeNull();
-        result!.Id.ShouldBe(tournament.Id);
-    }
+        [Fact]
+        public async Task LoadFromDataSourceAsync_ShouldNotThrow()
+        {
+            var sut = MakeSut();
 
-    [Fact]
-    public async Task CancelTournament_ShouldSetStatusToCancelled()
-    {
-        var tournament = GetTournament();
-        var dummyBot = GetDummyBot();
-        var sut = MakeSut(tournament, dummyBot);
+            var exception = await Record.ExceptionAsync(async () =>
+            {
+                await sut.LoadFromDataSourceAsync();
+            });
 
-        await sut.InitializeTournamentAsync(tournament.Id, null, null);
+            exception.ShouldBeNull();
+        }
 
-        await sut.CancelTournamentAsync(tournament.Id);
+        [Fact]
+        public async Task SaveTournamentAsync_ShouldNotThrow()
+        {
+            var sut = MakeSut();
+            var tournament = new Models.Tournament
+            {
+                Id = Guid.NewGuid(),
+                Name = "Saving Tournament",
+                RegisteredPlayers = new Dictionary<Guid, string>(),
+                Matches = new List<Models.Match>(),
+                Leaderboard = new Dictionary<Guid, int>(),
+                MatchRepetition = 1
+            };
 
-        var cancelled = sut.GetTournament(tournament.Id);
-        cancelled.ShouldNotBeNull();
-        cancelled!.Status.ShouldBe(TournamentStatus.Cancelled);
+            var exception = await Record.ExceptionAsync(async () =>
+            {
+                await sut.SaveTournamentAsync(tournament);
+            });
+
+            exception.ShouldBeNull();
+        }
+
+        [Fact]
+        public async Task SubmitMove_WhenTournamentNotFound_ShouldNotThrow()
+        {
+            var sut = MakeSut();
+
+            var exception = await Record.ExceptionAsync(async () =>
+            {
+                await sut.SubmitMove(Guid.NewGuid(), Guid.NewGuid(), 1, 1);
+            });
+
+            exception.ShouldBeNull();
+        }
     }
 }

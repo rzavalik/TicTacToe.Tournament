@@ -12,12 +12,18 @@ public class RemotePlayerBot : IPlayerBot
 
     public Guid Id { get; }
     public string Name { get; set; }
+    public Guid TournamentId { get; set; }
 
-    public RemotePlayerBot(Guid id, string name, IClientProxy client)
+    public RemotePlayerBot(
+        Guid id, 
+        string name, 
+        IClientProxy client,
+        Guid tournamentId)
     {
         Id = id;
         Name = name;
         _client = client;
+        TournamentId = tournamentId;
     }
 
     public void OnRegistered(Guid playerId)

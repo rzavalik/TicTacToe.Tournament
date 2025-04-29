@@ -1,12 +1,13 @@
-﻿namespace TicTacToe.Tournament.Auth;
-
-public class TournamentAuthRequest
+﻿namespace TicTacToe.Tournament.Auth
 {
-    public Guid TournamentId { get; set; } = Guid.NewGuid()!;
+    public class TournamentAuthRequest
+    {
+        public Guid TournamentId { get; set; } = Guid.NewGuid()!;
 
-    public string? PlayerName { get; set; }
+        public string? PlayerName { get; set; }
 
-    public string? AgentName { get; set; }
+        public string? AgentName { get; set; }
 
-    public string? MachineName { get; set; }
+        public string? MachineName { get; set; }
+    }
 }

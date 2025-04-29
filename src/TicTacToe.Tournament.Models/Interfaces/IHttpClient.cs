@@ -1,8 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-
-namespace TicTacToe.Tournament.Models.Interfaces
+﻿namespace TicTacToe.Tournament.Models.Interfaces
 {
+    using System.Diagnostics.CodeAnalysis;
+    using System.Text.Json;
+
     public interface IHttpClient
     {
         Task<HttpResponseMessage> PostAsJsonAsync<TValue>(

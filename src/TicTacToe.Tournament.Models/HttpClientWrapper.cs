@@ -1,26 +1,36 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Json;
-using System.Text.Json;
-using TicTacToe.Tournament.Models.Interfaces;
-
-namespace TicTacToe.Tournament.Models;
-
-public class HttpClientWrapper : IHttpClient
+﻿namespace TicTacToe.Tournament.Models
 {
-    private readonly HttpClient _httpClient;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Net.Http.Json;
+    using System.Text.Json;
+    using TicTacToe.Tournament.Models.Interfaces;
 
-    public HttpClientWrapper(HttpClient? httpClient = null)
+    public class HttpClientWrapper : IHttpClient
     {
-        _httpClient = httpClient ?? new HttpClient();
-    }
+        private readonly HttpClient _httpClient;
 
-    public async Task<HttpResponseMessage> PostAsJsonAsync<TValue>(
-        [StringSyntax("Uri")]
-        string? requestUri,
-        TValue value,
-        JsonSerializerOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        return await _httpClient.PostAsJsonAsync(requestUri, value, options, cancellationToken);
+        public HttpClientWrapper(HttpClient? httpClient = null)
+        {
+            _httpClient = httpClient ?? new HttpClient();
+        }
+
+        public async Task<HttpResponseMessage> PostAsJsonAsync<TValue>(
+            [StringSyntax("Uri")] string? requestUri,
+            TValue value,
+            JsonSerializerOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(requestUri))
+            {
+                throw new ArgumentNullException(nameof(requestUri));
+            }
+
+            if (value is null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            return await _httpClient.PostAsJsonAsync(requestUri, value, options, cancellationToken);
+        }
     }
 }

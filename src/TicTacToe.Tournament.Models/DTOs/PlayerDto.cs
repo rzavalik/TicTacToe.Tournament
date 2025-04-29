@@ -1,8 +1,9 @@
-﻿namespace TicTacToe.Tournament.Models.DTOs;
-
-public class PlayerDto
+﻿namespace TicTacToe.Tournament.Models.DTOs
 {
-    public Guid Id { get; set; }
-    public string Name { get; set; } = default!;
-    public int Score { get; set; }
+    public class PlayerDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = default!;
+        public int Score { get; set; }
+    }
 }

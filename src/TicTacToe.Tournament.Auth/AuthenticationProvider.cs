@@ -1,67 +1,68 @@
-﻿using System.Text.Json;
-using TicTacToe.Tournament.Models.Interfaces;
-
-namespace TicTacToe.Tournament.Auth;
-
-public class AuthenticationProvider : IAuthenticationProvider
+﻿namespace TicTacToe.Tournament.Auth
 {
-    private readonly IHttpClient _httpClient;
-    private string _baseEndpoint;
+    using System.Text.Json;
+    using TicTacToe.Tournament.Models.Interfaces;
 
-    public AuthenticationProvider(
-        IHttpClient httpClient,
-        string baseEndpoint)
+    public class AuthenticationProvider : IAuthenticationProvider
     {
-        _httpClient = httpClient
-            ?? throw new ArgumentNullException(nameof(httpClient), "HttpClient must be provided");
-        _baseEndpoint = baseEndpoint
-            ?? throw new ArgumentNullException(nameof(baseEndpoint), "BaseEndpoint must be provided");
-    }
+        private readonly IHttpClient _httpClient;
+        private string _baseEndpoint;
 
-    public Guid? PlayerId { get; set; }
-
-    public Guid? TournamentId { get; set; }
-
-    public string? LastMessage { get; set; }
-
-    public async Task<string> GetTokenAsync(Guid tournamentId)
-    {
-        if (_baseEndpoint.EndsWith("/"))
+        public AuthenticationProvider(
+            IHttpClient httpClient,
+            string baseEndpoint)
         {
-            _baseEndpoint = _baseEndpoint[..^1];
-        }   
+            _httpClient = httpClient
+                ?? throw new ArgumentNullException(nameof(httpClient), "HttpClient must be provided");
+            _baseEndpoint = baseEndpoint
+                ?? throw new ArgumentNullException(nameof(baseEndpoint), "BaseEndpoint must be provided");
+        }
 
-        var requestUrl = $"{_baseEndpoint}/tournament/{tournamentId}/authenticate";
-        var response = await _httpClient.PostAsJsonAsync(
-            requestUrl,
-            new TournamentAuthRequest
+        public Guid? PlayerId { get; set; }
+
+        public Guid? TournamentId { get; set; }
+
+        public string? LastMessage { get; set; }
+
+        public async Task<string> GetTokenAsync(Guid tournamentId)
+        {
+            if (_baseEndpoint.EndsWith("/"))
             {
-                TournamentId = tournamentId
-            });
+                _baseEndpoint = _baseEndpoint[..^1];
+            }
 
-        if (!(response?.IsSuccessStatusCode ?? false))
-        {
-            throw new AccessViolationException($"Failed to authenticate tournament. Status code: {response?.StatusCode}");
+            var requestUrl = $"{_baseEndpoint}/tournament/{tournamentId}/authenticate";
+            var response = await _httpClient.PostAsJsonAsync(
+                requestUrl,
+                new TournamentAuthRequest
+                {
+                    TournamentId = tournamentId
+                });
+
+            if (!(response?.IsSuccessStatusCode ?? false))
+            {
+                throw new AccessViolationException($"Failed to authenticate tournament. Status code: {response?.StatusCode}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var authResponse = JsonSerializer.Deserialize<TournamentAuthResponse>(json, jsonOptions);
+
+            if (string.IsNullOrEmpty(authResponse?.Token))
+            {
+                throw new Exception($"Failed to deserialize authentication response.\r\n{json}");
+            }
+
+            PlayerId = authResponse.PlayerId;
+            TournamentId = authResponse.TournamentId;
+            LastMessage = authResponse.Message;
+
+            return authResponse.Token;
         }
-
-        var json = await response.Content.ReadAsStringAsync();
-
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
-        var authResponse = JsonSerializer.Deserialize<TournamentAuthResponse>(json, jsonOptions);
-
-        if (string.IsNullOrEmpty(authResponse?.Token))
-        {
-            throw new Exception($"Failed to deserialize authentication response.\r\n{json}");
-        }
-
-        PlayerId = authResponse.PlayerId;
-        TournamentId = authResponse.TournamentId;
-        LastMessage = authResponse.Message;
-
-        return authResponse.Token;
     }
 }

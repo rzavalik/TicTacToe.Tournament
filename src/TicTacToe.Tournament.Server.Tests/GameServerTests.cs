@@ -23,10 +23,54 @@ public class GameServerTests
         clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
         _hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
 
-        return (IGameServer)new GameServer(
-            null,
+        var tournament = new Models.Tournament
+        {
+            Id = _tournamentId,
+            Name = "Test Tournament",
+            RegisteredPlayers = new Dictionary<Guid, string>(),
+            Leaderboard = new Dictionary<Guid, int>(),
+            Matches = new List<Models.Match>(),
+            MatchRepetition = 1
+        };
+
+        return new GameServer(
+            tournament,
             _hubContextMock.Object,
-            (id, score) => { });
+            (id, score) => { _leaderboardCalls.Add((id, score)); });
+    }
+
+    [Fact]
+    public void RegisterPlayer_ShouldAddToRegisteredPlayersAndInitializeLeaderboard()
+    {
+        var sut = MakeSut();
+        var playerId = Guid.NewGuid();
+        _botMock.SetupGet(b => b.Id).Returns(playerId);
+        _botMock.SetupGet(b => b.Name).Returns("BotTest");
+
+        sut.RegisterPlayer(_botMock.Object);
+
+        var tournament = GetTournament(sut);
+        tournament.RegisteredPlayers.ShouldContainKey(playerId);
+        tournament.Leaderboard.ShouldContainKey(playerId);
+    }
+
+    [Fact]
+    public void RegisterPlayer_WhenTwoPlayers_ShouldGenerateMatches()
+    {
+        var sut = MakeSut();
+
+        var bot1 = new Mock<IPlayerBot>();
+        var bot2 = new Mock<IPlayerBot>();
+        bot1.SetupGet(b => b.Id).Returns(Guid.NewGuid());
+        bot2.SetupGet(b => b.Id).Returns(Guid.NewGuid());
+        bot1.SetupGet(b => b.Name).Returns("Bot1");
+        bot2.SetupGet(b => b.Name).Returns("Bot2");
+
+        sut.RegisterPlayer(bot1.Object);
+        sut.RegisterPlayer(bot2.Object);
+
+        var tournament = GetTournament(sut);
+        tournament.Matches.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -110,5 +154,10 @@ public class GameServerTests
         var result = sut.GetBotById(Guid.NewGuid());
 
         result.ShouldBeNull();
+    }
+
+    private Models.Tournament GetTournament(IGameServer gameServer)
+    {
+        return ((GameServer)gameServer).Tournament;
     }
 }

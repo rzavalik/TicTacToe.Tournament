@@ -7,11 +7,13 @@ namespace TicTacToe.Tournament.Server.Bots
     {
         public Guid Id { get; }
         public string Name { get; set; }
+        public Guid TournamentId { get; }
 
-        public DummyPlayerBot(Guid id, string name)
+        public DummyPlayerBot(Guid id, string name, Guid tournamentId)
         {
             Id = id;
             Name = name;
+            TournamentId = tournamentId;
         }
 
         public void OnRegistered(Guid playerId)

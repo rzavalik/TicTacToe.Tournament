@@ -20,26 +20,26 @@ public abstract class BasePlayerClient : IBot
     private ISignalRClient? _signalRClient;
     private readonly ISignalRClientBuilder _signalRBuilder;
 
-    public Mark[][]? CurrentBoard { get; private set; }
+    public Mark[][]? CurrentBoard { get; protected set; }
 
-    public bool Authenticated { get; private set; } = false;
+    public bool Authenticated { get; protected set; } = false;
 
-    public Guid PlayerId { get; private set; } = default;
+    public Guid PlayerId { get; protected set; } = default;
 
-    public Guid UserId { get; private set; } = default;
+    public Guid UserId { get; protected set; } = default;
 
-    public Guid OpponentId { get; private set; } = default;
+    public Guid OpponentId { get; protected set; } = default;
 
-    public string? Token { get; private set; } = null;
+    public string? Token { get; protected set; } = null;
 
     public string BotName => _botName;
 
-    public Mark Mark { get; private set; } = Mark.Empty;
+    public Mark Mark { get; protected set; } = Mark.Empty;
 
     public TournamentDto Tournament
     {
         get { return _tournament; }
-        private set
+        protected set
         {
             _tournament = value;
             if (value != null)
@@ -115,13 +115,13 @@ public abstract class BasePlayerClient : IBot
 
         if (!(response?.IsSuccessStatusCode ?? false))
         {
-            throw new Exception($"Authentication failed: {response?.StatusCode}");
+            throw new AccessViolationException($"Authentication failed: {response?.StatusCode}");
         }
 
         var auth = await response.Content.ReadFromJsonAsync<TournamentAuthResponse>();
         if (auth == null)
         {
-            throw new Exception($"Authentication failed: could not deserialize TournamentAuthResponse.");
+            throw new AccessViolationException($"Authentication failed: could not deserialize TournamentAuthResponse.");
         }
 
         UserId = auth.PlayerId;
