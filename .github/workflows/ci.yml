@@ -29,8 +29,8 @@ jobs:
 
       - name: Run Unit Tests - All Unit Tests
         run: |
-          dotnet test src/TicTacToe.Tournament.Auth.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Models.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Server.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.Player.Tests.csproj --no-build --configuration Release
-          dotnet test src/TicTacToe.Tournament.SmartPlayer.Tests.csproj --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Auth.Tests/TicTacToe.Tournament.Auth.Tests.csproj --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Models.Tests/TicTacToe.Tournament.Models.Tests.csproj --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Server.Tests/TicTacToe.Tournament.Server.Tests.csproj --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Player.Tests/TicTacToe.Tournament.Player.Tests.csproj --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.SmartPlayer.Tests/TicTacToe.Tournament.SmartPlayer.Tests.csproj --no-build --configuration Release
