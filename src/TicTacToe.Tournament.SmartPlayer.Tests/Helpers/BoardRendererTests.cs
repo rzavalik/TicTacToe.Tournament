@@ -30,11 +30,11 @@
             sut.Draw(board);
 
             var expected =
-                " X |   | O \r\n" +
-                "---+---+---\r\n" +
-                " O | X |   \r\n" +
-                "---+---+---\r\n" +
-                "   |   | X \r\n";
+                $" X |   | O {Environment.NewLine}" +
+                $"---+---+---{Environment.NewLine}" +
+                $" O | X |   {Environment.NewLine}" +
+                $"---+---+---{Environment.NewLine}" +
+                $"   |   | X {Environment.NewLine}";
 
             output.ToString().ShouldBe(expected);
         }
