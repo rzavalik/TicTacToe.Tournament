@@ -41,10 +41,8 @@ jobs:
             dotnet test "$proj" --configuration Release \
               --logger "trx;LogFileName=${name}.trx" \
               --collect:"XPlat Code Coverage"
-          done
-          find . -name "*.trx" -exec cp {} TestResults/ \;
-          find . -type f -name "coverage.cobertura.xml" | while read file; do
-            cp "$file" TestResults/Coverage/$(basename $(dirname "$file")).xml
+            find . -name "${name}.trx" -exec cp {} TestResults/ \;
+            find . -name "coverage.cobertura.xml" -exec cp {} TestResults/Coverage/${name}.xml \;
           done
 
       - name: Upload TRX Test Results
