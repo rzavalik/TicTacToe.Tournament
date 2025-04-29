@@ -31,8 +31,8 @@ jobs:
         run: |
           for proj in $(find src -name "*.Tests.csproj"); do
             dotnet test "$proj" --no-build --configuration Release \
-              --logger "trx;LogFileName=$projname.trx" \
-              --results-directory "TestResults"
+              --logger "trx;LogFileName=$(basename $proj .csproj).trx" \
+              --results-directory TestResults
           done
 
       - name: Upload TRX Test Results
