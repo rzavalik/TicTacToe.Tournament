@@ -38,12 +38,14 @@ jobs:
           mkdir -p TestResults/Coverage
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
             name=$(basename "$proj" .csproj)
-            dotnet test "$proj" --no-build --configuration Release \
+            dotnet test "$proj" --configuration Release \
               --logger "trx;LogFileName=${name}.trx" \
               --collect:"XPlat Code Coverage"
           done
           find . -name "*.trx" -exec cp {} TestResults/ \;
-          find . -name "coverage.cobertura.xml" -exec cp {} TestResults/Coverage/ \;
+          find . -type f -name "coverage.cobertura.xml" | while read file; do
+            cp "$file" TestResults/Coverage/$(basename $(dirname "$file")).xml
+          done
 
       - name: Upload TRX Test Results
         uses: actions/upload-artifact@v4
@@ -69,10 +71,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
-          path: TestResults/*.xml
+          path: TestResults/Coverage/*.xml
 
       - name: Publish Coverage to GitHub Summary
         uses: 5monkeys/cobertura-action@v13
         with:
-          path: TestResults/*.xml
+          path: TestResults/Coverage/*.xml
           minimum_coverage: 0
