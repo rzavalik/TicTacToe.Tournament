@@ -22,7 +22,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore all dependencies
-        run: dotnet restore *.sln
+        run: dotnet restore .\TicTacToe.Tournament.sln
 
       - name: Build entire solution
         run: dotnet build --no-restore --configuration Release
