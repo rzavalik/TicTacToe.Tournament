@@ -27,5 +27,10 @@ jobs:
       - name: Build entire solution
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run Unit Tests - Models
-        run: dotnet test tests/TicTacToe.Tournament.Models.Tests --no-restore --no
+      - name: Run Unit Tests - All Unit Tests
+        run: |
+          dotnet test src/TicTacToe.Tournament.Auth.Tests --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Models.Tests --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Server.Tests --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.Player.Tests --no-build --configuration Release
+          dotnet test src/TicTacToe.Tournament.SmartPlayer.Tests --no-build --configuration Release
