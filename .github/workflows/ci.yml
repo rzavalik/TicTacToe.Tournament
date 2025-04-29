@@ -35,16 +35,15 @@ jobs:
 
       - name: Run Unit Tests - All Unit Tests
         run: |
-          mkdir -p TestResults
+          mkdir -p TestResults/Coverage
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
-            name=$(basename $proj .csproj)
+            name=$(basename "$proj" .csproj)
             dotnet test "$proj" --no-build --configuration Release \
               --logger "trx;LogFileName=${name}.trx" \
-              --collect:"XPlat Code Coverage" \
-              /p:CoverletOutput=TestResults/coverage-${name}.xml \
-              /p:CoverletOutputFormat=cobertura
+              --collect:"XPlat Code Coverage"
           done
           find . -name "*.trx" -exec cp {} TestResults/ \;
+          find . -name "coverage.cobertura.xml" -exec cp {} TestResults/Coverage/ \;
 
       - name: Upload TRX Test Results
         uses: actions/upload-artifact@v4
