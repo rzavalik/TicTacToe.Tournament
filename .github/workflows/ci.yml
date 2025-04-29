@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore src/TicTacToe.Tournament.sln
 
       - name: Build entire solution
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build src/TicTacToe.Tournament.sln --no-restore --configuration Release
 
       - name: Run Unit Tests - All Unit Tests
         run: |
