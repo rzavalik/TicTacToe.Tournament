@@ -27,21 +27,29 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore all dependencies
+      - name: Restore dependencies
         run: dotnet restore src/TicTacToe.Tournament.sln
 
-      - name: Build entire solution
+      - name: Build solution
         run: dotnet build src/TicTacToe.Tournament.sln --no-restore --configuration Release
 
-      - name: Run Unit Tests - All Unit Tests
+      - name: Run Unit Tests and Collect Coverage
         run: |
+          mkdir -p TestResults
           mkdir -p TestResults/Coverage
+
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
             name=$(basename "$proj" .csproj)
+
+            # Run tests and collect coverage
             dotnet test "$proj" --configuration Release \
               --logger "trx;LogFileName=${name}.trx" \
               --collect:"XPlat Code Coverage"
+
+            # Copy TRX
             find . -name "${name}.trx" -exec cp {} TestResults/ \;
+
+            # Copy coverage file
             find . -name "coverage.cobertura.xml" -exec cp {} TestResults/Coverage/${name}.xml \;
           done
 
@@ -50,6 +58,25 @@ jobs:
         with:
           name: test-results
           path: TestResults/*.trx
+
+      - name: Upload Coverage XML Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: TestResults/Coverage/*.xml
+
+      - name: Generate HTML Coverage Report
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.1.26
+        with:
+          reports: TestResults/Coverage/*.xml
+          targetdir: TestResults/CoverageReport
+          reporttypes: HtmlInline_AzurePipelines;Cobertura
+
+      - name: Upload HTML Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: TestResults/CoverageReport
 
       - name: Publish Test Report as PR Comment
         uses: dorny/test-reporter@v1
@@ -64,17 +91,3 @@ jobs:
         if: always()
         with:
           files: TestResults/*.trx
-
-      - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-reports
-          path: TestResults/Coverage/*.xml
-
-      - name: Publish Coverage to GitHub Summary
-        uses: 5monkeys/cobertura-action@v13
-        with:
-          path: TestResults/Coverage/*.xml
-          minimum_coverage: 0
-          skip_covered: true
-          show_line: false
