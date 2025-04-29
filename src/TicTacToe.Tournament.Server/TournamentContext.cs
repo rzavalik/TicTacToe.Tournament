@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using TicTacToe.Tournament.Models.Interfaces;
-using TicTacToe.Tournament.Server.Bots;
 using TicTacToe.Tournament.Server.Hubs;
 
 namespace TicTacToe.Tournament.Server;
 
 public class TournamentContext
 {
-    private readonly Action<TournamentContext> _saveDelegate;
     private readonly IHubContext<TournamentHub> _hubContext;
 
     public Models.Tournament Tournament { get; set; } = default!;
