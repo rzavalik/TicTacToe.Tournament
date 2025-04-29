@@ -7,14 +7,15 @@ on:
   pull_request:
     branches:
       - main
-      
+
 permissions:
   checks: write
   pull-requests: write
   contents: read
-  
+
 jobs:
   build-and-test:
+    name: Build, Test, and Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -36,13 +37,12 @@ jobs:
         run: |
           mkdir -p TestResults
           for proj in $(find . -type f -iname "*.Tests.csproj"); do
-            cd "$proj_dir"
-            dotnet test --no-build --configuration Release \
-              --logger "trx;LogFileName=$(basename $proj .csproj).trx" \
+            projectName=$(basename "$proj" .csproj)
+            dotnet test "$proj" --no-build --configuration Release \
+              --logger "trx;LogFileName=${projectName}.trx" \
               /p:CollectCoverage=true \
               /p:CoverletOutputFormat=cobertura \
-              /p:CoverletOutput=../../TestResults/coverage-$(basename $proj .csproj).xml
-            cd -
+              /p:CoverletOutput="${{ github.workspace }}/TestResults/coverage-${projectName}.xml"
           done
           find . -name "*.trx" -exec cp {} TestResults/ \;
 
@@ -67,13 +67,13 @@ jobs:
           files: TestResults/*.trx
 
       - name: Upload Coverage Reports
-          uses: actions/upload-artifact@v4
-          with:
+        uses: actions/upload-artifact@v4
+        with:
           name: coverage-reports
           path: TestResults/*.xml
-      
+
       - name: Publish Coverage to GitHub Summary
-          uses: 5monkeys/cobertura-action@v13
-          with:
+        uses: 5monkeys/cobertura-action@v13
+        with:
           path: TestResults/*.xml
           minimum_coverage: 0
