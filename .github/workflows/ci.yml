@@ -44,7 +44,7 @@ jobs:
 
       - name: Publish Test Report as PR Comment
         uses: dorny/test-reporter@v1
-        if: always()
+        if: github.event_name == 'pull_request'
         with:
           name: Tests Report
           path: TestResults/*.trx
