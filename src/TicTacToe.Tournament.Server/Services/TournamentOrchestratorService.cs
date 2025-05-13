@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using TicTacToe.Tournament.Models.DTOs;
@@ -63,10 +62,12 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
     {
         await EnsureConnectionAsync();
 
-        return await _connection.InvokeAsync<TournamentDto>(
+        var tournament = await _connection.InvokeAsync<TournamentDto>(
             "GetTournamentAsync",
             tournamentId
         );
+
+        return tournament;
     }
 
     public async Task<IEnumerable<TournamentSummaryDto>> GetAllTournamentsAsync()
