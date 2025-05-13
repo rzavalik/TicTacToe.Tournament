@@ -298,7 +298,8 @@ namespace TicTacToe.Tournament.Server
                     }
                 }
             }
-            else if (tournament.Matches.All(m => m.Status == MatchStatus.Finished))
+            else if (tournament.Status == TournamentStatus.Ongoing &&
+                     tournament.Matches.All(m => m.Status == MatchStatus.Finished))
             {
                 tournament.Status = TournamentStatus.Finished;
             }
