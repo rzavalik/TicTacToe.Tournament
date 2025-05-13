@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Server.Bots;
 using TicTacToe.Tournament.Models.DTOs;
+using TicTacToe.Tournament.Server.Bots;
 using TicTacToe.Tournament.Server.Interfaces;
 
 namespace TicTacToe.Tournament.Server.Hubs;
@@ -17,13 +17,11 @@ public class TournamentHub : Hub
 
     public async Task<TournamentDto?> GetTournamentAsync(Guid tournamentId)
     {
-        var tContext = await _tournamentManager.GetTournamentContextAsync(tournamentId);
-        if (tContext == null)
+        var tournament = _tournamentManager.GetTournament(tournamentId);
+        if (tournament == null)
         {
-            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+            return null;
         }
-
-        var tournament = tContext.Tournament;
 
         return new TournamentDto
         {
