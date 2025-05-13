@@ -1,8 +1,8 @@
-﻿namespace TicTacToe.Tournament.Server
+namespace TicTacToe.Tournament.Server
 {
-    using Microsoft.AspNetCore.SignalR;
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.SignalR;
     using TicTacToe.Tournament.Models;
     using TicTacToe.Tournament.Models.DTOs;
     using TicTacToe.Tournament.Models.Interfaces;
@@ -190,6 +190,16 @@
                 return;
             }
 
+            foreach (var match in tContext.Tournament.Matches)
+            {
+                if (match.Status == MatchStatus.Finished ||
+                    match.Status == MatchStatus.Cancelled)
+                {
+                    continue;
+                }
+
+                match.Status = MatchStatus.Cancelled;
+            }
             tContext.Tournament.Status = TournamentStatus.Cancelled;
             tContext.Tournament.EndTime = DateTime.UtcNow;
 
@@ -268,9 +278,34 @@
         }
 
         public Models.Tournament? GetTournament(Guid tournamentId)
-            => _tournamentContext.TryGetValue(tournamentId, out var tContext)
-            ? tContext.Tournament
-            : null;
+        {
+            var tournament = _tournamentContext.TryGetValue(tournamentId, out var tContext)
+                ? tContext.Tournament
+                : null;
+
+            if (tournament == null)
+            {
+                return tournament;
+            }
+
+            if (tournament.Status == TournamentStatus.Cancelled)
+            {
+                if (tournament.Matches.Any(m => m.Status == MatchStatus.Ongoing || m.Status == MatchStatus.Planned))
+                {
+                    foreach (var match in tournament.Matches.Where(m => m.Status == MatchStatus.Ongoing || m.Status == MatchStatus.Planned))
+                    {
+                        match.Status = MatchStatus.Cancelled;
+                    }
+                }
+            }
+
+            if (tournament.Matches.All(m => m.Status == MatchStatus.Finished))
+            {
+                tournament.Status = TournamentStatus.Finished;
+            }
+
+            return tournament;
+        }
 
         public IEnumerable<Models.Tournament> GetAllTournaments() => _tournamentContext.Values.Select(v => v.Tournament);
 
@@ -288,8 +323,8 @@
             {
                 var winner = match.WinnerMark;
 
-                MatchScore scoreA = MatchScore.Draw;
-                MatchScore scoreB = MatchScore.Draw;
+                var scoreA = MatchScore.Draw;
+                var scoreB = MatchScore.Draw;
 
                 if (winner.HasValue)
                 {
