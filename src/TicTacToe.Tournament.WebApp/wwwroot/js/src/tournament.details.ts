@@ -575,7 +575,8 @@ hub.onTournamentUpdated(async () => {
     await Promise.all([
         loadLeaderboard(),
         loadMatches(),
-        checkNoCurrentMatch(null)
+        checkNoCurrentMatch(null),
+        loadPlayers()
     ]);
 });
 hub.onPlayerRegistered(async () => {
