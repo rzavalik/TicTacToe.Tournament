@@ -1,12 +1,14 @@
 // === IMPORTS ===
 import { startSpinner, stopSpinner, safeFetchJson, flashElement } from "./helpers.js";
 import { renderMatches, renderLeaderboard, renderPlayers, updateMatchBoard } from "./renderers.js";
-import { SymbolMap, MatchStatus } from "./models.js";
+import { MatchDto, LeaderboardEntryDto, PlayerDto, TournamentDetailsDto, SymbolMap, MatchStatus } from "./models.js";
+import { TournamentHubClient } from "./tournament.hub.js";
+
 // === GLOBALS ===
-const tournamentId = document.getElementById("tournament")?.dataset.tournamentId;
-const hub = window.tournamentHub;
+const tournamentId = (document.getElementById("tournament") as HTMLElement)?.dataset.tournamentId!;
+const hub = (window as any).tournamentHub as TournamentHubClient;
 // === LOADERS ===
-function renderTournamentMeta(tournament) {
+function renderTournamentMeta(tournament: TournamentDetailsDto): void {
     const meta = document.getElementById("tournamentMeta");
     if (!meta)
         return;
@@ -18,12 +20,12 @@ function renderTournamentMeta(tournament) {
         </p>
     `;
 }
-export async function loadTournamentDetails(tournamentId) {
+export async function loadTournamentDetails(tournamentId: string): Promise<void> {
     if (!tournamentId)
         return;
     startSpinner("reloadTournamentBtn");
     try {
-        const tournament = await safeFetchJson(`/tournament/${tournamentId}`);
+        const tournament = await safeFetchJson<TournamentDetailsDto>(`/tournament/${tournamentId}`);
         renderTournamentMeta(tournament);
         renderMatches(tournament.matches);
         renderPlayers(Object.entries(tournament.registeredPlayers)
@@ -39,13 +41,13 @@ export async function loadTournamentDetails(tournamentId) {
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to load tournament.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to load tournament.", 'error');
     }
     finally {
         stopSpinner("reloadTournamentBtn");
     }
 }
-export function toggleMatchesPanel(tournamentId) {
+export function toggleMatchesPanel(tournamentId: string): void {
     const container = document.getElementById('matchesContainer');
     if (!container) {
         console.error("toggleMatchesPanel: matchesContainer not found.");
@@ -58,12 +60,12 @@ export function toggleMatchesPanel(tournamentId) {
         container.classList.add('d-none');
     }
 }
-async function loadMatches() {
+async function loadMatches(): Promise<void> {
     if (!tournamentId)
         return;
     startSpinner("reloadMatchesBtn");
     try {
-        const matches = await safeFetchJson(`/tournament/${tournamentId}/matches`);
+        const matches = await safeFetchJson<MatchDto[]>(`/tournament/${tournamentId}/matches`);
         renderMatches(matches);
         if (matches.every(m => MatchStatus[Number(m.status)] == 'Finished' || MatchStatus[Number(m.status)] == 'Cancelled')) {
             const res = await fetch(`/tournament/${tournamentId}`);
@@ -75,51 +77,51 @@ async function loadMatches() {
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to load matches.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to load matches.", 'error');
     }
     finally {
         stopSpinner("reloadMatchesBtn");
     }
 }
-async function loadLeaderboard() {
+async function loadLeaderboard(): Promise<void> {
     if (!tournamentId)
         return;
     startSpinner("reloadLeaderboardBtn");
     try {
-        const leaderboard = await safeFetchJson(`/tournament/${tournamentId}/leaderboard`);
+        const leaderboard = await safeFetchJson<LeaderboardEntryDto[]>(`/tournament/${tournamentId}/leaderboard`);
         renderLeaderboard(leaderboard);
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to load leaderboard.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to load leaderboard.", 'error');
     }
     finally {
         stopSpinner("reloadLeaderboardBtn");
     }
 }
-async function loadPlayers() {
+async function loadPlayers(): Promise<void> {
     if (!tournamentId)
         return;
     startSpinner("reloadPlayersBtn");
     try {
-        const players = await safeFetchJson(`/tournament/${tournamentId}/players`);
+        const players = await safeFetchJson<PlayerDto[]>(`/tournament/${tournamentId}/players`);
         renderPlayers(players);
         checkNumOfPlayersToStart(players.length);
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to load players.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to load players.", 'error');
     }
     finally {
         stopSpinner("reloadPlayersBtn");
     }
 }
-async function drawBoard(matchId, board, match) {
+async function drawBoard(matchId: string, board: string[][], match: MatchDto | null) {
     let container = document.getElementById("boardContainer");
     if (!container) {
         container = document.createElement("div");
         container.id = "boardContainer";
-        const center = document.getElementById("center");
+        const center = document.getElementById("center")!;
         center.appendChild(container);
     }
     container.innerHTML = "";
@@ -143,8 +145,7 @@ async function drawBoard(matchId, board, match) {
     }
     container.appendChild(table);
     if (match == null) {
-        const res = await fetch(`/tournament/${tournamentId}/match/current`);
-        match = await res.json();
+        const res = await safeFetchJson<MatchDto>(`/tournament/${tournamentId}/match/current`);
     }
     if (match == null) {
         let subtitle = document.getElementById("matchSubtitle");
@@ -155,8 +156,8 @@ async function drawBoard(matchId, board, match) {
         }
     }
     else {
-        const playerA = match.playerAName ?? match.playerAId;
-        const playerB = match.playerBName ?? match.playerBId;
+        const playerA = match.playerAName ?? match.playerAId ?? '';
+        const playerB = match.playerBName ?? match.playerBId ?? '';
         let subtitle = document.getElementById("matchSubtitle");
         if (!subtitle) {
             subtitle = document.createElement("h5");
@@ -171,7 +172,7 @@ async function drawBoard(matchId, board, match) {
         subtitle.textContent = `${playerA} (X) vs ${playerB} (O)`;
     }
 }
-function renderPodium(sorted, players) {
+function renderPodium(sorted: [string, number][], players: Record<string, string>) {
     const podium = [
         { place: 2, color: 'blue', height: 120, medal: '🥈' },
         { place: 1, color: 'gold', height: 180, medal: '🥇' },
@@ -198,7 +199,7 @@ function renderPodium(sorted, players) {
         `;
     }).join('');
 }
-function checkNumOfPlayersToStart(numPlayers) {
+function checkNumOfPlayersToStart(numPlayers: number) {
     try {
         const canStart = numPlayers >= 2;
         const startButton = document.getElementById("startBtn");
@@ -220,8 +221,8 @@ function checkNumOfPlayersToStart(numPlayers) {
         console.error('Could not update the start button limitation.');
     }
 }
-function renderPlannedTournamentUI(data) {
-    const center = document.getElementById("center");
+function renderPlannedTournamentUI(data: any) {
+    const center = document.getElementById("center")!;
     if (center.classList.contains("ongoing") ||
         center.classList.contains("finished") ||
         center.classList.contains("cancelled")) {
@@ -277,12 +278,12 @@ function renderPlannedTournamentUI(data) {
     });
     checkNumOfPlayersToStart(data.registeredPlayers.length);
 }
-async function updateTournamentUI(status, data) {
-    const center = document.getElementById("center");
+async function updateTournamentUI(status: string, data: any) {
+    const center = document.getElementById("center")!;
     center.innerHTML = "";
     const titleElement = document.getElementById("tournamentTitle");
     if (titleElement && data.name) {
-        titleElement.firstChild.textContent = data.name + " ";
+        titleElement!.firstChild!.textContent = data.name + " ";
     }
     const matchesContainer = document.getElementById("matches");
     if (matchesContainer) {
@@ -319,8 +320,8 @@ async function updateTournamentUI(status, data) {
         }
     }
 }
-async function renderOngoingTournamentUI(data) {
-    const center = document.getElementById("center");
+async function renderOngoingTournamentUI(data: any) {
+    const center = document.getElementById("center")!;
     if (center.classList.contains("planned") ||
         center.classList.contains("finished") ||
         center.classList.contains("cancelled")) {
@@ -347,7 +348,7 @@ async function renderOngoingTournamentUI(data) {
     let cancelBtn = document.getElementById("cancelBtn");
     if (!cancelBtn) {
         center.innerHTML += '<br><button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>';
-        cancelBtn = document.getElementById("cancelBtn");
+        cancelBtn = document.getElementById("cancelBtn")!;
         cancelBtn.addEventListener("click", async () => {
             try {
                 const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
@@ -365,7 +366,7 @@ async function renderOngoingTournamentUI(data) {
         center.appendChild(cancelBtn);
     }
 }
-async function checkNoCurrentMatch(res) {
+async function checkNoCurrentMatch(res: any) {
     try {
         res = res ?? await fetch(`/tournament/${tournamentId}/match/current`);
         if (res.status != 200) {
@@ -374,7 +375,7 @@ async function checkNoCurrentMatch(res) {
             if (!container) {
                 container = document.createElement("div");
                 container.id = "boardContainer";
-                const center = document.getElementById("center");
+                const center = document.getElementById("center")!;
                 center.appendChild(container);
             }
             container.innerHTML = `
@@ -392,8 +393,8 @@ async function checkNoCurrentMatch(res) {
         return true;
     }
 }
-function renderFinishedTournamentUI(data) {
-    const center = document.getElementById("center");
+function renderFinishedTournamentUI(data: any) {
+    const center = document.getElementById("center")!;
     if (center.classList.contains("planned") ||
         center.classList.contains("ongoing") ||
         center.classList.contains("cancelled")) {
@@ -405,8 +406,8 @@ function renderFinishedTournamentUI(data) {
     if (!center.classList.contains("finished")) {
         center.classList.add("finished");
     }
-    const sorted = Object.entries(data.leaderboard)
-        .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
+    const sorted = Object.entries(data.leaderboard as Record<string, number>)
+        .sort(([, scoreA], [, scoreB]) => (scoreB as number) - (scoreA as number));
     center.innerHTML = `
         <h3>🏁 Tournament Finished</h3>
         <div class="podium-container d-flex justify-content-center align-items-end mt-4">
@@ -414,8 +415,9 @@ function renderFinishedTournamentUI(data) {
         </div>
     `;
 }
+
 function renderCancelledTournamentUI() {
-    const center = document.getElementById("center");
+    const center = document.getElementById("center")!;
     if (center.classList.contains("planned") ||
         center.classList.contains("ongoing") ||
         center.classList.contains("finished")) {
@@ -441,7 +443,7 @@ function subscribeToTournament() {
     }
 }
 // === ACTIONS ===
-async function renameTournament() {
+async function renameTournament(): Promise<void> {
     if (!tournamentId)
         return;
     const { value: newName } = await Swal.fire({
@@ -450,7 +452,7 @@ async function renameTournament() {
         inputLabel: 'New tournament name:',
         inputPlaceholder: 'Enter new name',
         showCancelButton: true,
-        inputValidator: (value) => {
+        inputValidator: (value: string) => {
             if (!value)
                 return 'Please enter a valid name!';
         }
@@ -466,18 +468,18 @@ async function renameTournament() {
         await Swal.fire('Success!', 'Tournament renamed.', 'success');
         const titleElement = document.getElementById("tournamentTitle");
         if (titleElement) {
-            titleElement.firstChild.textContent = newName + " ";
+            titleElement!.firstChild!.textContent = newName + " ";
             flashElement(titleElement);
         }
         document.title = newName + " - Tournament";
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to rename tournament.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to rename tournament.", 'error');
     }
 }
-window.renameTournament = renameTournament;
-async function renamePlayer(playerId) {
+(window as any).renameTournament = renameTournament;
+async function renamePlayer(playerId: string): Promise<void> {
     if (!tournamentId)
         return;
     const { value: newName } = await Swal.fire({
@@ -486,7 +488,7 @@ async function renamePlayer(playerId) {
         inputLabel: 'New player name:',
         inputPlaceholder: 'Enter new name',
         showCancelButton: true,
-        inputValidator: (value) => {
+        inputValidator: (value: string) => {
             if (!value)
                 return 'Please enter a valid name!';
         }
@@ -504,11 +506,11 @@ async function renamePlayer(playerId) {
     }
     catch (error) {
         console.error(error);
-        await Swal.fire('Error', error.message || "Failed to rename player.", 'error');
+        await Swal.fire('Error', (error as Error).message || "Failed to rename player.", 'error');
     }
 }
-window.renamePlayer = renamePlayer;
-export async function fetchMatch(tournamentId, matchId) {
+(window as any).renamePlayer = renamePlayer;
+export async function fetchMatch(tournamentId: string, matchId: string): Promise<MatchDto | null> {
     try {
         const res = await fetch(`/tournament/${tournamentId}/match/${matchId}`);
         if (!res.ok) {
@@ -522,7 +524,7 @@ export async function fetchMatch(tournamentId, matchId) {
         return null;
     }
 }
-window.fetchMatch = fetchMatch;
+(window as any).fetchMatch = fetchMatch;
 // === HUB EVENTS ===
 hub.onPlayerRegistered(async () => {
     console.log("Player registered → Reloading players and tournament UI.");
@@ -553,16 +555,16 @@ hub.onTournamentUpdated(async () => {
     }
 });
 hub.onTournamentCancelled(() => updateTournamentUI("Cancelled", {}));
-hub.onMatchStarted(async (matchId) => {
+hub.onMatchStarted(async (matchId: string) => {
     await fetchMatch(String(tournamentId), matchId);
 });
-hub.onMatchEnded(async (matchId) => {
+hub.onMatchEnded(async (matchId: string) => {
     await Promise.all([
         fetchMatch(String(tournamentId), matchId),
         checkNoCurrentMatch(null)
     ]);
 });
-hub.onReceiveBoard(async (matchId, board) => {
+hub.onReceiveBoard(async (matchId: string, board: string[][]) => {
     await Promise.all([
         drawBoard(matchId, board, null),
         updateMatchBoard(matchId, board)
@@ -588,7 +590,7 @@ document.getElementById("reloadMatchesBtn")?.addEventListener("click", loadMatch
 document.getElementById("renameTournamentBtn")?.addEventListener("click", renameTournament);
 document.querySelectorAll(".renamePlayerBtn").forEach(button => {
     button.addEventListener("click", (e) => {
-        const playerId = e.currentTarget.getAttribute("data-player-id");
+        const playerId = (e.currentTarget as HTMLElement).getAttribute("data-player-id");
         if (playerId) {
             renamePlayer(playerId);
         }

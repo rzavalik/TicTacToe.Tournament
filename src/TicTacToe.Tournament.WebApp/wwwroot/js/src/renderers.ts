@@ -1,12 +1,32 @@
 // renderers.ts
-import { showElementById } from "./helpers.js";
+import { flashElement, showElementById } from "./helpers.js";
 import { MatchStatus } from "./models.js";
+
+export interface MatchDto {
+    id: string;
+    playerAName: string;
+    playerBName: string;
+    board: string[][];
+    status: string;
+    duration: string | null;
+}
+
+export interface LeaderboardEntryDto {
+    name: string;
+    score: number;
+}
+
+export interface PlayerDto {
+    id: string;
+    name: string;
+}
+
 /**
     * Renders a tic-tac-toe board.
     * @param board The board data.
     */
-export function renderMatchBoard(board) {
-    const boardSymbolMap = { "32": " ", "88": "X", "79": "O" };
+export function renderMatchBoard(board: string[][]) {
+    const boardSymbolMap: Record<string, string> = { "32": " ", "88": "X", "79": "O" };
     const empty = ["", "", ""];
     if (!board || board.every(row => row === null))
         board = [empty, empty, empty];
@@ -18,7 +38,7 @@ export function renderMatchBoard(board) {
 * Renders a list of matches.
 * @param matches The matches array.
 */
-export function renderMatches(matches) {
+export function renderMatches(matches: MatchDto[]): void {
     const container = document.getElementById("matchesContainer");
     if (!container)
         return;
@@ -36,7 +56,7 @@ export function renderMatches(matches) {
 * @param match Match.
 * @param matchIndex Index.
 */
-export function renderMatch(match, matchIndex) {
+export function renderMatch(match: MatchDto, matchIndex?: number): void {
     const container = document.getElementById("matchesContainer");
     if (!container)
         return;
@@ -63,10 +83,10 @@ export function renderMatch(match, matchIndex) {
     tempDiv.innerHTML = matchHtml;
     const newMatchDiv = tempDiv.firstElementChild;
     if (matchDiv) {
-        container.replaceChild(newMatchDiv, matchDiv);
+        container.replaceChild(newMatchDiv!, matchDiv);
     }
     else {
-        container.appendChild(newMatchDiv);
+        container.appendChild(newMatchDiv!);
     }
 }
 const priorityOrder = ['Ongoing', 'Planned', 'Finished', 'Cancelled'];
@@ -77,15 +97,15 @@ function reorderMatches() {
     }
     const cards = Array.from(container.children);
     cards.sort((a, b) => {
-        const statusA = a.dataset.status || '';
-        const statusB = b.dataset.status || '';
+        const statusA = a.attributes.getNamedItem("data-status")?.value || '';
+        const statusB = b.attributes.getNamedItem("data-status")?.value || '';
         return priorityOrder.indexOf(statusA) - priorityOrder.indexOf(statusB);
     });
     for (const card of cards) {
         container.appendChild(card);
     }
 }
-export function updateMatchBoard(matchId, board) {
+export function updateMatchBoard(matchId: string, board: any[][]) {
     const matchDiv = document.querySelector(`[data-match-id="${matchId}"]`);
     if (!matchDiv) {
         console.error(`Match with id ${matchId} not found.`);
@@ -110,7 +130,7 @@ export function updateMatchBoard(matchId, board) {
     * Renders the tournament leaderboard.
     * @param players The leaderboard array.
     */
-export function renderLeaderboard(players) {
+export function renderLeaderboard(players: LeaderboardEntryDto[]): void {
     const container = document.getElementById("leaderboardContainer");
     if (!container)
         return;
@@ -134,7 +154,7 @@ export function renderLeaderboard(players) {
     * Renders the list of players.
     * @param players The players array.
     */
-export function renderPlayers(players) {
+export function renderPlayers(players: PlayerDto[]): void {
     const container = document.getElementById("playersContainer");
     if (!container)
         return;

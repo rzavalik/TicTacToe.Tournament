@@ -1,7 +1,7 @@
 // === IMPORTS ===
 import { startSpinner, stopSpinner, safeFetchJson, flashElement } from "./helpers.js";
 import { renderMatches, renderLeaderboard, renderPlayers, updateMatchBoard } from "./renderers.js";
-import { SymbolMap } from "./models.js";
+import { SymbolMap, MatchStatus } from "./models.js";
 // === GLOBALS ===
 const tournamentId = document.getElementById("tournament")?.dataset.tournamentId;
 const hub = window.tournamentHub;
@@ -58,7 +58,6 @@ export function toggleMatchesPanel(tournamentId) {
         container.classList.add('d-none');
     }
 }
-window.toggleMatchesPanel = toggleMatchesPanel;
 async function loadMatches() {
     if (!tournamentId)
         return;
@@ -66,6 +65,13 @@ async function loadMatches() {
     try {
         const matches = await safeFetchJson(`/tournament/${tournamentId}/matches`);
         renderMatches(matches);
+        if (matches.every(m => MatchStatus[Number(m.status)] == 'Finished' || MatchStatus[Number(m.status)] == 'Cancelled')) {
+            const res = await fetch(`/tournament/${tournamentId}`);
+            if (res.ok) {
+                const data = await res.json();
+                await updateTournamentUI(data.status, data);
+            }
+        }
     }
     catch (error) {
         console.error(error);
@@ -98,6 +104,7 @@ async function loadPlayers() {
     try {
         const players = await safeFetchJson(`/tournament/${tournamentId}/players`);
         renderPlayers(players);
+        checkNumOfPlayersToStart(players.length);
     }
     catch (error) {
         console.error(error);
@@ -107,7 +114,7 @@ async function loadPlayers() {
         stopSpinner("reloadPlayersBtn");
     }
 }
-function drawBoard(matchId, board) {
+async function drawBoard(matchId, board, match) {
     let container = document.getElementById("boardContainer");
     if (!container) {
         container = document.createElement("div");
@@ -135,6 +142,33 @@ function drawBoard(matchId, board) {
         table.appendChild(row);
     }
     container.appendChild(table);
+    if (match == null) {
+        const res = await safeFetchJson(`/tournament/${tournamentId}/match/current`);
+    }
+    if (match == null) {
+        let subtitle = document.getElementById("matchSubtitle");
+        if (subtitle != null) {
+            if (!subtitle.classList.contains("d-none")) {
+                subtitle.classList.add("d-none");
+            }
+        }
+    }
+    else {
+        const playerA = match.playerAName ?? match.playerAId ?? '';
+        const playerB = match.playerBName ?? match.playerBId ?? '';
+        let subtitle = document.getElementById("matchSubtitle");
+        if (!subtitle) {
+            subtitle = document.createElement("h5");
+            subtitle.id = "matchSubtitle";
+            container.appendChild(subtitle);
+        }
+        else {
+            if (subtitle.classList.contains("d-none")) {
+                subtitle.classList.remove("d-none");
+            }
+        }
+        subtitle.textContent = `${playerA} (X) vs ${playerB} (O)`;
+    }
 }
 function renderPodium(sorted, players) {
     const podium = [
@@ -163,8 +197,41 @@ function renderPodium(sorted, players) {
         `;
     }).join('');
 }
+function checkNumOfPlayersToStart(numPlayers) {
+    try {
+        const canStart = numPlayers >= 2;
+        const startButton = document.getElementById("startBtn");
+        if (startButton != null) {
+            if (canStart) {
+                if (startButton.classList.contains("disabled")) {
+                    startButton.classList.remove("disabled");
+                }
+                startButton.attributes.removeNamedItem("disabled");
+            }
+            else {
+                if (!startButton.classList.contains("disabled")) {
+                    startButton.classList.add("disabled");
+                }
+            }
+        }
+    }
+    catch {
+        console.error('Could not update the start button limitation.');
+    }
+}
 function renderPlannedTournamentUI(data) {
     const center = document.getElementById("center");
+    if (center.classList.contains("ongoing") ||
+        center.classList.contains("finished") ||
+        center.classList.contains("cancelled")) {
+        center.innerHTML = 'Loading...';
+        center.classList.remove("ongoing");
+        center.classList.remove("finished");
+        center.classList.remove("cancelled");
+    }
+    if (!center.classList.contains("planned")) {
+        center.classList.add("planned");
+    }
     const numPlayers = Object.keys(data.registeredPlayers).length;
     const canStart = numPlayers >= 2;
     center.innerHTML = `
@@ -207,6 +274,7 @@ function renderPlannedTournamentUI(data) {
             alert("❌ An unexpected error occurred while cancelling the tournament.");
         }
     });
+    checkNumOfPlayersToStart(data.registeredPlayers.length);
 }
 async function updateTournamentUI(status, data) {
     const center = document.getElementById("center");
@@ -252,8 +320,17 @@ async function updateTournamentUI(status, data) {
 }
 async function renderOngoingTournamentUI(data) {
     const center = document.getElementById("center");
-    const leaderboardContainer = document.getElementById("right");
-    leaderboardContainer.innerHTML = "";
+    if (center.classList.contains("planned") ||
+        center.classList.contains("finished") ||
+        center.classList.contains("cancelled")) {
+        center.innerHTML = '';
+        center.classList.remove("planned");
+        center.classList.remove("finished");
+        center.classList.remove("cancelled");
+    }
+    if (!center.classList.contains("ongoing")) {
+        center.classList.add("ongoing");
+    }
     let title = document.getElementById("matchTitle");
     if (!title) {
         title = document.createElement("h3");
@@ -262,48 +339,14 @@ async function renderOngoingTournamentUI(data) {
         center.appendChild(title);
     }
     const res = await fetch(`/tournament/${tournamentId}/match/current`);
-    if (res.status != 200) {
-        center.innerHTML = `
-            <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px;">
-                <div class="display-1 text-muted">🕒</div>
-                <div class="text-muted">Waiting for the next match...</div>
-            </div>
-            <br/>
-            <button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>
-        `;
-        document.getElementById("cancelBtn")?.addEventListener("click", async () => {
-            try {
-                const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
-                if (!response.ok) {
-                    const message = await response.text();
-                    alert(`⚠️ Failed to cancel tournament: ${message}`);
-                    return;
-                }
-            }
-            catch (err) {
-                console.error("Unexpected error:", err);
-                alert("❌ An unexpected error occurred while cancelling the tournament.");
-            }
-        });
-        return;
+    if (await checkNoCurrentMatch(res) == false) {
+        const match = await res.json();
+        await drawBoard(match.id, match.board, match);
     }
-    const match = await res.json();
-    drawBoard(match.id, match.board);
-    const playerA = data.registeredPlayers[match.playerAId] ?? match.playerAId;
-    const playerB = data.registeredPlayers[match.playerBId] ?? match.playerBId;
-    let subtitle = document.getElementById("matchSubtitle");
-    if (!subtitle) {
-        subtitle = document.createElement("h5");
-        subtitle.id = "matchSubtitle";
-        center.appendChild(subtitle);
-    }
-    subtitle.textContent = `${playerA} vs ${playerB}`;
     let cancelBtn = document.getElementById("cancelBtn");
     if (!cancelBtn) {
-        cancelBtn = document.createElement("button");
-        cancelBtn.id = "cancelBtn";
-        cancelBtn.textContent = "Cancel Tournament";
-        cancelBtn.className = "btn btn-danger mt-3 d-block mx-auto";
+        center.innerHTML += '<br><button id="cancelBtn" class="btn btn-danger">Cancel Tournament</button>';
+        cancelBtn = document.getElementById("cancelBtn");
         cancelBtn.addEventListener("click", async () => {
             try {
                 const response = await fetch(`/tournament/${tournamentId}/cancel`, { method: "POST" });
@@ -320,21 +363,47 @@ async function renderOngoingTournamentUI(data) {
         });
         center.appendChild(cancelBtn);
     }
-    leaderboardContainer.innerHTML = "<h4>Leaderboard</h4>";
-    const table = document.createElement("table");
-    table.className = "table table-striped";
-    const tbody = document.createElement("tbody");
-    Object.entries(data.leaderboard).forEach(([playerId, score], idx) => {
-        const name = data.registeredPlayers[playerId] ?? "Unknown";
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${idx + 1}</td><td>${name}</td><td>${score}</td>`;
-        tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-    leaderboardContainer.appendChild(table);
+}
+async function checkNoCurrentMatch(res) {
+    try {
+        res = res ?? await fetch(`/tournament/${tournamentId}/match/current`);
+        if (res.status != 200) {
+            const center = document.getElementById("center");
+            let container = document.getElementById("boardContainer");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "boardContainer";
+                const center = document.getElementById("center");
+                center.appendChild(container);
+            }
+            container.innerHTML = `
+                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px;">
+                    <div class="display-1 text-muted">🕒</div>
+                    <div class="text-muted">Waiting for the next match...</div>
+                </div>
+            `;
+            return true;
+        }
+        return false;
+    }
+    catch {
+        console.log('Failed to retrieve current match.');
+        return true;
+    }
 }
 function renderFinishedTournamentUI(data) {
     const center = document.getElementById("center");
+    if (center.classList.contains("planned") ||
+        center.classList.contains("ongoing") ||
+        center.classList.contains("cancelled")) {
+        center.innerHTML = 'Loading...';
+        center.classList.remove("planned");
+        center.classList.remove("ongoing");
+        center.classList.remove("cancelled");
+    }
+    if (!center.classList.contains("finished")) {
+        center.classList.add("finished");
+    }
     const sorted = Object.entries(data.leaderboard)
         .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
     center.innerHTML = `
@@ -346,7 +415,29 @@ function renderFinishedTournamentUI(data) {
 }
 function renderCancelledTournamentUI() {
     const center = document.getElementById("center");
+    if (center.classList.contains("planned") ||
+        center.classList.contains("ongoing") ||
+        center.classList.contains("finished")) {
+        center.innerHTML = 'Loading...';
+        center.classList.remove("planned");
+        center.classList.remove("ongoing");
+        center.classList.remove("finished");
+    }
+    if (!center.classList.contains("cancelled")) {
+        center.classList.add("cancelled");
+    }
     center.innerHTML = "<h3 class='text-danger'>Tournament Cancelled</h3>";
+}
+function subscribeToTournament() {
+    if (hub?.connectionStatus == 'Connected') {
+        try {
+            hub.subscribeToTournament(tournamentId);
+        }
+        catch { }
+    }
+    else {
+        setTimeout(subscribeToTournament, 500);
+    }
 }
 // === ACTIONS ===
 async function renameTournament() {
@@ -438,11 +529,21 @@ hub.onPlayerRegistered(async () => {
     const res = await fetch(`/tournament/${tournamentId}`);
     if (res.ok) {
         const data = await res.json();
-        await updateTournamentUI(data.status, data);
+        await Promise.all([
+            updateTournamentUI(data.status, data),
+            checkNumOfPlayersToStart(data.registeredPlayers.length)
+        ]);
     }
     await loadLeaderboard();
 });
 hub.onRefreshLeaderboard(() => loadLeaderboard());
+hub.onTournamentStarted(async () => {
+    const res = await fetch(`/tournament/${tournamentId}`);
+    if (res.ok) {
+        const data = await res.json();
+        await updateTournamentUI(data.status, data);
+    }
+});
 hub.onTournamentUpdated(async () => {
     const res = await fetch(`/tournament/${tournamentId}`);
     if (res.ok) {
@@ -455,28 +556,27 @@ hub.onMatchStarted(async (matchId) => {
     await fetchMatch(String(tournamentId), matchId);
 });
 hub.onMatchEnded(async (matchId) => {
-    await fetchMatch(String(tournamentId), matchId);
+    await Promise.all([
+        fetchMatch(String(tournamentId), matchId),
+        checkNoCurrentMatch(null)
+    ]);
 });
 hub.onReceiveBoard(async (matchId, board) => {
-    await drawBoard(matchId, board);
-    await updateMatchBoard(matchId, board);
-});
-hub.onTournamentUpdated(async () => {
-    console.log("Tournament updated → Reloading leaderboard and matches...");
     await Promise.all([
-        loadLeaderboard(),
-        loadMatches()
+        drawBoard(matchId, board, null),
+        updateMatchBoard(matchId, board)
     ]);
 });
 hub.onTournamentUpdated(async () => {
-    console.log("Tournament updated → Reloading leaderboard and matches...");
+    console.log("Tournament updated → reloading leaderboard and matches...");
     await Promise.all([
         loadLeaderboard(),
-        loadMatches()
+        loadMatches(),
+        checkNoCurrentMatch(null)
     ]);
 });
 hub.onPlayerRegistered(async () => {
-    console.log("Player registered → Reloading players...");
+    console.log("Player registered → reloading players...");
     await loadPlayers();
 });
 // === DOM EVENTS ===
@@ -496,8 +596,5 @@ document.querySelectorAll(".renamePlayerBtn").forEach(button => {
 // === INITIALIZATION ===
 document.addEventListener("DOMContentLoaded", async () => {
     await loadTournamentDetails(tournamentId);
-    try {
-        setTimeout(() => hub.subscribeToTournament(tournamentId), 2000);
-    }
-    catch { }
+    subscribeToTournament();
 });

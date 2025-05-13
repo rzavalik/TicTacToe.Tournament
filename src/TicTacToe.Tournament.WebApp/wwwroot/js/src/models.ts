@@ -41,6 +41,8 @@ export interface MatchDto {
     id: string;
     playerAName: string;
     playerBName: string;
+    playerAId: string;
+    playerBId: string;
     board: string[][];
     status: string;
     duration: string | null;

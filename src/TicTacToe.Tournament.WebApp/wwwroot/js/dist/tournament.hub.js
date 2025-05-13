@@ -44,6 +44,7 @@ export class TournamentHubClient {
     async start() {
         try {
             await this.connection.start();
+            this.connectionStatus = this.connection.state;
             console.log("✅ TournamentHub connected.");
         }
         catch (err) {

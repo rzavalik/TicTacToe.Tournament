@@ -6,7 +6,7 @@ import { renderMatches, renderLeaderboard, renderPlayers } from "./renderers.js"
 
 const hub = new TournamentHubClient();
 
-hub.onAny((event, data) => {
+hub.onAny((event: any, data: any) => {
     console.log(`[GlobalHub] ${event}`, data);
 });
 

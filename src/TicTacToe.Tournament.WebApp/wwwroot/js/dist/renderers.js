@@ -29,6 +29,7 @@ export function renderMatches(matches) {
     for (let idx = 0; idx < matches.length; idx++) {
         renderMatch(matches[idx], idx);
     }
+    reorderMatches();
 }
 /**
 * Renders or Updates a specific match
@@ -51,8 +52,8 @@ export function renderMatch(match, matchIndex) {
     else if (status === "Planned")
         cardColor = "bg-info text-dark";
     const matchHtml = `
-        <div class="card col-3 m-2 ${cardColor} flash-change" data-match-id="${match.id}">
-            <strong>Match ${matchIndex !== undefined ? matchIndex + 1 : ''}:</strong> ${match.playerAName} vs ${match.playerBName}<br>
+        <div class="card col-3 m-2 ${cardColor} flash-change" data-match-id="${match.id}" data-status="${status}">
+            <strong>Match ${matchIndex !== undefined ? matchIndex + 1 : ''}:</strong> ${match.playerAName} (X) vs ${match.playerBName} (O)<br>
             <strong>Status:</strong> ${status}<br>
             <strong>Duration:</strong> ${match.duration || '-'}
             ${renderMatchBoard(match.board)}
@@ -66,6 +67,22 @@ export function renderMatch(match, matchIndex) {
     }
     else {
         container.appendChild(newMatchDiv);
+    }
+}
+const priorityOrder = ['Ongoing', 'Planned', 'Finished', 'Cancelled'];
+function reorderMatches() {
+    const container = document.getElementById('matchesContainer');
+    if (!container) {
+        return;
+    }
+    const cards = Array.from(container.children);
+    cards.sort((a, b) => {
+        const statusA = a.attributes.getNamedItem("data-status")?.value || '';
+        const statusB = b.attributes.getNamedItem("data-status")?.value || '';
+        return priorityOrder.indexOf(statusA) - priorityOrder.indexOf(statusB);
+    });
+    for (const card of cards) {
+        container.appendChild(card);
     }
 }
 export function updateMatchBoard(matchId, board) {
