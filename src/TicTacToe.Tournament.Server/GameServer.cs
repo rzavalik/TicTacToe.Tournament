@@ -1,8 +1,8 @@
-﻿namespace TicTacToe.Tournament.Server
+namespace TicTacToe.Tournament.Server
 {
-    using Microsoft.AspNetCore.SignalR;
     using System.Collections.Concurrent;
     using System.Diagnostics;
+    using Microsoft.AspNetCore.SignalR;
     using TicTacToe.Tournament.Models;
     using TicTacToe.Tournament.Models.Interfaces;
     using TicTacToe.Tournament.Server.Hubs;
@@ -77,12 +77,13 @@
             _tournament.Matches = new List<Match>();
 
             var ids = _tournament.RegisteredPlayers.Keys.ToList();
-            for (int i = 0; i < ids.Count; i++)
+            for (var i = 0; i < ids.Count; i++)
             {
-                for (int j = 0; j < ids.Count; j++)
+                for (var j = 0; j < ids.Count; j++)
                 {
-                    if (i == j) continue;
-                    for (int r = 0; r < _tournament.MatchRepetition; r++)
+                    if (i == j) { continue; }
+
+                    for (var r = 0; r < _tournament.MatchRepetition; r++)
                     {
                         var match = new Models.Match
                         {
@@ -208,7 +209,9 @@
             while (sw.ElapsedMilliseconds < timeoutInMs)
             {
                 if (_pendingMoves.TryGetValue(playerId, out var queue) && queue.TryDequeue(out var move))
+                {
                     return move;
+                }
 
                 await Task.Delay(100);
             }
