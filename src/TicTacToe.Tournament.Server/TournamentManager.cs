@@ -190,6 +190,8 @@ namespace TicTacToe.Tournament.Server
                 return;
             }
 
+            tContext.Tournament.EndTime = DateTime.UtcNow;
+            tContext.Tournament.Status = TournamentStatus.Cancelled;
             foreach (var match in tContext.Tournament.Matches)
             {
                 if (match.Status == MatchStatus.Finished ||
@@ -200,8 +202,6 @@ namespace TicTacToe.Tournament.Server
 
                 match.Status = MatchStatus.Cancelled;
             }
-            tContext.Tournament.Status = TournamentStatus.Cancelled;
-            tContext.Tournament.EndTime = DateTime.UtcNow;
 
             await SaveStateAsync(tContext);
 
@@ -298,8 +298,7 @@ namespace TicTacToe.Tournament.Server
                     }
                 }
             }
-
-            if (tournament.Matches.All(m => m.Status == MatchStatus.Finished))
+            else if (tournament.Matches.All(m => m.Status == MatchStatus.Finished))
             {
                 tournament.Status = TournamentStatus.Finished;
             }

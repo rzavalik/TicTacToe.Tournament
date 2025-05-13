@@ -1,11 +1,11 @@
 ﻿namespace TicTacToe.Tournament.Server.Tests.Hubs
 {
-    using TicTacToe.Tournament.Models;
-    using TicTacToe.Tournament.Server.Hubs;
-    using TicTacToe.Tournament.Server.Interfaces;
     using Microsoft.AspNetCore.SignalR;
     using Moq;
     using Shouldly;
+    using TicTacToe.Tournament.Models;
+    using TicTacToe.Tournament.Server.Hubs;
+    using TicTacToe.Tournament.Server.Interfaces;
 
     public class TournamentHubTests
     {
@@ -53,8 +53,8 @@
             };
 
             var managerMock = new Mock<ITournamentManager>();
-            managerMock.Setup(m => m.GetTournamentContextAsync(tournamentId))
-                .ReturnsAsync(new TournamentContext(new Mock<IHubContext<TournamentHub>>().Object, tournament));
+            managerMock.Setup(m => m.GetTournament(tournamentId))
+                .Returns(tournament);
 
             var sut = MakeSut(managerMock, out _, out _, out _, out _);
 
