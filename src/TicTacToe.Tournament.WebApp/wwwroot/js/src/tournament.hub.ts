@@ -1,143 +1,112 @@
-﻿declare const signalR: any;
-
-declare global {
-    interface Window {
-        SIGNALR_HUB_URL: string;
-    }
-}
-
-type Guid = string;
-type Board = number[][];
-type AnyHandler = (...args: any[]) => void;
-
 export class TournamentHubClient {
-    private connection: any;
-    private globalListeners: ((event: string, data: any) => void)[] = [];
-    public connectionStatus: string = 'Disconnected';
-
-    private handlers: { [event: string]: AnyHandler | null } = {
-        OnRegistered: null,
-        OnPlayerRegistered: null,
-        OnTournamentCreated: null,
-        OnTournamentUpdated: null,
-        OnTournamentCancelled: null,
-        OnTournamentStarted: null,
-        OnMatchStarted: null,
-        OnMatchEnded: null,
-        OnOpponentMoved: null,
-        OnYourTurn: null,
-        OnReceiveBoard: null,
-        OnRefreshLeaderboard: null,
-    };
-
     constructor() {
+        this.globalListeners = [];
+        this.connectionStatus = 'Disconnected';
+        this.handlers = {
+            OnRegistered: null,
+            OnPlayerRegistered: null,
+            OnTournamentCreated: null,
+            OnTournamentUpdated: null,
+            OnTournamentCancelled: null,
+            OnTournamentStarted: null,
+            OnMatchStarted: null,
+            OnMatchEnded: null,
+            OnOpponentMoved: null,
+            OnYourTurn: null,
+            OnReceiveBoard: null,
+            OnRefreshLeaderboard: null,
+        };
         const endpoint = window.SIGNALR_HUB_URL || "https://default-server-url";
-
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(endpoint)
             .withAutomaticReconnect()
             .build();
-
         this.connection.onclose(() => {
             this.connectionStatus = 'Disconnected';
-            console.warn("SignalR disconnected.")
+            console.warn("SignalR disconnected.");
         });
         this.connection.onreconnected(() => {
             this.connectionStatus = 'Connected';
-            console.warn("SignalR reconnected.")
+            console.warn("SignalR connected.");
         });
         this.connection.onreconnecting(() => {
             this.connectionStatus = 'Connecting';
-            console.warn("SignalR Reconnecting...")
+            console.warn("SignalR reconnecting...");
         });
-
         Object.keys(this.handlers).forEach(event => {
-            this.connection.on(event, (...args: any[]) => {
+            this.connection.on(event, (...args) => {
                 console.log(`🔹 ${event}`, ...args);
                 this.handlers[event]?.(...args);
                 this.notifyGlobal(event, args);
             });
         });
     }
-
-    public async start(): Promise<void> {
+    async start() {
         try {
             await this.connection.start();
+            this.connectionStatus = this.connection.state;
             console.log("✅ TournamentHub connected.");
-        } catch (err) {
+        }
+        catch (err) {
+            this.connectionStatus = this.connection?.state ?? 'Disconnected';
             console.error("❌ Error connecting TournamentHub:", err);
         }
     }
-
-    public onAny(handler: (event: string, data: any) => void): void {
+    onAny(handler) {
         this.globalListeners.push(handler);
     }
-
-    private notifyGlobal(event: string, data: any): void {
+    notifyGlobal(event, data) {
         for (const listener of this.globalListeners) {
             listener(event, data);
         }
-
         const evt = new CustomEvent("tournament-hub-event", {
             detail: { event, data }
         });
         window.dispatchEvent(evt);
     }
-
-    public async subscribeToTournament(tournamentId: string): Promise<void> {
+    async subscribeToTournament(tournamentId) {
         try {
             await this.connection.invoke("SpectateTournamentAsync", tournamentId);
             console.log(`✅ Subscribed to tournament ${tournamentId}`);
-        } catch (err) {
+        }
+        catch (err) {
             console.error("❌ Failed to subscribe to tournament:", err);
         }
     }
-
-    onRegistered(handler: (...args: any[]) => void): void {
+    onRegistered(handler) {
         this.handlers.OnRegistered = handler;
     }
-
-    onPlayerRegistered(handler: (...args: any[]) => void): void {
+    onPlayerRegistered(handler) {
         this.handlers.OnPlayerRegistered = handler;
     }
-
-    onTournamentCreated(handler: (...args: any[]) => void): void {
+    onTournamentCreated(handler) {
         this.handlers.OnTournamentCreated = handler;
     }
-
-    onTournamentUpdated(handler: (...args: any[]) => void): void {
+    onTournamentUpdated(handler) {
         this.handlers.OnTournamentUpdated = handler;
     }
-
-    onTournamentCancelled(handler: (...args: any[]) => void): void {
+    onTournamentCancelled(handler) {
         this.handlers.OnTournamentCancelled = handler;
     }
-
-    onTournamentStarted(handler: (...args: any[]) => void): void {
+    onTournamentStarted(handler) {
         this.handlers.OnTournamentStarted = handler;
     }
-
-    onMatchStarted(handler: (...args: any[]) => void): void {
+    onMatchStarted(handler) {
         this.handlers.OnMatchStarted = handler;
     }
-
-    onMatchEnded(handler: (...args: any[]) => void): void {
+    onMatchEnded(handler) {
         this.handlers.OnMatchEnded = handler;
     }
-
-    onOpponentMoved(handler: (...args: any[]) => void): void {
+    onOpponentMoved(handler) {
         this.handlers.OnOpponentMoved = handler;
     }
-
-    onYourTurn(handler: (...args: any[]) => void): void {
+    onYourTurn(handler) {
         this.handlers.OnYourTurn = handler;
     }
-
-    onReceiveBoard(handler: (...args: any[]) => void): void {
+    onReceiveBoard(handler) {
         this.handlers.OnReceiveBoard = handler;
     }
-
-    onRefreshLeaderboard(handler: (...args: any[]) => void): void {
+    onRefreshLeaderboard(handler) {
         this.handlers.OnRefreshLeaderboard = handler;
     }
 }
