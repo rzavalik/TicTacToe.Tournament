@@ -90,18 +90,18 @@ public class BotTestRunner
 
         _bot.OnMatchStarted(matchId, Guid.NewGuid(), Guid.NewGuid(), Mark.X, true);
 
-        var board = EmptyBoard;
+        var board = new Board();
 
         Console.WriteLine("");
-        boardRenderer.Draw(board);
+        boardRenderer.Draw(board.State);
         Console.WriteLine("");
         Console.WriteLine("");
 
-        for (int turn = 0; turn < 9; turn++)
+        for (var turn = 0; turn < 9; turn++)
         {
-            var (row, col) = await _bot.MakeMoveAsync(matchId, board);
+            var (row, col) = await _bot.MakeMoveAsync(matchId, board.State);
 
-            if (board[row][col] != Mark.Empty)
+            if (board.State[row][col] != Mark.Empty)
             {
                 hasFailed = true;
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -109,13 +109,13 @@ public class BotTestRunner
                 continue;
             }
 
-            board[row][col] = turn % 2 == 0 ? Mark.X : Mark.O;
+            board.State[row][col] = turn % 2 == 0 ? Mark.X : Mark.O;
 
             _bot.OnOpponentMoved(matchId, row, col);
-            _bot.OnBoardUpdated(matchId, board);
+            _bot.OnBoardUpdated(matchId, board.State);
 
             Console.WriteLine("");
-            boardRenderer.Draw(board);
+            boardRenderer.Draw(board.State);
             Console.WriteLine("");
             Console.WriteLine("");
         }
@@ -146,9 +146,9 @@ public class BotTestRunner
 
     public static Mark[][] EmptyBoard =>
     [
-        new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-        new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-        new[] { Mark.Empty, Mark.Empty, Mark.Empty }
+        [Mark.Empty, Mark.Empty, Mark.Empty],
+        [Mark.Empty, Mark.Empty, Mark.Empty],
+        [Mark.Empty, Mark.Empty, Mark.Empty]
     ];
 
     private List<Mark[][]> BoardTestCases =>
@@ -157,156 +157,137 @@ public class BotTestRunner
         EmptyBoard,
 
         // 1 - First move by X
-        new[]
-        {
-            new[] { Mark.X, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+            [ Mark.X, Mark.Empty, Mark.Empty ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 2 - X followed by O
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+            [ Mark.X, Mark.O, Mark.Empty ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 3 - 3 moves
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+            [ Mark.X, Mark.O, Mark.X ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ],
+            [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 4
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.Empty, Mark.Empty ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 5
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.Empty ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 6
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.O },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.O ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 7
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.O },
-            new[] { Mark.X, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.O ],
+             [ Mark.X, Mark.Empty, Mark.Empty ]
+        ],
 
         // 8
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.O },
-            new[] { Mark.X, Mark.X, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.O ],
+             [ Mark.X, Mark.X, Mark.Empty ]
+        ],
 
         // 9 - Near win for X
-        new[]
-        {
-            new[] { Mark.X, Mark.X, Mark.Empty },
-            new[] { Mark.O, Mark.O, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.X, Mark.Empty ],
+             [ Mark.O, Mark.O, Mark.Empty ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 10 - Near win for O
-        new[]
-        {
-            new[] { Mark.O, Mark.O, Mark.Empty },
-            new[] { Mark.X, Mark.X, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.O, Mark.O, Mark.Empty ],
+             [ Mark.X, Mark.X, Mark.Empty ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 11
-        new[]
-        {
-            new[] { Mark.X, Mark.Empty, Mark.O },
-            new[] { Mark.Empty, Mark.X, Mark.Empty },
-            new[] { Mark.O, Mark.Empty, Mark.X }
-        },
+        [
+             [ Mark.X, Mark.Empty, Mark.O ],
+             [ Mark.Empty, Mark.X, Mark.Empty ],
+             [ Mark.O, Mark.Empty, Mark.X ]
+        ],
 
         // 12 - Start in center
-        new[]
-        {
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty },
-            new[] { Mark.Empty, Mark.X, Mark.Empty },
-            new[] { Mark.Empty, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.Empty, Mark.Empty, Mark.Empty ],
+             [ Mark.Empty, Mark.X, Mark.Empty ],
+             [ Mark.Empty, Mark.Empty, Mark.Empty ]
+        ],
 
         // 13
-        new[]
-        {
-            new[] { Mark.Empty, Mark.O, Mark.Empty },
-            new[] { Mark.X, Mark.X, Mark.Empty },
-            new[] { Mark.O, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.Empty, Mark.O, Mark.Empty ],
+             [ Mark.X, Mark.X, Mark.Empty ],
+             [ Mark.O, Mark.Empty, Mark.Empty ]
+        ],
 
         // 14
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.X, Mark.O, Mark.Empty },
-            new[] { Mark.O, Mark.X, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.X, Mark.O, Mark.Empty ],
+             [ Mark.O, Mark.X, Mark.Empty ]
+        ],
 
         // 15 - Opponent fork
-        new[]
-        {
-            new[] { Mark.O, Mark.Empty, Mark.O },
-            new[] { Mark.Empty, Mark.X, Mark.Empty },
-            new[] { Mark.X, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.O, Mark.Empty, Mark.O ],
+             [ Mark.Empty, Mark.X, Mark.Empty ],
+             [ Mark.X, Mark.Empty, Mark.Empty ]
+        ],
 
         // 16 - Block fork
-        new[]
-        {
-            new[] { Mark.X, Mark.Empty, Mark.Empty },
-            new[] { Mark.O, Mark.X, Mark.Empty },
-            new[] { Mark.O, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.Empty, Mark.Empty ],
+             [ Mark.O, Mark.X, Mark.Empty ],
+             [ Mark.O, Mark.Empty, Mark.Empty ]
+        ],
 
         // 17 - Mid game
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.X },
-            new[] { Mark.O, Mark.Empty, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.X ],
+             [ Mark.O, Mark.Empty, Mark.Empty ]
+        ],
 
         // 18 - Unpredictable layout
-        new[]
-        {
-            new[] { Mark.X, Mark.Empty, Mark.O },
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.Empty }
-        },
+        [
+             [ Mark.X, Mark.Empty, Mark.O ],
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.Empty ]
+        ],
 
         // 19 - Almost full, still playable
-        new[]
-        {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.O, Mark.X, Mark.O },
-            new[] { Mark.X, Mark.X, Mark.Empty }
-        }
+        [
+             [ Mark.X, Mark.O, Mark.X ],
+             [ Mark.O, Mark.X, Mark.O ],
+             [ Mark.X, Mark.X, Mark.Empty ]
+        ]
     ];
 
     public static async Task Run<T>(string[] args) where T : IBot, new()

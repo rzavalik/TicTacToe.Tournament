@@ -27,9 +27,6 @@ public class GameServerTests
         {
             Id = _tournamentId,
             Name = "Test Tournament",
-            RegisteredPlayers = new Dictionary<Guid, string>(),
-            Leaderboard = new Dictionary<Guid, int>(),
-            Matches = new List<Models.Match>(),
             MatchRepetition = 1
         };
 

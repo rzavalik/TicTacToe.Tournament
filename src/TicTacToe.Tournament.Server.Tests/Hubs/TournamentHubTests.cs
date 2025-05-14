@@ -47,9 +47,6 @@
                 Id = tournamentId,
                 Name = "Test",
                 Status = TournamentStatus.Planned,
-                RegisteredPlayers = new Dictionary<Guid, string>(),
-                Leaderboard = new Dictionary<Guid, int>(),
-                Matches = new List<Models.Match>()
             };
 
             var managerMock = new Mock<ITournamentManager>();
@@ -76,8 +73,6 @@
                     Id = Guid.NewGuid(),
                     Name = "A",
                     Status = TournamentStatus.Planned,
-                    RegisteredPlayers = new Dictionary<Guid, string>(),
-                    Matches = new List<Models.Match>()
                 }
                 });
 

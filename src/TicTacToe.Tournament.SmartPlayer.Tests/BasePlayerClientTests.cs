@@ -1,12 +1,11 @@
 ﻿namespace TicTacToe.Tournament.Player.Tests
 {
-    using Moq;
-    using Shouldly;
     using System.Net;
     using System.Net.Http.Json;
+    using Moq;
+    using Shouldly;
     using TicTacToe.Tournament.Auth;
     using TicTacToe.Tournament.BasePlayer;
-    using TicTacToe.Tournament.BasePlayer.Helpers;
     using TicTacToe.Tournament.BasePlayer.Interfaces;
     using TicTacToe.Tournament.Models;
     using Xunit;
@@ -179,7 +178,7 @@
                 MatchId = Guid.NewGuid(),
                 WinnerId = Guid.NewGuid(),
                 IsDraw = false,
-                Board = new Mark[3][]
+                Board = new Board()
             });
         }
     }

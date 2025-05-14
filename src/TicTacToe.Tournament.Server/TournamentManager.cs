@@ -58,10 +58,7 @@ namespace TicTacToe.Tournament.Server
                     Id = tournamentId,
                     Name = name ?? $"Tournament {DateTime.Now.ToShortDateString()}",
                     Status = TournamentStatus.Planned,
-                    RegisteredPlayers = new Dictionary<Guid, string>(),
-                    Matches = new List<Match>(),
                     MatchRepetition = matchRepetition.Value,
-                    Leaderboard = new Dictionary<Guid, int>(),
                 };
 
                 tContext = await InitializeContextAsync(tournament);
@@ -401,15 +398,17 @@ namespace TicTacToe.Tournament.Server
                 StartTime = tournament.StartTime,
                 Duration = tournament.Duration,
                 EndTime = tournament.EndTime,
+                ETag = tournament.ETag,
                 Matches = tournament.Matches.Select(m => new MatchDto
                 {
                     Id = m.Id,
                     PlayerAId = m.PlayerA,
                     PlayerBId = m.PlayerB,
                     Status = m.Status,
-                    Board = m.Board,
+                    Board = m.Board.State,
                     StartTime = m.StartTime,
-                    EndTime = m.EndTime
+                    EndTime = m.EndTime,
+                    ETag = m.ETag
                 }).ToList()
             });
     }

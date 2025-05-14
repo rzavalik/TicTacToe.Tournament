@@ -74,7 +74,7 @@ namespace TicTacToe.Tournament.Server
 
         public void GenerateMatches()
         {
-            _tournament.Matches = new List<Match>();
+            _tournament.Matches.Clear();
 
             var ids = _tournament.RegisteredPlayers.Keys.ToList();
             for (var i = 0; i < ids.Count; i++)
@@ -91,7 +91,6 @@ namespace TicTacToe.Tournament.Server
                             PlayerB = ids[j],
                             Status = MatchStatus.Planned
                         };
-                        match.Board = Board.Empty;
                         _tournament.Matches.Add(match);
                     }
                 }
@@ -102,8 +101,7 @@ namespace TicTacToe.Tournament.Server
         {
             match.Status = MatchStatus.Ongoing;
             match.StartTime = DateTime.UtcNow;
-            match.Board = Board.Empty;
-            var board = new Board();
+            var board = match.Board;
 
             var turn = 0;
             var playerX = _players[match.PlayerA];
@@ -124,7 +122,7 @@ namespace TicTacToe.Tournament.Server
 
                 match.CurrentTurn = currentPlayer.Id;
 
-                await OnYourTurn(match.Id, currentPlayer.Id, match.Board);
+                await OnYourTurn(match.Id, currentPlayer.Id, match.Board.State);
 
                 (int row, int col)? move = null;
                 try
@@ -155,7 +153,6 @@ namespace TicTacToe.Tournament.Server
                     if (board.IsValidMove(move.Value.row, move.Value.col))
                     {
                         board.ApplyMove(move.Value.row, move.Value.col, mark);
-                        match.Board = board.GetState();
 
                         await Task.WhenAll(
                             OnOpponentMoved(match.Id, opponent.Id, move.Value.row, move.Value.col),
@@ -237,7 +234,6 @@ namespace TicTacToe.Tournament.Server
         {
             match.Status = MatchStatus.Ongoing;
             match.StartTime = DateTime.UtcNow;
-            match.Board = Board.Empty;
 
             var result = await PlayMatchAsync(match);
 

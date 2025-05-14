@@ -1,64 +1,178 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
-    public class Match
+    [Serializable]
+    public class Match : BaseModel
     {
-        public Match()
+        private Guid _id = Guid.NewGuid();
+        private Guid _playerA;
+        private Guid _playerB;
+        private MatchStatus _status = MatchStatus.Planned;
+        private DateTime? _startTime;
+        private DateTime? _endTime;
+        private Board _board = new Board();
+        private Guid _currentTurn;
+        private Mark? _winnerMark = Mark.Empty;
+
+        public Match() : base()
         {
-            Board = Models.Board.Empty;
         }
 
-        public Match(Guid playera, Guid playerb)
-            : base()
+        public Match(Guid playerA, Guid playerB) : this()
         {
-            PlayerA = playera;
-            PlayerB = playerb;
+            PlayerA = playerA;
+            PlayerB = playerB;
         }
 
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id
+        {
+            get => _id;
+            set
+            {
+                if (_id != value)
+                {
+                    _id = value;
+                    OnChanged();
+                }
+            }
+        }
 
-        public Guid PlayerA { get; set; } = default!;
-        public Guid PlayerB { get; set; } = default!;
+        public Guid PlayerA
+        {
+            get => _playerA;
+            set
+            {
+                if (_playerA != value)
+                {
+                    _playerA = value;
+                    OnChanged();
+                }
+            }
+        }
 
-        public MatchStatus Status { get; set; } = MatchStatus.Planned;
+        public Guid PlayerB
+        {
+            get => _playerB;
+            set
+            {
+                if (_playerB != value)
+                {
+                    _playerB = value;
+                    OnChanged();
+                }
+            }
+        }
 
-        public DateTime? StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
+        public MatchStatus Status
+        {
+            get => _status;
+            set
+            {
+                if (_status != value)
+                {
+                    _status = value;
+                    OnChanged();
+                }
+            }
+        }
+
+        public DateTime? StartTime
+        {
+            get => _startTime;
+            set
+            {
+                if (_startTime != value)
+                {
+                    _startTime = value;
+                    OnChanged();
+                }
+            }
+        }
+
+        public DateTime? EndTime
+        {
+            get => _endTime;
+            set
+            {
+                if (_endTime != value)
+                {
+                    _endTime = value;
+                    OnChanged();
+                }
+            }
+        }
 
         public TimeSpan? Duration =>
             StartTime.HasValue && EndTime.HasValue
                 ? EndTime - StartTime
                 : null;
 
-        public Mark[][] Board { get; set; } = Models.Board.Empty;
+        public Board Board
+        {
+            get => _board;
+            set
+            {
+                _board = value;
+                OnChanged();
+            }
+        }
 
-        public Guid CurrentTurn { get; set; } = default!;
+        public Guid CurrentTurn
+        {
+            get => _currentTurn;
+            set
+            {
+                if (_currentTurn != value)
+                {
+                    _currentTurn = value;
+                    OnChanged();
+                }
+            }
+        }
 
-        public Mark? WinnerMark { get; set; } = Mark.Empty;
+        public Mark? WinnerMark
+        {
+            get => _winnerMark;
+            set
+            {
+                if (_winnerMark != value)
+                {
+                    _winnerMark = value;
+                    OnChanged();
+                }
+            }
+        }
 
-        public async Task MakeMoveAsync(Guid playerId, int row, int col)
+        public void MakeMove(Guid playerId, int row, int col)
         {
             if (Status == MatchStatus.Finished)
+            {
                 throw new InvalidOperationException("Match already finished.");
+            }
 
             if (playerId != PlayerA && playerId != PlayerB)
+            {
                 throw new AccessViolationException("Invalid player making move.");
+            }
 
             if (CurrentTurn != Guid.Empty && CurrentTurn != playerId)
+            {
                 throw new InvalidOperationException("Not your turn.");
+            }
 
-            if (Board[row][col] != Mark.Empty)
-                throw new InvalidOperationException("Cell already occupied.");
-
-            var mark = playerId == PlayerA ? Mark.X : Mark.O;
-            Board[row][col] = mark;
+            var mark = GetPlayerMark(playerId);
+            Board.ApplyMove(row, col, mark);
 
             if (StartTime == null)
             {
                 StartTime = DateTime.UtcNow;
+            }
+
+            if (Status != MatchStatus.Ongoing)
+            {
                 Status = MatchStatus.Ongoing;
             }
 
-            if (CheckWinner(mark))
+            if (HasWinner(mark))
             {
                 WinnerMark = mark;
                 Status = MatchStatus.Finished;
@@ -69,27 +183,26 @@
             CurrentTurn = (playerId == PlayerA) ? PlayerB : PlayerA;
         }
 
-        private bool CheckWinner(Mark mark)
+        public Mark GetPlayerMark(Guid playerId)
         {
-            // Rows
-            for (int i = 0; i < 3; i++)
-                if (Board[i][0] == mark && Board[i][1] == mark && Board[i][2] == mark)
-                    return true;
+            if (playerId == PlayerA)
+            {
+                return Mark.X;
+            }
 
-            // Columns
-            for (int j = 0; j < 3; j++)
-                if (Board[0][j] == mark && Board[1][j] == mark && Board[2][j] == mark)
-                    return true;
+            if (playerId == PlayerB)
+            {
+                return Mark.O;
+            }
 
-            // Diagonals
-            if (Board[0][0] == mark && Board[1][1] == mark && Board[2][2] == mark)
-                return true;
-
-            if (Board[0][2] == mark && Board[1][1] == mark && Board[2][0] == mark)
-                return true;
-
-            return false;
+            throw new InvalidOperationException("Invalid player.");
         }
 
+        private bool HasWinner(Mark mark)
+        {
+            var winnerMark = Board.GetWinner();
+
+            return mark == winnerMark;
+        }
     }
 }

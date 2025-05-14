@@ -33,15 +33,21 @@ public class TournamentHub : Hub
             StartTime = tournament.StartTime,
             Duration = tournament.Duration,
             EndTime = tournament.EndTime,
+            ETag = tournament.ETag,
             Matches = tournament.Matches.Select(m => new MatchDto
             {
                 Id = m.Id,
+                PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
                 PlayerAId = m.PlayerA,
+                PlayerAMark = Mark.X,
+                PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
                 PlayerBId = m.PlayerB,
+                PlayerBMark = Mark.O,
                 Status = m.Status,
-                Board = m.Board,
+                Board = m.Board.State,
                 StartTime = m.StartTime,
-                EndTime = m.EndTime
+                EndTime = m.EndTime,
+                ETag = m.ETag
             }).ToList()
         };
     }
@@ -104,7 +110,8 @@ public class TournamentHub : Hub
                 Name = t.Name,
                 Status = t.Status.ToString(),
                 RegisteredPlayersCount = t.RegisteredPlayers.Count,
-                MatchCount = t.Matches.Count
+                MatchCount = t.Matches.Count,
+                ETag = t.ETag
             });
 
         return Task.FromResult(result);
@@ -193,17 +200,19 @@ public class TournamentHub : Hub
             throw new ArgumentNullException(nameof(tournamentId), $"Tournament {tournamentId} not found.");
         }
 
-        return tContext.Tournament.Matches.Select(m => new MatchDto
+        var tournament = tContext.Tournament;
+        return tournament.Matches.Select(m => new MatchDto
         {
             Id = m.Id,
-            PlayerAName = tContext.Tournament.RegisteredPlayers[m.PlayerA],
+            PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
             PlayerAId = m.PlayerA,
-            PlayerBName = tContext.Tournament.RegisteredPlayers[m.PlayerB],
+            PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
             PlayerBId = m.PlayerB,
             Status = m.Status,
-            Board = m.Board,
+            Board = m.Board.State,
             StartTime = m.StartTime,
-            EndTime = m.EndTime
+            EndTime = m.EndTime,
+            ETag = m.ETag
         }).ToList();
     }
 

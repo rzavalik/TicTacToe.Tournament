@@ -1,15 +1,15 @@
 ﻿namespace TicTacToe.Tournament.Server.Tests
 {
+    using System.Collections.Concurrent;
     using Microsoft.AspNetCore.SignalR;
     using Moq;
     using Shouldly;
     using TicTacToe.Tournament.Models;
+    using TicTacToe.Tournament.Server;
     using TicTacToe.Tournament.Server.Bots;
     using TicTacToe.Tournament.Server.Hubs;
     using TicTacToe.Tournament.Server.Interfaces;
-    using TicTacToe.Tournament.Server;
     using Xunit;
-    using System.Collections.Concurrent;
 
     public class TournamentManagerTests
     {
@@ -35,9 +35,6 @@
                             Id = fixedTournamentId.Value,
                             Name = "Loaded Tournament",
                             Status = TournamentStatus.Planned,
-                            RegisteredPlayers = new Dictionary<Guid, string>(),
-                            Matches = new List<Models.Match>(),
-                            Leaderboard = new Dictionary<Guid, int>(),
                             MatchRepetition = 2
                         },
                         new List<PlayerInfo>(),
@@ -222,9 +219,6 @@
             {
                 Id = Guid.NewGuid(),
                 Name = "Saving Tournament",
-                RegisteredPlayers = new Dictionary<Guid, string>(),
-                Matches = new List<Models.Match>(),
-                Leaderboard = new Dictionary<Guid, int>(),
                 MatchRepetition = 1
             };
 

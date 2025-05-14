@@ -1,5 +1,6 @@
 ﻿namespace TicTacToe.Tournament.Models.DTOs
 {
+    [Serializable]
     public class TournamentDto
     {
         public TournamentDto()
@@ -18,5 +19,6 @@
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public TimeSpan? Duration { get; set; }
+        public string ETag { get; set; } = string.Empty;
     }
 }

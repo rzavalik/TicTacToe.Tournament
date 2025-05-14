@@ -57,8 +57,20 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
+            var eTag = tournament.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
             return Ok(tournament);
         }
 
@@ -117,7 +129,9 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         public async Task<IActionResult> RenameTournament(Guid tournamentId, [FromBody] RenameTournamentRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NewName))
+            {
                 return BadRequest("Invalid name.");
+            }
 
             await _orchestrator.RenameTournamentAsync(tournamentId, request.NewName);
             return Ok();
@@ -127,7 +141,9 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         public async Task<IActionResult> RenamePlayer(Guid tournamentId, Guid playerId, [FromBody] RenamePlayerRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NewName))
+            {
                 return BadRequest("Invalid name.");
+            }
 
             await _orchestrator.RenamePlayerAsync(tournamentId, playerId, request.NewName);
             return Ok();
@@ -138,11 +154,15 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status != TournamentStatus.Planned.ToString("G") &&
                 tournament.Status != TournamentStatus.Ongoing.ToString("G"))
+            {
                 return BadRequest($"Cannot cancel because it is {tournament.Status}.");
+            }
 
             await _orchestrator.CancelTournamentAsync(tournamentId);
             return Ok(new { message = $"Tournament {tournamentId} cancelled." });
@@ -153,13 +173,19 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status != TournamentStatus.Planned.ToString("G"))
+            {
                 return BadRequest($"Cannot start because it is {tournament.Status}.");
+            }
 
             if ((tournament?.RegisteredPlayers?.Count ?? 0) < 2)
+            {
                 return BadRequest("Cannot start with less than 2 players.");
+            }
 
             await _orchestrator.StartTournamentAsync(tournamentId);
             return Ok(new { message = $"Tournament {tournamentId} started." });
@@ -170,11 +196,15 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status != TournamentStatus.Finished.ToString("G") &&
                 tournament.Status != TournamentStatus.Cancelled.ToString("G"))
+            {
                 return BadRequest("Only Finished or Cancelled tournaments can be deleted.");
+            }
 
             await _orchestrator.DeleteTournamentAsync(tournamentId);
             return Ok(new { message = $"Tournament {tournamentId} deleted." });
@@ -185,11 +215,25 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status == TournamentStatus.Planned.ToString("G"))
+            {
                 return NoContent();
+            }
 
+            var eTag = tournament.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
             var matches = await _orchestrator.GetMatchesAsync(tournamentId);
             return Ok(matches);
         }
@@ -199,7 +243,23 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
 
-            return ResultMatchDto(tournament, matchId);
+            var match = ResultMatchDto(tournament, matchId);
+            if (match == null)
+            {
+                return NoContent();
+            }
+
+            var eTag = match.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(match);
         }
 
         [HttpGet("tournament/{tournamentId}/match/current/board")]
@@ -207,15 +267,32 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status == TournamentStatus.Planned.ToString("G"))
+            {
                 return NoContent();
+            }
 
             var board = await _orchestrator.GetCurrentMatchBoardAsync(tournamentId);
-            return board == null
-                ? NotFound()
-                : Ok(board);
+            if (board == null)
+            {
+                return NotFound();
+            }
+
+            var eTag = board.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(board);
         }
 
         [HttpGet("tournament/{tournamentId}/match/current/players")]
@@ -238,7 +315,24 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         public async Task<IActionResult> GetCurrentMatch(Guid tournamentId)
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
-            return ResultMatchDto(tournament);
+            var match = ResultMatchDto(tournament);
+
+            if (match == null)
+            {
+                return NoContent();
+            }
+
+            var eTag = match.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(match);
         }
 
         [HttpGet("tournament/{tournamentId}/players")]
@@ -246,12 +340,24 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             var players = tournament.RegisteredPlayers
                 .Select(p => new { id = p.Key, name = p.Value })
                 .ToList();
 
+            var eTag = tournament.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
             return Ok(players);
         }
 
@@ -260,7 +366,9 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             var leaderboard = tournament
                 .Leaderboard
@@ -273,6 +381,16 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 .OrderByDescending(p => p.score)
                 .ToList();
 
+            var eTag = tournament.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
             return Ok(leaderboard);
         }
 
@@ -280,36 +398,79 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         public async Task<IActionResult> GetMatchBoard(Guid tournamentId, Guid matchId)
         {
             var board = await _orchestrator.GetMatchBoardAsync(tournamentId, matchId);
-            return board == null
-                ? NotFound()
-                : Ok(board);
+            if (board == null)
+            {
+                return NotFound();
+            }
+
+            var eTag = board.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(board);
         }
 
         [HttpGet("tournament/{tournamentId}/match/{matchId}/players")]
         public async Task<IActionResult> GetMatchPlayers(Guid tournamentId, Guid matchId)
         {
             var players = await _orchestrator.GetMatchPlayersAsync(tournamentId, matchId);
-            return players == null
-                ? NotFound()
-                : Ok(players);
+            if (players == null)
+            {
+                return NoContent();
+            }
+
+            var eTag = players.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(players);
         }
 
         [HttpGet("tournament/{tournamentId}/player/{playerId}")]
         public async Task<IActionResult> GetPlayer(Guid tournamentId, Guid playerId)
         {
             var player = await _orchestrator.GetPlayerAsync(tournamentId, playerId);
-            return player == null
-                ? NotFound()
-                : Ok(player);
+            if (player == null)
+            {
+                return NotFound();
+            }
+
+            var eTag = player.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(player);
         }
 
-        private IActionResult ResultMatchDto(TournamentDto? tournament, Guid? matchId = null)
+        private MatchDto? ResultMatchDto(TournamentDto? tournament, Guid? matchId = null)
         {
             if (tournament == null)
-                return NotFound();
+            {
+                return null;
+            }
 
             if (tournament.Status == TournamentStatus.Planned.ToString("G"))
-                return NoContent();
+            {
+                return null;
+            }
 
             var match = tournament.Matches
                 .Where(m => matchId.HasValue
@@ -319,12 +480,14 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 .FirstOrDefault();
 
             if (match == null)
-                return NoContent();
+            {
+                return null;
+            }
 
             var playerAName = tournament.RegisteredPlayers.TryGetValue(match.PlayerAId, out var nameA) ? nameA : "Unknown";
             var playerBName = tournament.RegisteredPlayers.TryGetValue(match.PlayerBId, out var nameB) ? nameB : "Unknown";
 
-            return Ok(new MatchDto
+            return new MatchDto
             {
                 Id = match.Id,
                 PlayerAId = match.PlayerAId,
@@ -334,9 +497,10 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 Board = match.Board,
                 Status = match.Status,
                 StartTime = match.StartTime,
-                EndTime  = match.EndTime,
-                Duration = match.Duration
-            });
+                EndTime = match.EndTime,
+                Duration = match.Duration,
+                ETag = match.ETag
+            };
         }
     }
 }

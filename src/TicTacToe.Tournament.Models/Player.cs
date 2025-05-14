@@ -1,11 +1,53 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
-    public class Player
+    [Serializable]
+    public class Player : BaseModel
     {
-        public Guid Id { get; set; }
+        private Guid _id;
+        private string _name = string.Empty;
+        private Guid _tournamentId;
 
-        public required string Name { get; set; }
+        public Player() : base()
+        {
+        }
 
-        public Guid TournamentId { get; set; }
+        public Guid Id
+        {
+            get => _id;
+            set
+            {
+                if (_id != value)
+                {
+                    _id = value;
+                    OnChanged();
+                }
+            }
+        }
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    OnChanged();
+                }
+            }
+        }
+
+        public Guid TournamentId
+        {
+            get => _tournamentId;
+            set
+            {
+                if (_tournamentId != value)
+                {
+                    _tournamentId = value;
+                    OnChanged();
+                }
+            }
+        }
     }
 }

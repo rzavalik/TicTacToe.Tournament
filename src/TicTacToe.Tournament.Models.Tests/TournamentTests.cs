@@ -72,11 +72,11 @@ public class TournamentTests
     public void Duration_WhenStartAndEndSet_ShouldReturnTimeSpan()
     {
         var sut = MakeSut();
-        sut.StartTime = new DateTime(2025, 4, 24, 10, 0, 0);
-        sut.EndTime = new DateTime(2025, 4, 24, 11, 0, 0);
+        sut.StartTime = DateTime.UtcNow.AddHours(-1);
+        sut.EndTime = DateTime.UtcNow;
 
         sut.Duration.ShouldNotBeNull();
-        sut.Duration.Value.TotalMinutes.ShouldBe(60);
+        ((int)sut.Duration.Value.TotalMinutes).ShouldBe(60);
     }
 
     [Fact]
