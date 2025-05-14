@@ -1,4 +1,6 @@
-﻿using TicTacToe.Tournament.Server.Interfaces;
+﻿using System.IO.Compression;
+using Microsoft.AspNetCore.ResponseCompression;
+using TicTacToe.Tournament.Server.Interfaces;
 using TicTacToe.Tournament.Server.Services;
 
 internal class Program
@@ -8,13 +10,25 @@ internal class Program
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
-        builder.Configuration.AddEnvironmentVariables();
-        builder.Services.AddControllersWithViews();
-        builder.Services.AddSingleton<ITournamentOrchestratorService, TournamentOrchestratorService>();
         builder.Configuration
             .AddJsonFile("appSettings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+        builder.Services.AddControllersWithViews();
+        builder.Services.AddSingleton<ITournamentOrchestratorService, TournamentOrchestratorService>();
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
 
         var app = builder.Build();
 
@@ -27,11 +41,22 @@ internal class Program
         }
 
         app.UseHttpsRedirection();
-        app.UseStaticFiles();
+        app.UseResponseCompression();
         app.UseDefaultFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                var headers = ctx.Context.Response.GetTypedHeaders();
+                headers.CacheControl = new Microsoft.Net.Http.Headers.CacheControlHeaderValue
+                {
+                    Public = true,
+                    MaxAge = TimeSpan.FromDays(30)
+                };
+            }
+        });
         app.UseRouting();
         app.UseAuthorization();
-
         app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");

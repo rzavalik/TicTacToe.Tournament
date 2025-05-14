@@ -3,7 +3,8 @@
     [Serializable]
     public class Board : BaseModel
     {
-        private readonly Mark[][] _grid = Empty;
+        private Mark[][] _grid = Empty;
+        private List<Movement> _movements = new List<Movement>();
 
         public static Mark[][] Empty =>
         [
@@ -39,6 +40,15 @@
             }
 
             _grid[row][col] = mark;
+            _movements.Add(
+                new Movement
+                {
+                    Row = (byte)row,
+                    Column = (byte)col,
+                    Mark = mark
+                }
+            );
+
             OnChanged();
         }
 
@@ -77,7 +87,20 @@
             return null;
         }
 
-        public Mark[][] State => GetState();
+        public Mark[][] State => _grid;
+
+        public List<Movement> Movements
+        {
+            get => _movements;
+            set
+            {
+                if (value != _movements)
+                {
+                    _movements = value;
+                    OnChanged();
+                }
+            }
+        }
 
         public Mark[][] GetState()
         {
