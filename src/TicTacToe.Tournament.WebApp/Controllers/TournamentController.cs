@@ -224,7 +224,12 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 return NoContent();
             }
 
-            var eTag = tournament.ETag;
+            var eTag = tournament
+                .Matches
+                .OrderByDescending(m => m.ETag)
+                .Select(e => e.ETag)
+                .First();
+
             if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
             {
                 return StatusCode(StatusCodes.Status304NotModified);
@@ -234,8 +239,7 @@ namespace TicTacToe.Tournament.WebApp.Controllers
             {
                 Response.Headers.ETag = eTag;
             }
-            var matches = await _orchestrator.GetMatchesAsync(tournamentId);
-            return Ok(matches);
+            return Ok(tournament.Matches);
         }
 
         [HttpGet("tournament/{tournamentId}/match/{matchId}")]
@@ -484,23 +488,7 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 return null;
             }
 
-            var playerAName = tournament.RegisteredPlayers.TryGetValue(match.PlayerAId, out var nameA) ? nameA : "Unknown";
-            var playerBName = tournament.RegisteredPlayers.TryGetValue(match.PlayerBId, out var nameB) ? nameB : "Unknown";
-
-            return new MatchDto
-            {
-                Id = match.Id,
-                PlayerAId = match.PlayerAId,
-                PlayerAName = playerAName,
-                PlayerBId = match.PlayerBId,
-                PlayerBName = playerBName,
-                Board = match.Board,
-                Status = match.Status,
-                StartTime = match.StartTime,
-                EndTime = match.EndTime,
-                Duration = match.Duration,
-                ETag = match.ETag
-            };
+            return match;
         }
     }
 }

@@ -403,11 +403,16 @@ namespace TicTacToe.Tournament.Server
                 {
                     Id = m.Id,
                     PlayerAId = m.PlayerA,
+                    PlayerAMark = Mark.X,
+                    PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
                     PlayerBId = m.PlayerB,
+                    PlayerBMark = Mark.O,
+                    PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
                     Status = m.Status,
                     Board = m.Board.State,
                     StartTime = m.StartTime,
                     EndTime = m.EndTime,
+                    Duration = m.Duration,
                     ETag = m.ETag
                 }).ToList()
             });

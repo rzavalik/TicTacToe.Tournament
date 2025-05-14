@@ -37,16 +37,17 @@ public class TournamentHub : Hub
             Matches = tournament.Matches.Select(m => new MatchDto
             {
                 Id = m.Id,
-                PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
                 PlayerAId = m.PlayerA,
                 PlayerAMark = Mark.X,
-                PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
+                PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
                 PlayerBId = m.PlayerB,
                 PlayerBMark = Mark.O,
+                PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
                 Status = m.Status,
                 Board = m.Board.State,
                 StartTime = m.StartTime,
                 EndTime = m.EndTime,
+                Duration = m.Duration,
                 ETag = m.ETag
             }).ToList()
         };
@@ -204,14 +205,17 @@ public class TournamentHub : Hub
         return tournament.Matches.Select(m => new MatchDto
         {
             Id = m.Id,
-            PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
             PlayerAId = m.PlayerA,
-            PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
+            PlayerAMark = Mark.X,
+            PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
             PlayerBId = m.PlayerB,
+            PlayerBMark = Mark.O,
+            PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
             Status = m.Status,
             Board = m.Board.State,
             StartTime = m.StartTime,
             EndTime = m.EndTime,
+            Duration = m.Duration,
             ETag = m.ETag
         }).ToList();
     }
