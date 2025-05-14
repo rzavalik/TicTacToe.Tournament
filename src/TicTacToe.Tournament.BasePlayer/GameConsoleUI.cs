@@ -4,13 +4,15 @@
     using System.Text;
     using Spectre.Console;
     using TicTacToe.Tournament.BasePlayer.Helpers;
+    using TicTacToe.Tournament.BasePlayer.Interfaces;
     using TicTacToe.Tournament.Models;
     using TicTacToe.Tournament.Models.DTOs;
 
-    public class GameConsoleUI
+    public class GameConsoleUI : IGameConsoleUI
     {
         private int i = 0;
         private readonly ConcurrentBag<string> _logs = new();
+        private IDictionary<Guid, string> _players;
 
         public Mark[][] Board { get; set; }
 
@@ -57,7 +59,7 @@
 
         public void Log(string message)
         {
-            _logs.Add($"{Markup.Escape(DateTime.Now.AddSeconds(new Random().Next(100)).ToString("HH:mm:ss"))}: {Markup.Escape(message)}");
+            _logs.Add($"{Markup.Escape(DateTime.Now.AddSeconds(new Random().Next(100)).ToShortTimeString())}: {Markup.Escape(message)}");
         }
 
         public void Start()
@@ -225,7 +227,7 @@
                         VerticalAlignment.Middle
                     )
                 )
-                .Header("Info: " + (IsPlaying ? $"your are playing as {PlayerMark:G}" : "spectating"))
+                .Header("Info: " + (IsPlaying ? $"You are playing as {PlayerMark:G}" : $"You are spectating"))
                 .Expand()
                 .HeaderAlignment(Justify.Left)
                 .Border(BoxBorder.Rounded);
@@ -244,17 +246,44 @@
         private Panel RenderLeaderboard()
         {
             var table = new Table()
+                .AddColumn("#").Alignment(Justify.Left).Expand()
                 .AddColumn("Player").Alignment(Justify.Left).Expand()
                 .AddColumn("Points").Alignment(Justify.Center).Collapse()
+                .AddColumn("Matches").Alignment(Justify.Center).Collapse()
+                .AddColumn("W").Alignment(Justify.Center).Collapse()
+                .AddColumn("D").Alignment(Justify.Center).Collapse()
+                .AddColumn("L").Alignment(Justify.Center).Collapse()
+                .AddColumn("WO").Alignment(Justify.Center).Collapse()
                 .Border(TableBorder.Heavy)
                 .ShowHeaders();
 
+            Leaderboard = Leaderboard
+                .OrderByDescending(item => item.TotalPoints)
+                .ThenByDescending(item => item.Wins)
+                .ThenByDescending(item => item.Draws)
+                .ThenByDescending(item => item.Losses)
+                .ThenByDescending(item => item.Walkovers)
+                .ThenByDescending(item => item.PlayerName)
+                .ToList();
+
+            var position = 0;
             foreach (var item in Leaderboard)
             {
                 table.AddRow(
+                    (++position).ToString(),
                     item.PlayerName,
-                    item.TotalPoints.ToString()
+                    item.TotalPoints.ToString(),
+                    (item.Wins + item.Draws + item.Losses + item.Walkovers).ToString(),
+                    item.Wins.ToString(),
+                    item.Draws.ToString(),
+                    item.Losses.ToString(),
+                    item.Walkovers.ToString()
                 );
+
+                if (position > 5)
+                {
+                    break;
+                }
             }
 
             var panel = new Panel(
@@ -272,14 +301,13 @@
 
         private Panel RenderLogPanel()
         {
+            var logs = _logs.ToList().OrderByDescending(s => s);
+
             var panel = new Panel(
                     new Rows(
-                        _logs
-                        .Reverse()
-                        .Select(log => new Text(ReplaceUserIds(log))
-                        .Overflow(Overflow.Ellipsis))
+                            logs.Select(log => new Text(ReplaceUserIds(log)))
+                        )
                     )
-                )
                 .Header("Game Log")
                 .HeaderAlignment(Justify.Center)
                 .Expand()
@@ -355,6 +383,84 @@
         public T Read<T>(string message)
         {
             return AnsiConsole.Ask<T>(message);
+        }
+
+        public void LoadTournament(TournamentDto value)
+        {
+            _players = value.RegisteredPlayers;
+
+            var currentMatch = value
+                .Matches
+                .FirstOrDefault(m => m.Status == Models.MatchStatus.Ongoing);
+
+            TournamentName = value.Name;
+            TournamentStatus = value.Status;
+            PlayerA = GetPlayerName(currentMatch?.PlayerAId);
+            PlayerB = GetPlayerName(currentMatch?.PlayerBId);
+            TotalPlayers = value?.RegisteredPlayers?.Keys.Count() ?? 0;
+            TotalMatches = value?.Matches?.Count();
+            MatchesFinished = value?.Matches?.Count(m => m.Status == Models.MatchStatus.Finished);
+            MatchesPlanned = value?.Matches?.Count(m => m.Status == Models.MatchStatus.Planned);
+            MatchesOngoing = value?.Matches?.Count(m => m.Status == Models.MatchStatus.Ongoing);
+            MatchesCancelled = value?.Matches?.Count(m => m.Status == Models.MatchStatus.Cancelled);
+            Leaderboard = value?.Leaderboard?.ToList();
+            TournamentStatus = value.Status;
+            Board = currentMatch?.Board;
+        }
+
+        public void SetIsPlaying(bool isPlaying)
+        {
+            IsPlaying = isPlaying;
+        }
+
+        public void SetPlayerA(string value)
+        {
+            PlayerA = value;
+        }
+
+        public void SetPlayerB(string value)
+        {
+            PlayerB = value;
+        }
+
+        public void SetBoard(Mark[][]? marks)
+        {
+            Board = marks;
+        }
+
+        public void SetMatchEndTime(DateTime? now)
+        {
+            MatchEndTime = now;
+        }
+
+        protected string GetPlayerName(Guid? playerId)
+        {
+            if (playerId.HasValue)
+            {
+                if (_players?.ContainsKey(playerId.Value) ?? false)
+                {
+                    return _players[playerId.Value]?
+                        .ToString() ?? playerId.Value.ToString();
+
+                }
+            }
+
+            return "";
+        }
+
+        public void SetMatchStartTime(DateTime? now)
+        {
+            MatchStartTime = now;
+        }
+
+        public void SetPlayerMark(Mark mark)
+        {
+            PlayerMark = mark;
+        }
+
+        public void SetCurrentTurn(Mark mark)
+        {
+            CurrentTurn = mark;
         }
     }
 }

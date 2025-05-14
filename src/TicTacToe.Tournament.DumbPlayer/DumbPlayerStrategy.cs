@@ -16,15 +16,21 @@ public class DumbPlayerStrategy : IPlayerStrategy
         _opponentMark = opponentMark;
     }
 
-    public (int row, int col) MakeMove(Mark[][] board)
+    public (byte row, byte col) MakeMove(Mark[][] board)
     {
         var _rng = new Random();
 
-        var moves = new List<(int row, int col)>();
-        for (int r = 0; r < 3; r++)
-            for (int c = 0; c < 3; c++)
+        var moves = new List<(byte row, byte col)>();
+        for (byte r = 0; r < 3; r++)
+        {
+            for (byte c = 0; c < 3; c++)
+            {
                 if (board[r][c] == Mark.Empty)
+                {
                     moves.Add((r, c));
+                }
+            }
+        }
 
         return moves.OrderBy(r => _rng.NextDouble()).FirstOrDefault();
     }

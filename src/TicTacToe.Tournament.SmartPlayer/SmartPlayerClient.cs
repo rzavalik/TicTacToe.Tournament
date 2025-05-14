@@ -43,11 +43,11 @@ public class SmartPlayerClient : BasePlayerClient
             playerMark: mark,
             opponentMark: mark == Mark.X ? Mark.O : Mark.X,
             (log) => base.ConsoleWrite(log),
-            (message) => base.ConsoleRead<int>(message)
+            (message) => base.ConsoleRead<byte>(message)
         );
     }
 
-    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+    protected override Task<(byte row, byte col)> MakeMove(Guid matchId, Mark[][] board)
     {
         try
         {
@@ -61,6 +61,6 @@ public class SmartPlayerClient : BasePlayerClient
             base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
-        return Task.FromResult((-1, -1));
+        return Task.FromResult(((byte)255, (byte)255));
     }
 }

@@ -127,10 +127,11 @@ public class TournamentHub : Hub
         return await _tournamentManager.TournamentExistsAsync(tournamentId);
     }
 
-    public async Task SpectateTournamentAsync(Guid tournamentId)
+    public async Task<TournamentDto> SpectateTournamentAsync(Guid tournamentId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, tournamentId.ToString());
         Console.WriteLine($"[TournamentHub] UI client joined group {tournamentId}");
+        return await GetTournamentAsync(tournamentId);
     }
 
     public async Task RegisterPlayerAsync(string playerName, Guid tournamentId)

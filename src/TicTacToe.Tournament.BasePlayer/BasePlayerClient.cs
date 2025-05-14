@@ -10,7 +10,7 @@ namespace TicTacToe.Tournament.BasePlayer;
 
 public abstract class BasePlayerClient : IBot
 {
-    private readonly GameConsoleUI _consoleUI = new();
+    protected IGameConsoleUI _consoleUI = new GameConsoleUI();
     private readonly IHttpClient _httpClient;
     private readonly Guid _tournamentId;
     private readonly string _botName;
@@ -36,25 +36,15 @@ public abstract class BasePlayerClient : IBot
 
     public Mark Mark { get; protected set; } = Mark.Empty;
 
-    public TournamentDto Tournament
+    public TournamentDto? Tournament
     {
         get { return _tournament; }
         protected set
         {
-            _tournament = value;
             if (value != null)
             {
-                _consoleUI.TournamentName = value.Name;
-                _consoleUI.PlayerA = GetPlayerName(PlayerId);
-                _consoleUI.PlayerB = GetPlayerName(OpponentId);
-                _consoleUI.TotalPlayers = value?.RegisteredPlayers?.Keys.Count() ?? 0;
-                _consoleUI.TotalMatches = value?.Matches?.Count();
-                _consoleUI.MatchesFinished = value?.Matches?.Count(m => m.Status == MatchStatus.Finished);
-                _consoleUI.MatchesPlanned = value?.Matches?.Count(m => m.Status == MatchStatus.Planned);
-                _consoleUI.MatchesOngoing = value?.Matches?.Count(m => m.Status == MatchStatus.Ongoing);
-                _consoleUI.MatchesCancelled = value?.Matches?.Count(m => m.Status == MatchStatus.Cancelled);
-                _consoleUI.Leaderboard = value?.Leaderboard?.ToList();
-                _consoleUI.TournamentStatus = value.Status;
+                _tournament = value;
+                _consoleUI?.LoadTournament(_tournament);
             }
         }
     }
@@ -77,12 +67,12 @@ public abstract class BasePlayerClient : IBot
 
     public async Task StartAsync()
     {
-        _consoleUI.Start();
+        _consoleUI?.Start();
 
         await ConnectToSignalRAsync();
         await RegisterAsync();
 
-        _consoleUI.Log($"{_botName} is ready. PlayerId = {UserId}");
+        _consoleUI?.Log($"{_botName} is ready. PlayerId = {UserId}");
 
         await Task.Delay(Timeout.Infinite);
     }
@@ -120,7 +110,7 @@ public abstract class BasePlayerClient : IBot
         Authenticated = true;
         Token = auth.Token;
 
-        _consoleUI.Log($"Authenticated as {UserId}");
+        _consoleUI?.Log($"Authenticated as {UserId}");
 
         OnAuthenticated(auth);
     }
@@ -139,51 +129,49 @@ public abstract class BasePlayerClient : IBot
 
         _signalRClient.Reconnecting += error =>
         {
-            _consoleUI.Log("Reconnecting to SignalR...");
+            _consoleUI?.Log("Reconnecting to SignalR...");
             return Task.CompletedTask;
         };
 
         _signalRClient.Reconnected += async connectionId =>
         {
             await RegisterToTournamentAsync();
-            _consoleUI.Log($"Reconnected to SignalR with connectionId: {connectionId}");
+            _consoleUI?.Log($"Reconnected to SignalR with connectionId: {connectionId}");
         };
 
         _signalRClient.Closed += error =>
         {
-            _consoleUI.IsPlaying = false;
-            _consoleUI.Board = CurrentBoard = null;
-            Tournament = null;
-
-            _consoleUI.Log("Connection closed.");
+            _consoleUI?.Log("Connection closed.");
             return Task.CompletedTask;
         };
 
-        await _signalRClient.SubscribeAsync<Guid>("OnRegistered", id =>
+        await _signalRClient.SubscribeAsync<Guid>("OnRegistered", async id =>
         {
             try
             {
-                _consoleUI.IsPlaying = false;
+                _consoleUI?.SetIsPlaying(false);
+                Tournament = await GetTournamentAsync();
                 var name = GetPlayerName(id) ?? id.ToString();
-                _consoleUI.Log($"{name} has been registered to this tournament");
+                _consoleUI?.Log($"{name} has been registered to this tournament");
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
-        await _signalRClient.SubscribeAsync<Guid>("OnPlayerRegistered", id =>
+        await _signalRClient.SubscribeAsync<Guid>("OnPlayerRegistered", async id =>
         {
             try
             {
-                _consoleUI.IsPlaying = false;
+                _consoleUI?.SetIsPlaying(false);
+                Tournament = await GetTournamentAsync();
                 var playerName = GetPlayerName(id) ?? id.ToString();
-                _consoleUI.Log($"New player joined: {playerName}");
+                _consoleUI?.Log($"New player joined: {playerName}");
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -191,14 +179,14 @@ public abstract class BasePlayerClient : IBot
         {
             try
             {
-                _consoleUI.IsPlaying = false;
+                _consoleUI?.SetIsPlaying(false);
                 Tournament = await GetTournamentAsync();
                 var name = Tournament?.Name ?? id.ToString();
-                _consoleUI.Log($"Tournament created: {name}");
+                _consoleUI?.Log($"Tournament created: {name}");
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -208,22 +196,23 @@ public abstract class BasePlayerClient : IBot
             {
                 Tournament = await GetTournamentAsync();
                 var name = Tournament?.Name ?? id.ToString();
-                _consoleUI.Log($"Tournament updated: {name}");
+                _consoleUI?.Log($"Tournament updated: {name}");
 
                 if (Tournament?.Status == "Finished" ||
                     Tournament?.Status == "Cancelled")
                 {
-                    _consoleUI.PlayerA = null;
-                    _consoleUI.PlayerB = null;
-                    _consoleUI.IsPlaying = false;
-                    _consoleUI.Board = CurrentBoard = null;
-                    _consoleUI.MatchEndTime = DateTime.Now;
-                    _consoleUI.Log($"Tournament {Tournament.Status.ToLower()}!");
+                    CurrentBoard = null;
+                    _consoleUI?.SetPlayerA(null);
+                    _consoleUI?.SetPlayerB(null);
+                    _consoleUI?.SetIsPlaying(false);
+                    _consoleUI?.SetBoard(CurrentBoard);
+                    _consoleUI?.SetMatchEndTime(DateTime.Now);
+                    _consoleUI?.Log($"Tournament {Tournament.Status.ToLower()}!");
                 }
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -232,18 +221,18 @@ public abstract class BasePlayerClient : IBot
             try
             {
                 Tournament = await GetTournamentAsync();
-                _consoleUI.Board = CurrentBoard = null;
-                _consoleUI.IsPlaying = false;
-                _consoleUI.MatchEndTime = DateTime.Now;
-                _consoleUI.PlayerA = null;
-                _consoleUI.PlayerB = null;
+                _consoleUI?.SetBoard(CurrentBoard = null);
+                _consoleUI?.SetIsPlaying(false);
+                _consoleUI?.SetMatchEndTime(DateTime.Now);
+                _consoleUI?.SetPlayerA(null);
+                _consoleUI?.SetPlayerB(null);
 
                 var name = Tournament?.Name ?? id.ToString();
-                _consoleUI.Log($"Tournament cancelled: {name}");
+                _consoleUI?.Log($"Tournament cancelled: {name}");
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -251,15 +240,15 @@ public abstract class BasePlayerClient : IBot
         {
             try
             {
-                _consoleUI.IsPlaying = false;
-                _consoleUI.Board = CurrentBoard = null;
+                _consoleUI?.SetIsPlaying(false);
+                _consoleUI?.SetBoard(CurrentBoard = null);
                 Tournament = await GetTournamentAsync();
                 var name = Tournament?.Name ?? data.Id.ToString();
-                _consoleUI.Log("{name} started.");
+                _consoleUI?.Log($"{name} started.");
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -270,20 +259,19 @@ public abstract class BasePlayerClient : IBot
                 PlayerId = playerId;
                 OpponentId = opponentId;
 
-                _consoleUI.IsPlaying = IsUserPlaying(matchId);
+                _consoleUI?.SetIsPlaying(IsUserPlaying(matchId));
+                _consoleUI?.SetPlayerMark(Mark = Enum.Parse<Mark>(markStr));
+                _consoleUI?.SetPlayerA(GetPlayerName(playerId) ?? playerId.ToString());
+                _consoleUI?.SetPlayerB(GetPlayerName(opponentId) ?? opponentId.ToString());
+                _consoleUI?.SetMatchStartTime(DateTime.Now);
+                _consoleUI?.SetMatchEndTime(null);
+                _consoleUI?.Log($"Match started: {playerId} vs {opponentId}, mark: {Mark}, yourTurn: {starts}");
 
-                _consoleUI.PlayerMark = Mark = Enum.Parse<Mark>(markStr);
-                _consoleUI.PlayerA = GetPlayerName(playerId) ?? playerId.ToString();
-                _consoleUI.PlayerB = GetPlayerName(opponentId) ?? opponentId.ToString();
-                _consoleUI.MatchStartTime = DateTime.Now;
-                _consoleUI.MatchEndTime = null;
-
-                _consoleUI.Log($"Match started: {playerId} vs {opponentId}, mark: {Mark}, yourTurn: {starts}");
                 OnMatchStarted(matchId, playerId, opponentId, Mark, starts);
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -291,48 +279,54 @@ public abstract class BasePlayerClient : IBot
         {
             try
             {
-                _consoleUI.CurrentTurn = Mark;
-                _consoleUI.Board = CurrentBoard = board;
+                _consoleUI?.SetCurrentTurn(Mark);
+                _consoleUI?.SetBoard(CurrentBoard = board);
+
                 var name = GetPlayerName(playerId) ?? playerId.ToString();
-                _consoleUI.Log($"{name}: it's your turn!");
+                _consoleUI?.Log($"{name}: it's your turn!");
 
                 if (UserId == playerId)
                 {
                     var move = await MakeMove(matchId, board);
-                    _consoleUI.Log($"{name} is playing at ({move.row},{move.col})");
+                    _consoleUI?.Log($"{name} is playing at ({move.row},{move.col})");
 
-                    if (_consoleUI.IsPlaying)
+                    if (_consoleUI != null)
                     {
-                        _consoleUI.CurrentTurn = Mark == Mark.X
-                            ? Mark.O
-                            : Mark.X;
+                        if (_consoleUI.IsPlaying)
+                        {
+                            _consoleUI?.SetCurrentTurn(Mark == Mark.X
+                                ? Mark.O
+                                : Mark.X);
+                        }
+                        else
+                        {
+                            _consoleUI?.SetCurrentTurn(Mark.Empty);
+                        }
                     }
-                    else
-                    {
-                        _consoleUI.CurrentTurn = Mark.Empty;
-                    }
+
                     CurrentBoard[move.row][move.col] = Mark;
-                    _consoleUI.Board = CurrentBoard = board;
+
+                    _consoleUI?.SetBoard(CurrentBoard = board);
                     await SubmitMove(move.row, move.col);
-                    _consoleUI.CurrentTurn = Mark.Empty;
+                    _consoleUI?.SetCurrentTurn(Mark.Empty);
                 }
             }
             catch (TimeoutException)
             {
-                _consoleUI.Log($"You've lost you turn due to Timeout!");
+                _consoleUI?.Log($"You've lost you turn due to Timeout!");
             }
         });
 
-        await _signalRClient.SubscribeAsync<Guid, int, int>("OnOpponentMoved", (matchId, row, col) =>
+        await _signalRClient.SubscribeAsync<Guid, byte, byte>("OnOpponentMoved", (matchId, row, col) =>
         {
             try
             {
-                _consoleUI.Log($"Opponent moved at ({row},{col})");
+                _consoleUI?.Log($"Opponent moved at ({row},{col})");
                 OnOpponentMoved(matchId, row, col);
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -340,25 +334,25 @@ public abstract class BasePlayerClient : IBot
         {
             try
             {
-                _consoleUI.IsPlaying = false;
-                _consoleUI.Board = CurrentBoard = null;
-                _consoleUI.MatchEndTime = DateTime.Now;
+                _consoleUI?.SetIsPlaying(false);
+                _consoleUI?.SetBoard(CurrentBoard = null);
+                _consoleUI?.SetMatchEndTime(DateTime.Now);
 
                 if (result.WinnerId.HasValue)
                 {
                     var name = GetPlayerName(result.WinnerId.Value) ?? result.WinnerId.ToString();
-                    _consoleUI.Log($"Match ended with {name} as Winner");
+                    _consoleUI?.Log($"Match ended with {name} as Winner");
                 }
                 else
                 {
-                    _consoleUI.Log($"Match ended.");
+                    _consoleUI?.Log($"Match ended.");
                 }
 
                 OnMatchEnded(result);
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
@@ -366,36 +360,38 @@ public abstract class BasePlayerClient : IBot
         {
             try
             {
-                _consoleUI.Board = CurrentBoard = board;
+                CurrentBoard = board;
+                _consoleUI?.SetBoard(CurrentBoard);
+
                 OnBoardUpdated(matchId, CurrentBoard);
             }
             catch (Exception e)
             {
-                _consoleUI.Log(e.Message);
+                _consoleUI?.Log(e.Message);
             }
         });
 
         await _signalRClient.SubscribeAsync<Dictionary<Guid, int>>("OnRefreshLeaderboard", leaderboard =>
         {
-            _consoleUI.Log("Leaderboard updated.");
+            _consoleUI?.Log("Leaderboard updated.");
             foreach (var entry in leaderboard.OrderByDescending(e => e.Value))
             {
-                _consoleUI.Log($" - {entry.Key}: {entry.Value} pts");
+                _consoleUI?.Log($" - {entry.Key}: {entry.Value} pts");
             }
         });
 
-        _consoleUI.Log("Connecting to SignalR...");
+        _consoleUI?.Log("Connecting to SignalR...");
         await _signalRClient.StartAsync();
-        _consoleUI.Log("Connected to SignalR!");
+        _consoleUI?.Log("Connected to SignalR!");
 
         Tournament = await GetTournamentAsync();
 
         await SubscribeTournament(_tournamentId);
     }
 
-    private async Task SubmitMove(int row, int col)
+    private async Task SubmitMove(byte row, byte col)
     {
-        await _signalRClient!.InvokeAsync("SubmitMoveAsync", _tournamentId, row, col);
+        await _signalRClient!.SubmitMoveAsync(_tournamentId, row, col);
     }
 
     private async Task<TournamentDto?> GetTournamentAsync()
@@ -408,16 +404,17 @@ public abstract class BasePlayerClient : IBot
         try
         {
             if (_signalRClient == null)
+            {
                 return null;
+            }
 
-            return await _signalRClient.InvokeAsync<TournamentDto>(
-                "GetTournamentAsync",
-                tournamentId
-            );
+            Tournament = await _signalRClient.GetTournamentAsync(tournamentId);
+
+            return Tournament;
         }
         catch (Exception ex)
         {
-            _consoleUI.Log(ex.Message);
+            _consoleUI?.Log(ex.Message);
             return null;
         }
     }
@@ -426,37 +423,41 @@ public abstract class BasePlayerClient : IBot
     {
         if (_signalRClient == null || _signalRClient.State != HubConnectionState.Connected)
         {
-            _consoleUI.Log("Cannot register player: not connected to SignalR.");
+            _consoleUI?.Log("Cannot register player: not connected to SignalR.");
             return;
         }
 
         try
         {
-            _consoleUI.Log($"Registering {_botName} ({PlayerId}) to tournament {_tournamentId}...");
-            await _signalRClient.InvokeAsync("RegisterPlayerAsync", _botName, _tournamentId);
-            _consoleUI.Log($"Registered to tournament {_tournamentId} successfully.");
+            _consoleUI?.Log($"Registering {_botName} ({PlayerId}) to tournament {_tournamentId}...");
+            await _signalRClient.RegisterPlayerAsync(_botName, _tournamentId);
+            _consoleUI?.Log($"Registered to tournament {_tournamentId} successfully.");
         }
         catch (Exception ex)
         {
-            _consoleUI.Log($"Failed to register: {ex.Message}");
+            _consoleUI?.Log($"Failed to register: {ex.Message}");
         }
     }
 
     private async Task SubscribeTournament(Guid tournamentId)
     {
-        await _signalRClient!.InvokeAsync("SpectateTournamentAsync", _tournamentId);
+        var tournament = await _signalRClient!.SpectateTournamentAsync(tournamentId);
+        if (tournament != null)
+        {
+            Tournament = tournament;
+        }
     }
 
     private async Task RegisterAsync()
     {
-        await _signalRClient!.InvokeAsync("RegisterPlayerAsync", _botName, _tournamentId);
+        await _signalRClient!.RegisterPlayerAsync(_botName, _tournamentId);
     }
 
     protected virtual void OnMatchStarted(Guid matchId, Guid playerId, Guid opponentId, Mark mark, bool starts)
     {
     }
 
-    protected virtual void OnOpponentMoved(Guid matchId, int row, int col)
+    protected virtual void OnOpponentMoved(Guid matchId, byte row, byte col)
     {
     }
 
@@ -468,13 +469,13 @@ public abstract class BasePlayerClient : IBot
     {
     }
 
-    protected abstract Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board);
+    protected abstract Task<(byte row, byte col)> MakeMove(Guid matchId, Mark[][] board);
 
     protected virtual void OnAuthenticated(TournamentAuthResponse auth)
     {
     }
 
-    Task<(int row, int col)> IBot.MakeMoveAsync(Guid matchId, Mark[][] board)
+    Task<(byte row, byte col)> IBot.MakeMoveAsync(Guid matchId, Mark[][] board)
     {
         return MakeMove(matchId, board);
     }
@@ -484,7 +485,7 @@ public abstract class BasePlayerClient : IBot
         OnMatchStarted(matchId, playerId, opponentId, mark, starts);
     }
 
-    void IBot.OnOpponentMoved(Guid matchId, int row, int col)
+    void IBot.OnOpponentMoved(Guid matchId, byte row, byte col)
     {
         OnOpponentMoved(matchId, row, col);
     }
@@ -501,25 +502,35 @@ public abstract class BasePlayerClient : IBot
 
     protected void ConsoleWrite(string message)
     {
-        _consoleUI.Log(message);
+        _consoleUI?.Log(message);
     }
 
     protected T ConsoleRead<T>(string message)
     {
+        if (_consoleUI == null)
+        {
+            return default;
+        }
+
         return _consoleUI.Read<T>(message);
     }
 
-    protected string GetPlayerName(Guid playerId)
+    protected string? GetPlayerName(Guid playerId)
     {
         if (_tournament?.RegisteredPlayers.ContainsKey(playerId) ?? false)
         {
             return _tournament?
                 .RegisteredPlayers[playerId]?
-                .ToString() ?? playerId.ToString();
+                .ToString() ?? (playerId == PlayerId ? _botName : playerId.ToString());
 
         }
 
-        return "";
+        if (playerId == PlayerId)
+        {
+            return _botName;
+        }
+
+        return null;
     }
 
     protected bool IsUserPlaying(Guid matchId)

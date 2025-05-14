@@ -1,7 +1,7 @@
 ﻿using TicTacToe.Tournament.BasePlayer;
-using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.BasePlayer.Interfaces;
 using TicTacToe.Tournament.BasePlayer.Helpers;
+using TicTacToe.Tournament.BasePlayer.Interfaces;
+using TicTacToe.Tournament.Models;
 
 namespace TicTacToe.Tournament.OpenAIClientPlayer;
 
@@ -47,7 +47,7 @@ public class OpenAIClientPlayer : BasePlayerClient
         );
     }
 
-    protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+    protected override Task<(byte row, byte col)> MakeMove(Guid matchId, Mark[][] board)
     {
         try
         {
@@ -61,6 +61,6 @@ public class OpenAIClientPlayer : BasePlayerClient
             base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
-        return Task.FromResult((-1, -1));
+        return Task.FromResult(((byte)255, (byte)255));
     }
 }

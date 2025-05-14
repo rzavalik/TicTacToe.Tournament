@@ -177,8 +177,7 @@ function renderPodium(sorted: [string, number][], players: Record<string, string
         { place: 3, color: 'green', height: 80, medal: '🥉' },
     ];
     return podium.map((p, i) => {
-        const [playerId, score] = sorted[p.place - 1] || [null, null];
-        const name = playerId ? players[playerId] ?? "Unknown" : "-";
+        const name = (sorted[i]['1'] as any).playerName;
         return `
             <div class="text-center mx-2">
                 <div style="font-weight:bold;">${name}</div>

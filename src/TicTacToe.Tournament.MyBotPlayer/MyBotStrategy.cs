@@ -22,7 +22,7 @@ namespace TicTacToe.Tournament.MyBotPlayer
             _consoleRead = consoleRead;
         }
 
-        public (int row, int col) MakeMove(Mark[][] board)
+        public (byte row, byte col) MakeMove(Mark[][] board)
         {
             // Add your strategy here
             throw new NotImplementedException();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using TicTacToe.Tournament.BasePlayer.Interfaces;
+using TicTacToe.Tournament.Models.DTOs;
 
 namespace TicTacToe.Tournament.BasePlayer.Helpers;
 
@@ -13,8 +14,6 @@ public class SignalRClient : ISignalRClient
 
     public Task StartAsync() => _conn.StartAsync();
 
-    public Task InvokeAsync(string method, params object[] args) =>
-        _conn.InvokeCoreAsync(method, typeof(object), args);
 
     public event Func<Exception?, Task> Reconnecting
     {
@@ -64,6 +63,28 @@ public class SignalRClient : ISignalRClient
         return Task.CompletedTask;
     }
 
-    public Task<T> InvokeAsync<T>(string method, params object[] args) =>
-        _conn.InvokeCoreAsync<T>(method, args);
+    public async Task<TournamentDto?> SpectateTournamentAsync(Guid tournamentId)
+    {
+        return await _conn.InvokeAsync<TournamentDto>(
+            "SpectateTournamentAsync",
+            tournamentId);
+    }
+
+    public async Task SubmitMoveAsync(Guid tournamentId, byte row, byte col)
+    {
+        await _conn.InvokeAsync("SubmitMoveAsync", tournamentId, row, col);
+    }
+
+    public async Task<TournamentDto?> GetTournamentAsync(Guid tournamentId)
+    {
+        return await _conn.InvokeAsync<TournamentDto>(
+                "GetTournamentAsync",
+                tournamentId
+            );
+    }
+
+    public async Task RegisterPlayerAsync(string botName, Guid tournamentId)
+    {
+        await _conn.InvokeAsync("RegisterPlayerAsync", botName, tournamentId);
+    }
 }

@@ -25,16 +25,16 @@ public class OpenAIStrategy : IPlayerStrategy
         _apiKey = apiKey;
     }
 
-    public (int row, int col) MakeMove(Mark[][] board)
+    public (byte row, byte col) MakeMove(Mark[][] board)
     {
         _currentBoard = board;
 
-        var playerPositions = new List<(int row, int col)>();
-        var opponentPositions = new List<(int row, int col)>();
+        var playerPositions = new List<(byte row, byte col)>();
+        var opponentPositions = new List<(byte row, byte col)>();
 
-        for (int i = 0; i < 3; i++)
+        for (byte i = 0; i < 3; i++)
         {
-            for (int j = 0; j < 3; j++)
+            for (byte j = 0; j < 3; j++)
             {
                 if (board[i][j] == _playerMark)
                 {
@@ -47,7 +47,7 @@ public class OpenAIStrategy : IPlayerStrategy
             }
         }
 
-        int row = -1, col = -1;
+        byte row = 255, col = 255;
 
         var prompt = GetPrompt(playerPositions, opponentPositions);
         var hasResponse = false;
@@ -86,7 +86,7 @@ public class OpenAIStrategy : IPlayerStrategy
         return (row, col);
     }
 
-    private (int row, int col) GetDumbMove()
+    private (byte row, byte col) GetDumbMove()
     {
         if (_currentBoard == null)
         {
@@ -94,18 +94,24 @@ public class OpenAIStrategy : IPlayerStrategy
         }
 
         var _rng = new Random();
-        var moves = new List<(int row, int col)>();
-        for (int r = 0; r < 3; r++)
-            for (int c = 0; c < 3; c++)
+        var moves = new List<(byte row, byte col)>();
+        for (byte r = 0; r < 3; r++)
+        {
+            for (byte c = 0; c < 3; c++)
+            {
                 if (_currentBoard[r][c] == Mark.Empty)
+                {
                     moves.Add((r, c));
+                }
+            }
+        }
 
         return (moves.OrderBy(r => _rng.NextDouble()).FirstOrDefault());
     }
 
     private string GetPrompt(
-        List<(int row, int col)> playerPositions,
-        List<(int row, int col)> opponentPositions)
+        List<(byte row, byte col)> playerPositions,
+        List<(byte row, byte col)> opponentPositions)
     {
         var stringBuilder = new StringBuilder();
         stringBuilder.AppendLine($"- You are playing using {_playerMark:G} and your ooponent is playing using {(_playerMark == Mark.O ? Mark.X : Mark.O):G}");
@@ -137,9 +143,9 @@ public class OpenAIStrategy : IPlayerStrategy
         return textWriter.ToString();
     }
 
-    private static int ExtractCoordinate(string input, string label)
+    private static byte ExtractCoordinate(string input, string label)
     {
         var match = System.Text.RegularExpressions.Regex.Match(input, @$"{label}\s*=\s*(\d)");
-        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+        return (byte)(match.Success ? byte.Parse(match.Groups[1].Value) : 0);
     }
 }

@@ -36,7 +36,7 @@ namespace TicTacToe.Tournament.MyBotPlayer
             );
         }
 
-        protected override Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+        protected override Task<(byte row, byte col)> MakeMove(Guid matchId, Mark[][] board)
         {
             try
             {
@@ -50,7 +50,7 @@ namespace TicTacToe.Tournament.MyBotPlayer
                 base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
             }
 
-            return Task.FromResult((-1, -1));
+            return Task.FromResult(((byte)255, (byte)255));
         }
     }
 }

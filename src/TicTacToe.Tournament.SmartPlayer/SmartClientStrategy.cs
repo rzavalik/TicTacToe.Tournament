@@ -8,13 +8,13 @@ internal class SmartClientStrategy : IPlayerStrategy
     private readonly Mark _playerMark;
     private readonly Mark _opponentMark;
     private readonly Action<string> _consoleWrite;
-    private readonly Func<string, int> _consoleRead;
+    private readonly Func<string, byte> _consoleRead;
 
     public SmartClientStrategy(
         Mark playerMark,
         Mark opponentMark,
         Action<string> consoleWrite,
-        Func<string, int> consoleRead)
+        Func<string, byte> consoleRead)
     {
         _playerMark = playerMark;
         _opponentMark = opponentMark;
@@ -22,11 +22,11 @@ internal class SmartClientStrategy : IPlayerStrategy
         _consoleRead = consoleRead;
     }
 
-    public (int row, int col) MakeMove(Mark[][] board)
+    public (byte row, byte col) MakeMove(Mark[][] board)
     {
         _consoleWrite("It's your time to make a move!");
 
-        int row = -1, col = -1;
+        byte row = 255, col = 255;
         var timeout = TimeSpan.FromSeconds(59);
         var startTime = DateTime.UtcNow;
 

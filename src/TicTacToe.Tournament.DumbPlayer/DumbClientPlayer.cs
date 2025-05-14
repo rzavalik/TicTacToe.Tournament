@@ -45,7 +45,7 @@ public class DumbPlayerClient : BasePlayerClient
         );
     }
 
-    protected override async Task<(int row, int col)> MakeMove(Guid matchId, Mark[][] board)
+    protected override async Task<(byte row, byte col)> MakeMove(Guid matchId, Mark[][] board)
     {
         try
         {
@@ -61,6 +61,6 @@ public class DumbPlayerClient : BasePlayerClient
             base.ConsoleWrite($"Error in MakeMoveAsync: {ex.Message}");
         }
 
-        return (-1, -1);
+        return (255, 255);
     }
 }
