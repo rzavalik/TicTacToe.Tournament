@@ -35,7 +35,9 @@
             DateTime? endTime,
             Board board,
             Guid currentTurn,
-            Mark? winnerMark) : base()
+            Mark? winnerMark,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _playerB = playerB;
             _status = status;
@@ -176,6 +178,12 @@
             }
         }
 
+        public void Start()
+        {
+            Status = MatchStatus.Ongoing;
+            StartTime = DateTime.UtcNow;
+        }
+
         public void MakeMove(Guid playerId, byte row, byte col)
         {
             if (Status == MatchStatus.Finished)
@@ -237,6 +245,29 @@
             var winnerMark = Board.GetWinner();
 
             return mark == winnerMark;
+        }
+
+        public void Walkover(Mark mark)
+        {
+            Finish(mark);
+        }
+
+        public void Finish(Mark? mark)
+        {
+            WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
+            Finish();
+        }
+
+        public void Draw()
+        {
+            WinnerMark = null;
+            Finish();
+        }
+
+        public void Finish()
+        {
+            Status = MatchStatus.Finished;
+            EndTime = DateTime.UtcNow;
         }
     }
 }

@@ -25,12 +25,21 @@
             _grid = board;
         }
 
-        [JsonConstructor]
         public Board(
             Mark[][] board,
             List<Movement> movements) : base()
         {
             _grid = board;
+            _movements = movements;
+        }
+
+        public Board(
+            Mark[][] state,
+            List<Movement> movements,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
+        {
+            _grid = state;
             _movements = movements;
         }
 

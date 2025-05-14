@@ -14,8 +14,22 @@
 
         }
 
-        [JsonConstructor]
-        public Movement(byte row, byte col, Mark mark) : this()
+        public Movement(
+            byte row,
+            byte col,
+            Mark mark) : base()
+        {
+            Row = row;
+            Column = col;
+            Mark = mark;
+        }
+
+        public Movement(
+            byte row,
+            byte col,
+            Mark mark,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             Row = row;
             Column = col;

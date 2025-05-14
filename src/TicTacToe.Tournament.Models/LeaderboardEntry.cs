@@ -32,7 +32,9 @@
             uint wins,
             uint draws,
             uint losses,
-            uint walkovers) : base()
+            uint walkovers,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _playerName = playerName ?? throw new ArgumentNullException(nameof(playerName));
             _playerId = playerId;

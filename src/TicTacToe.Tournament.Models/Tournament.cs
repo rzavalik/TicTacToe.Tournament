@@ -21,7 +21,10 @@
 
         }
 
-        public Tournament(Guid id, string name, uint matchRepetition) : this()
+        public Tournament(
+            Guid id,
+            string name,
+            uint matchRepetition) : this()
         {
             _id = id;
             _name = name;
@@ -39,7 +42,9 @@
             uint matchRepetition,
             IDictionary<Guid, string> registeredPlayers,
             IList<LeaderboardEntry> leaderboard,
-            Guid? champion) : base()
+            Guid? champion,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _id = id;
             _name = name;

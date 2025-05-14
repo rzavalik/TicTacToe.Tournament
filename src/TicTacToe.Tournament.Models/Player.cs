@@ -13,11 +13,23 @@
         {
         }
 
-        [JsonConstructor]
         public Player(
             Guid id,
             string name,
             Guid tournamentId) : base()
+        {
+            _id = id;
+            _name = name;
+            _tournamentId = tournamentId;
+        }
+
+        [JsonConstructor]
+        public Player(
+            Guid id,
+            string name,
+            Guid tournamentId,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _id = id;
             _name = name;

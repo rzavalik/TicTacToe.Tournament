@@ -95,6 +95,96 @@ public class LeaderboardEntryTests
         });
     }
 
+    [Fact]
+    public void Constructor_ShouldSetPlayerNameAndId()
+    {
+        var playerId = Guid.NewGuid();
+        var sut = new LeaderboardEntry("John", playerId);
+
+        sut.PlayerName.ShouldBe("John");
+        sut.PlayerId.ShouldBe(playerId);
+    }
+
+    [Fact]
+    public void Created_ShouldBeSetOnInstantiation()
+    {
+        var before = DateTime.UtcNow;
+        var sut = MakeSut();
+        var after = DateTime.UtcNow;
+
+        sut.Created.ShouldBeInRange(before, after);
+    }
+
+    [Fact]
+    public void Modified_ShouldInitiallyMatchCreated()
+    {
+        var sut = MakeSut();
+        sut.Modified.ShouldBe(sut.Created);
+    }
+
+    [Fact]
+    public void ETag_ShouldMatchCreatedTicksInitially()
+    {
+        var sut = MakeSut();
+        sut.ETag.ShouldBe($"\"{sut.Created.ToUniversalTime().Ticks}\"");
+    }
+
+    [Theory]
+    [InlineData(MatchScore.Win, 1, 0, 0, 0, 3)]
+    [InlineData(MatchScore.Draw, 0, 1, 0, 0, 1)]
+    [InlineData(MatchScore.Lose, 0, 0, 1, 0, 0)]
+    [InlineData(MatchScore.Walkover, 0, 0, 0, 1, -1)]
+    public void RegisterResult_ShouldUpdateCorrectly(MatchScore score, uint wins, uint draws, uint losses, uint walkovers, int points)
+    {
+        var sut = MakeSut();
+        var originalModified = sut.Modified ?? sut.Created;
+
+        Thread.Sleep(10);
+        sut.RegisterResult(score);
+
+        sut.Wins.ShouldBe(wins);
+        sut.Draws.ShouldBe(draws);
+        sut.Losses.ShouldBe(losses);
+        sut.Walkovers.ShouldBe(walkovers);
+        sut.TotalPoints.ShouldBe(points);
+        sut.Modified.Value.ShouldBeGreaterThan(originalModified);
+    }
+
+    [Fact]
+    public void GamesPlayed_ShouldSumAllResults()
+    {
+        var sut = MakeSut();
+        sut.RegisterResult(MatchScore.Win);
+        sut.RegisterResult(MatchScore.Draw);
+        sut.RegisterResult(MatchScore.Lose);
+        sut.RegisterResult(MatchScore.Walkover);
+
+        sut.GamesPlayed.ShouldBe(4);
+    }
+
+    [Fact]
+    public void PlayerName_Set_ShouldUpdateValueAndModify()
+    {
+        var sut = MakeSut();
+        var before = sut.Modified ?? sut.Created;
+
+        Thread.Sleep(10);
+        sut.PlayerName = "Another";
+
+        sut.PlayerName.ShouldBe("Another");
+        sut.Modified.Value.ShouldBeGreaterThan(before);
+    }
+
+    [Fact]
+    public void SettingSamePlayerName_ShouldNotTriggerModification()
+    {
+        var sut = new LeaderboardEntry("Static", Guid.NewGuid());
+        var before = sut.Modified;
+
+        sut.PlayerName = "Static";
+        sut.Modified.ShouldBe(before);
+    }
+
 
     private LeaderboardEntry MakeSut()
     {

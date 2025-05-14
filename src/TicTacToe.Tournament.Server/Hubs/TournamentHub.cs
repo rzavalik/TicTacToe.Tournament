@@ -23,43 +23,7 @@ public class TournamentHub : Hub
             return null;
         }
 
-        return new TournamentDto
-        {
-            Id = tournament.Id,
-            Name = tournament.Name,
-            Status = tournament.Status.ToString(),
-            RegisteredPlayers = tournament.RegisteredPlayers,
-            Leaderboard = tournament.Leaderboard.Select(l => new LeaderboardDto()
-            {
-                PlayerId = l.PlayerId,
-                PlayerName = l.PlayerName,
-                TotalPoints = l.TotalPoints,
-                Wins = l.Wins,
-                Draws = l.Draws,
-                Losses = l.Losses,
-                Walkovers = l.Walkovers
-            }).ToList(),
-            StartTime = tournament.StartTime,
-            Duration = tournament.Duration,
-            EndTime = tournament.EndTime,
-            ETag = tournament.ETag,
-            Matches = tournament.Matches.Select(m => new MatchDto
-            {
-                Id = m.Id,
-                PlayerAId = m.PlayerA,
-                PlayerAMark = Mark.X,
-                PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
-                PlayerBId = m.PlayerB,
-                PlayerBMark = Mark.O,
-                PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
-                Status = m.Status,
-                Board = m.Board.State,
-                StartTime = m.StartTime,
-                EndTime = m.EndTime,
-                Duration = m.Duration,
-                ETag = m.ETag
-            }).ToList()
-        };
+        return new TournamentDto(tournament);
     }
 
     public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
@@ -114,15 +78,7 @@ public class TournamentHub : Hub
                 t.Status == TournamentStatus.Cancelled
                 ? t.StartTime
                 : null)
-            .Select(t => new TournamentSummaryDto
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Status = t.Status.ToString(),
-                RegisteredPlayersCount = t.RegisteredPlayers.Count,
-                MatchCount = t.Matches.Count,
-                ETag = t.ETag
-            });
+            .Select(t => new TournamentSummaryDto(t));
 
         return Task.FromResult(result);
     }
@@ -207,22 +163,7 @@ public class TournamentHub : Hub
         }
 
         var tournament = tContext.Tournament;
-        return tournament.Matches.Select(m => new MatchDto
-        {
-            Id = m.Id,
-            PlayerAId = m.PlayerA,
-            PlayerAMark = Mark.X,
-            PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
-            PlayerBId = m.PlayerB,
-            PlayerBMark = Mark.O,
-            PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
-            Status = m.Status,
-            Board = m.Board.State,
-            StartTime = m.StartTime,
-            EndTime = m.EndTime,
-            Duration = m.Duration,
-            ETag = m.ETag
-        }).ToList();
+        return tournament.Matches.Select(m => new MatchDto(tournament, m)).ToList();
     }
 
     public async Task SubmitMoveAsync(Guid tournamentId, byte row, byte col)

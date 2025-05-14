@@ -10,6 +10,29 @@
             Matches = [];
         }
 
+        public TournamentDto(Tournament tournament)
+        {
+            Id = tournament.Id;
+            Name = tournament.Name;
+            Status = tournament.Status.ToString("G");
+            RegisteredPlayers = tournament
+                .RegisteredPlayers
+                .OrderBy(pair => pair.Value)
+                .ToDictionary();
+            Leaderboard = tournament
+                .Leaderboard
+                .Select(l => new LeaderboardDto(l))
+                .ToList();
+            Matches = tournament
+                .Matches
+                .Select(m => new MatchDto(tournament, m))
+                .ToList();
+            StartTime = tournament.StartTime;
+            EndTime = tournament.EndTime;
+            Duration = tournament.Duration;
+            ETag = tournament.ETag;
+        }
+
         public Guid Id { get; set; }
         public string Name { get; set; } = default!;
         public string Status { get; set; } = default!;

@@ -14,18 +14,22 @@ namespace TicTacToe.Tournament.Server
         private readonly Dictionary<Guid, IPlayerBot> _players = new();
         private readonly Action<Guid, MatchScore> _updateLeaderboard;
         private readonly ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> _pendingMoves = new();
-
+        private readonly TimeSpan _walkoverTimeout;
         public Models.Tournament Tournament => _tournament;
 
         public GameServer(
             Models.Tournament tournament,
             IHubContext<TournamentHub> hubContext,
-            Action<Guid, MatchScore> updateLeaderboard)
+            Action<Guid, MatchScore> updateLeaderboard,
+            TimeSpan walkoverTimeout)
         {
             _tournament = tournament ?? throw new ArgumentNullException(nameof(tournament));
             _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
             _updateLeaderboard = updateLeaderboard ?? throw new ArgumentNullException(nameof(updateLeaderboard));
+            _walkoverTimeout = walkoverTimeout;
         }
+
+        public static TimeSpan DefaultTimeout => TimeSpan.FromMinutes(1);
 
         public IReadOnlyDictionary<Guid, IPlayerBot> RegisteredPlayers => _players;
 
@@ -98,20 +102,18 @@ namespace TicTacToe.Tournament.Server
 
         private async Task<GameResult> PlayMatchAsync(Models.Match match)
         {
-            match.Status = MatchStatus.Ongoing;
-            match.StartTime = DateTime.UtcNow;
-            var board = match.Board;
+            match.Start();
 
             var turn = 0;
             var playerX = _players[match.PlayerA];
             var playerO = _players[match.PlayerB];
             var players = new Dictionary<Mark, IPlayerBot> { [Mark.X] = playerX, [Mark.O] = playerO };
 
-            await Task.WhenAll(
-                OnMatchStarted(match, playerX.Id, playerO.Id, Mark.X, true),
-                OnMatchStarted(match, playerO.Id, playerX.Id, Mark.O, false),
-                OnTournamentUpdated(_tournament.Id)
-            );
+            playerX.OnMatchStarted(match.Id, playerX.Id, playerO.Id, Mark.X, true);
+
+            playerO.OnMatchStarted(match.Id, playerO.Id, playerX.Id, Mark.O, false);
+
+            await OnTournamentUpdated(_tournament.Id);
 
             while (match.Status == MatchStatus.Ongoing)
             {
@@ -126,12 +128,11 @@ namespace TicTacToe.Tournament.Server
                 (byte row, byte col)? move = null;
                 try
                 {
-                    move = await WaitForMoveAsync(currentPlayer.Id, 60000);
+                    move = await WaitForMoveAsync(currentPlayer.Id, _walkoverTimeout.TotalMilliseconds);
                 }
                 catch (TimeoutException)
                 {
-                    match.Status = MatchStatus.Finished;
-                    match.WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
+                    match.Walkover(mark == Mark.X ? Mark.O : Mark.X);
 
                     var winnerId = match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB;
                     var walkoverId = match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA;
@@ -145,21 +146,21 @@ namespace TicTacToe.Tournament.Server
 
                 if (move.HasValue)
                 {
-                    if (board.IsValidMove(move.Value.row, move.Value.col))
+                    if (match.Board.IsValidMove(move.Value.row, move.Value.col))
                     {
-                        board.ApplyMove(move.Value.row, move.Value.col, mark);
+                        match.Board.ApplyMove(move.Value.row, move.Value.col, mark);
 
                         await Task.WhenAll(
                             OnOpponentMoved(match.Id, opponent.Id, move.Value.row, move.Value.col),
-                            OnReceiveBoard(match.Id, board.GetState())
+                            OnReceiveBoard(match.Id, match.Board.GetState())
                         );
                         turn++;
                     }
                 }
 
-                if (board.IsGameOver())
+                if (match.Board.IsGameOver())
                 {
-                    match.WinnerMark = board.GetWinner();
+                    match.Finish(match.Board.GetWinner());
                     break;
                 }
 
@@ -180,6 +181,7 @@ namespace TicTacToe.Tournament.Server
             }
             else
             {
+                match.Draw();
                 _updateLeaderboard(match.PlayerA, MatchScore.Draw);
                 _updateLeaderboard(match.PlayerB, MatchScore.Draw);
             }
@@ -192,7 +194,7 @@ namespace TicTacToe.Tournament.Server
             return gameResult;
         }
 
-        private async Task<(byte row, byte col)?> WaitForMoveAsync(Guid playerId, int timeoutInMs)
+        private async Task<(byte row, byte col)?> WaitForMoveAsync(Guid playerId, double timeoutInMs)
         {
             var sw = Stopwatch.StartNew();
             Console.WriteLine($"[GameServer] Waiting for player {playerId} to submit the movement.");
@@ -226,13 +228,11 @@ namespace TicTacToe.Tournament.Server
 
         private async Task RunMatchAsync(Guid tournamentId, Models.Match match)
         {
-            match.Status = MatchStatus.Ongoing;
-            match.StartTime = DateTime.UtcNow;
+            match.Start();
 
             var result = await PlayMatchAsync(match);
 
-            match.EndTime = DateTime.UtcNow;
-            match.Status = MatchStatus.Finished;
+            match.Finish();
 
             await OnTournamentUpdated(tournamentId);
         }

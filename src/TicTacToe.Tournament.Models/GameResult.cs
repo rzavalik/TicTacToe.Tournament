@@ -31,12 +31,26 @@
             _isDraw = false;
         }
 
-        [JsonConstructor]
         public GameResult(
             Guid matchId,
             Guid? winnerId,
             Board board,
             bool isDraw) : base()
+        {
+            _matchId = matchId;
+            _winnerId = winnerId;
+            _board = board ?? throw new ArgumentNullException(nameof(board));
+            _isDraw = isDraw;
+        }
+
+        [JsonConstructor]
+        public GameResult(
+            Guid matchId,
+            Guid? winnerId,
+            Board board,
+            bool isDraw,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _matchId = matchId;
             _winnerId = winnerId;

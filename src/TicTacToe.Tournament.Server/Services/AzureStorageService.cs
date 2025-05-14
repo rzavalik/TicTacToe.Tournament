@@ -17,7 +17,7 @@ public class AzureStorageService : IAzureStorageService
     {
         WriteIndented = false,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.Never
     };
 
     public AzureStorageService(string connectionString)

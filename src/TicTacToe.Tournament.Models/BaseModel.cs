@@ -13,7 +13,6 @@
             OnCreated();
         }
 
-        [JsonConstructor]
         public BaseModel(DateTime created, DateTime? modified)
         {
             _created = created;

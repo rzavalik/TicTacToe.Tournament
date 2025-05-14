@@ -385,42 +385,6 @@ namespace TicTacToe.Tournament.Server
             _hubContext.Clients.All.SendAsync("OnTournamentCancelled", tournamentId);
 
         private Task OnTournamentStarted(Models.Tournament tournament) =>
-            _hubContext.Clients.Group(tournament.Id.ToString()).SendAsync("OnTournamentStarted", new TournamentDto
-            {
-                Id = tournament.Id,
-                Name = tournament.Name,
-                Status = tournament.Status.ToString(),
-                RegisteredPlayers = tournament.RegisteredPlayers,
-                Leaderboard = tournament.Leaderboard.Select(l => new LeaderboardDto()
-                {
-                    PlayerId = l.PlayerId,
-                    PlayerName = l.PlayerName,
-                    TotalPoints = l.TotalPoints,
-                    Wins = l.Wins,
-                    Draws = l.Draws,
-                    Losses = l.Losses,
-                    Walkovers = l.Walkovers
-                }).ToList(),
-                StartTime = tournament.StartTime,
-                Duration = tournament.Duration,
-                EndTime = tournament.EndTime,
-                ETag = tournament.ETag,
-                Matches = tournament.Matches.Select(m => new MatchDto
-                {
-                    Id = m.Id,
-                    PlayerAId = m.PlayerA,
-                    PlayerAMark = Mark.X,
-                    PlayerAName = tournament.RegisteredPlayers[m.PlayerA],
-                    PlayerBId = m.PlayerB,
-                    PlayerBMark = Mark.O,
-                    PlayerBName = tournament.RegisteredPlayers[m.PlayerB],
-                    Status = m.Status,
-                    Board = m.Board.State,
-                    StartTime = m.StartTime,
-                    EndTime = m.EndTime,
-                    Duration = m.Duration,
-                    ETag = m.ETag
-                }).ToList()
-            });
+            _hubContext.Clients.Group(tournament.Id.ToString()).SendAsync("OnTournamentStarted", new TournamentDto(tournament));
     }
 }

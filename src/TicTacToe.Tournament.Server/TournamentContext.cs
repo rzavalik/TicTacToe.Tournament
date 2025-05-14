@@ -37,13 +37,18 @@ public class TournamentContext
                     .Clients
                     .Group(tournament.Id.ToString())
                     .SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
-            });
+            },
+            Server.GameServer.DefaultTimeout);
 
         if (Tournament.Leaderboard == null ||
             Tournament.Leaderboard.Count == 0)
+        {
             GameServer.InitializeLeaderboard();
+        }
 
         if (Tournament.Status == Models.TournamentStatus.Planned)
+        {
             GameServer.GenerateMatches();
+        }
     }
 }

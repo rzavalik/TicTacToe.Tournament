@@ -4,12 +4,124 @@ namespace TicTacToe.Tournament.Models.Tests;
 
 public class TournamentTests
 {
-    private Tournament MakeSut()
+    private static Guid _player1 = Guid.NewGuid();
+    private static Guid _player2 = Guid.NewGuid();
+
+    private static Tournament MakeSut(string name = "Tournament Test", uint repetition = 1)
     {
-        return new Tournament
-        {
-            Name = "Spring Invitational"
-        };
+        return new Tournament(Guid.NewGuid(), name, repetition);
+    }
+
+    [Fact]
+    public void Constructor_ShouldSetPropertiesCorrectly()
+    {
+        var id = Guid.NewGuid();
+        var name = "Championship";
+        uint repetition = 5;
+
+        var tournament = new Tournament(id, name, repetition);
+
+        tournament.Id.ShouldBe(id);
+        tournament.Name.ShouldBe(name);
+        tournament.MatchRepetition.ShouldBe(repetition);
+    }
+
+    [Fact]
+    public void MatchRepetition_ShouldBeLimitedToNine()
+    {
+        var sut = new Tournament(Guid.NewGuid(), "T", 20);
+        sut.MatchRepetition.ShouldBe(9u);
+    }
+
+    [Fact]
+    public void Created_ShouldBeSetOnInstantiation()
+    {
+        var before = DateTime.UtcNow;
+        var sut = MakeSut();
+        var after = DateTime.UtcNow;
+
+        sut.Created.ShouldBeInRange(before, after);
+    }
+
+    [Fact]
+    public void Modified_ShouldInitiallyEqualCreated()
+    {
+        var sut = MakeSut();
+        sut.Modified.ShouldBe(sut.Created);
+    }
+
+    [Fact]
+    public void ETag_ShouldReflectCreatedTicks()
+    {
+        var sut = MakeSut();
+        sut.ETag.ShouldBe($"\"{sut.Created.ToUniversalTime().Ticks}\"");
+    }
+
+    [Fact]
+    public void RegisterPlayer_NewPlayer_ShouldAddToRegisteredPlayersAndModify()
+    {
+        var sut = MakeSut();
+        var before = sut.Modified ?? sut.Created;
+
+        Thread.Sleep(10);
+        sut.RegisterPlayer(_player1, "Player One");
+
+        sut.RegisteredPlayers.ShouldContainKey(_player1);
+        sut.Modified.Value.ShouldBeGreaterThan(before);
+    }
+
+    [Fact]
+    public void RegisterPlayer_SamePlayerAndName_ShouldNotModify()
+    {
+        var sut = MakeSut();
+        sut.RegisterPlayer(_player1, "Player One");
+
+        var before = sut.Modified;
+        sut.RegisterPlayer(_player1, "Player One");
+
+        sut.Modified.ShouldBe(before); // no change
+    }
+
+    [Fact]
+    public void InitializeLeaderboard_ShouldCreateEntriesForRegisteredPlayers()
+    {
+        var sut = MakeSut();
+        sut.RegisterPlayer(_player1, "Alice");
+        sut.RegisterPlayer(_player2, "Bob");
+
+        sut.InitializeLeaderboard();
+
+        sut.Leaderboard.Count.ShouldBe(2);
+        sut.Leaderboard.Any(p => p.PlayerId == _player1).ShouldBeTrue();
+        sut.Leaderboard.Any(p => p.PlayerId == _player2).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void AgreggateScoreToPlayer_ShouldUpdateLeaderboardEntry()
+    {
+        var sut = MakeSut();
+        sut.RegisterPlayer(_player1, "Alice");
+        sut.InitializeLeaderboard();
+
+        var entry = sut.Leaderboard.First(p => p.PlayerId == _player1);
+        var before = entry.TotalPoints;
+
+        sut.AgreggateScoreToPlayer(_player1, MatchScore.Win);
+
+        var updated = sut.Leaderboard.First(p => p.PlayerId == _player1);
+        updated.TotalPoints.ShouldBe(before + 3);
+    }
+
+    [Fact]
+    public void Duration_ShouldBeCalculatedFromStartAndEndTime()
+    {
+        var sut = MakeSut();
+        sut.StartTime = DateTime.UtcNow;
+        Thread.Sleep(10);
+        sut.EndTime = DateTime.UtcNow;
+
+        sut.Duration.ShouldNotBeNull();
+        sut.Duration.Value.TotalMilliseconds.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -18,7 +130,7 @@ public class TournamentTests
         var sut = MakeSut();
 
         sut.Id.ShouldNotBe(Guid.Empty);
-        sut.Name.ShouldBe("Spring Invitational");
+        sut.Name.ShouldBe("Tournament Test");
         sut.Status.ShouldBe(TournamentStatus.Planned);
         sut.Matches.ShouldBeEmpty();
         sut.RegisteredPlayers.ShouldBeEmpty();

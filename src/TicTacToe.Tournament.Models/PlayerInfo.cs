@@ -12,8 +12,20 @@
         {
         }
 
+        public PlayerInfo(
+            Guid playerId,
+            string name) : base()
+        {
+            _playerId = playerId;
+            _name = name;
+        }
+
         [JsonConstructor]
-        public PlayerInfo(Guid playerId, string name) : base()
+        public PlayerInfo(
+            Guid playerId,
+            string name,
+            DateTime created,
+            DateTime? modified) : base(created, modified)
         {
             _playerId = playerId;
             _name = name;

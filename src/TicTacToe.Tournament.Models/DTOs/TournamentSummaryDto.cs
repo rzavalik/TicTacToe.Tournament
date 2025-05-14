@@ -3,6 +3,21 @@
     [Serializable]
     public class TournamentSummaryDto
     {
+        public TournamentSummaryDto()
+        {
+
+        }
+
+        public TournamentSummaryDto(Tournament tournament)
+        {
+            Id = tournament.Id;
+            Name = tournament.Name;
+            Status = tournament.Status.ToString("G");
+            RegisteredPlayersCount = tournament.RegisteredPlayers.Keys.Count();
+            MatchCount = tournament.Matches.Count();
+            ETag = tournament.ETag;
+        }
+
         public Guid Id { get; set; }
         public string Name { get; set; } = default!;
         public string Status { get; set; } = default!;

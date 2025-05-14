@@ -23,12 +23,19 @@ public class GameServerTests
         clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
         _hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
 
-        var tournament = new Models.Tournament(_tournamentId, "Test Tournament", 1);
+        var tournament = new Models.Tournament(_tournamentId, "Test Tournament", 2);
 
         return new GameServer(
             tournament,
             _hubContextMock.Object,
-            (id, score) => { _leaderboardCalls.Add((id, score)); });
+            (id, score) => { _leaderboardCalls.Add((id, score)); },
+            Server.GameServer.DefaultTimeout
+        );
+    }
+
+    private Models.Tournament GetTournament(IGameServer gameServer)
+    {
+        return ((GameServer)gameServer).Tournament;
     }
 
     [Fact]
@@ -148,8 +155,23 @@ public class GameServerTests
         result.ShouldBeNull();
     }
 
-    private Models.Tournament GetTournament(IGameServer gameServer)
+    [Fact]
+    public void GenerateMatches_ShouldCreateCorrectNumberOfMatches()
     {
-        return ((GameServer)gameServer).Tournament;
+        var sut = MakeSut();
+        var tournament = GetTournament(sut);
+
+        var bot1 = new Mock<IPlayerBot>();
+        var bot2 = new Mock<IPlayerBot>();
+        bot1.SetupGet(b => b.Id).Returns(Guid.NewGuid());
+        bot2.SetupGet(b => b.Id).Returns(Guid.NewGuid());
+        bot1.SetupGet(b => b.Name).Returns("Bot1");
+        bot2.SetupGet(b => b.Name).Returns("Bot2");
+
+        sut.RegisterPlayer(bot1.Object);
+        sut.RegisterPlayer(bot2.Object);
+
+        var matchCount = tournament.Matches.Count;
+        matchCount.ShouldBe(4);
     }
 }

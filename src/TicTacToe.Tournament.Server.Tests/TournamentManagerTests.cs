@@ -231,5 +231,64 @@
 
             exception.ShouldBeNull();
         }
+
+        [Fact]
+        public async Task GetLeaderboard_ShouldReturnCorrectScores()
+        {
+            var tournamentId = Guid.NewGuid();
+            var hubContextMock = new Mock<IHubContext<TournamentHub>>();
+            var clientsMock = new Mock<IHubClients>();
+            var clientProxyMock = new Mock<IClientProxy>();
+
+            clientsMock.Setup(c => c.All).Returns(clientProxyMock.Object);
+            clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(clientProxyMock.Object);
+            hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
+            hubContextMock.Setup(c => c.Clients.User(It.IsAny<string>())).Returns(clientProxyMock.Object);
+
+            var storageServiceMock = new Mock<IAzureStorageService>();
+            storageServiceMock.Setup(s => s.ListTournamentsAsync()).ReturnsAsync(new List<Guid>());
+            storageServiceMock.Setup(s => s.LoadTournamentStateAsync(tournamentId))
+                .ReturnsAsync(
+                    (
+                        new TicTacToe.Tournament.Models.Tournament(tournamentId, "Test", 1),
+                        new List<PlayerInfo>(),
+                        new Dictionary<Guid, Guid>(),
+                        new System.Collections.Concurrent.ConcurrentDictionary<Guid, System.Collections.Concurrent.ConcurrentQueue<(byte, byte)>>()
+                    )
+                );
+            storageServiceMock.Setup(s => s.SaveTournamentStateAsync(It.IsAny<TournamentContext>())).Returns(Task.CompletedTask);
+            storageServiceMock.Setup(s => s.TournamentExistsAsync(tournamentId)).ReturnsAsync(true);
+
+            var manager = new TournamentManager(hubContextMock.Object, storageServiceMock.Object);
+            await manager.InitializeTournamentAsync(tournamentId, "Test", 1);
+
+            var playerA = Guid.NewGuid();
+            var playerB = Guid.NewGuid();
+
+            var botA = new DummyPlayerBot(playerA, "Bot A", tournamentId);
+            var botB = new DummyPlayerBot(playerB, "Bot B", tournamentId);
+
+            await manager.RegisterPlayerAsync(tournamentId, botA);
+            await manager.RegisterPlayerAsync(tournamentId, botB);
+
+            var tournament = manager.GetTournament(tournamentId)!;
+
+            tournament.Matches.Add(new Models.Match(playerA, playerB)
+            {
+                Status = MatchStatus.Finished,
+                WinnerMark = Mark.X // Bot A wins
+            });
+
+            tournament.Matches.Add(new Models.Match(playerA, playerB)
+            {
+                Status = MatchStatus.Finished,
+                WinnerMark = null // Draw
+            });
+
+            var leaderboard = manager.GetLeaderboard(tournamentId);
+
+            leaderboard[playerA].ShouldBe((int)MatchScore.Win + (int)MatchScore.Draw);
+            leaderboard[playerB].ShouldBe((int)MatchScore.Lose + (int)MatchScore.Draw);
+        }
     }
 }

@@ -31,7 +31,7 @@ public class BoardTests
     [InlineData(0, 0)]
     [InlineData(2, 2)]
     [InlineData(1, 1)]
-    public void IsValidMove_WhenCellIsEmpty_ShouldReturnTrue(int row, int col)
+    public void IsValidMove_WhenCellIsEmpty_ShouldReturnTrue(byte row, byte col)
     {
         var sut = MakeSut();
 
@@ -48,11 +48,9 @@ public class BoardTests
     }
 
     [Theory]
-    [InlineData(-1, 0)]
     [InlineData(3, 1)]
-    [InlineData(0, -1)]
     [InlineData(2, 3)]
-    public void IsValidMove_WhenOutOfBounds_ShouldReturnFalse(int row, int col)
+    public void IsValidMove_WhenOutOfBounds_ShouldReturnFalse(byte row, byte col)
     {
         var sut = MakeSut();
 
@@ -135,14 +133,18 @@ public class BoardTests
         var sut = MakeSut();
         var marks = new[]
         {
-            new[] { Mark.X, Mark.O, Mark.X },
-            new[] { Mark.X, Mark.X, Mark.O },
+            [Mark.X, Mark.O, Mark.X],
+            [Mark.X, Mark.X, Mark.O],
             new[] { Mark.O, Mark.X, Mark.O }
         };
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
+        for (byte i = 0; i < 3; i++)
+        {
+            for (byte j = 0; j < 3; j++)
+            {
                 sut.ApplyMove(i, j, marks[i][j]);
+            }
+        }
 
         sut.IsGameOver().ShouldBeTrue();
     }
