@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class Match : BaseModel
     {
@@ -23,10 +25,33 @@
             PlayerB = playerB;
         }
 
+        [JsonConstructor]
+        public Match(
+            Guid id,
+            Guid playerA,
+            Guid playerB,
+            MatchStatus status,
+            DateTime? startTime,
+            DateTime? endTime,
+            Board board,
+            Guid currentTurn,
+            Mark? winnerMark) : base()
+        {
+            _playerB = playerB;
+            _status = status;
+            _startTime = startTime;
+            _endTime = endTime;
+            _board = board;
+            _currentTurn = currentTurn;
+            _winnerMark = winnerMark;
+            _id = id;
+        }
+
+        [JsonInclude]
         public Guid Id
         {
             get => _id;
-            set
+            private set
             {
                 if (_id != value)
                 {
@@ -36,10 +61,11 @@
             }
         }
 
+        [JsonInclude]
         public Guid PlayerA
         {
             get => _playerA;
-            set
+            private set
             {
                 if (_playerA != value)
                 {
@@ -49,10 +75,11 @@
             }
         }
 
+        [JsonInclude]
         public Guid PlayerB
         {
             get => _playerB;
-            set
+            private set
             {
                 if (_playerB != value)
                 {
@@ -62,6 +89,7 @@
             }
         }
 
+        [JsonInclude]
         public MatchStatus Status
         {
             get => _status;
@@ -75,6 +103,7 @@
             }
         }
 
+        [JsonInclude]
         public DateTime? StartTime
         {
             get => _startTime;
@@ -88,6 +117,7 @@
             }
         }
 
+        [JsonInclude]
         public DateTime? EndTime
         {
             get => _endTime;
@@ -101,21 +131,24 @@
             }
         }
 
+        [JsonInclude]
         public TimeSpan? Duration =>
             StartTime.HasValue && EndTime.HasValue
                 ? EndTime - StartTime
                 : null;
 
+        [JsonInclude]
         public Board Board
         {
             get => _board;
-            set
+            private set
             {
                 _board = value;
                 OnChanged();
             }
         }
 
+        [JsonInclude]
         public Guid CurrentTurn
         {
             get => _currentTurn;
@@ -129,6 +162,7 @@
             }
         }
 
+        [JsonInclude]
         public Mark? WinnerMark
         {
             get => _winnerMark;
@@ -142,7 +176,7 @@
             }
         }
 
-        public void MakeMove(Guid playerId, int row, int col)
+        public void MakeMove(Guid playerId, byte row, byte col)
         {
             if (Status == MatchStatus.Finished)
             {

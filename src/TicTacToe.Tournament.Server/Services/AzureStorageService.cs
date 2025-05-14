@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿namespace TicTacToe.Tournament.Server.Services;
+
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,16 +9,15 @@ using Azure.Storage.Blobs.Models;
 using TicTacToe.Tournament.Models;
 using TicTacToe.Tournament.Server.Interfaces;
 
-namespace TicTacToe.Tournament.Server.Services;
-
 public class AzureStorageService : IAzureStorageService
 {
     private BlobContainerClient? _containerClient;
     private readonly string _connectionString;
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        WriteIndented = false,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     public AzureStorageService(string connectionString)
@@ -176,10 +177,10 @@ public class AzureStorageService : IAzureStorageService
 
         await UploadAsync($"active/{folder}/tournament.json", tContext.Tournament);
         await UploadAsync($"active/{folder}/pendingMoves.json", tContext.GameServer.GetPendingMoves() ??
-            new ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>());
+            new ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>());
     }
 
-    public async Task<(Models.Tournament? Tournament, List<PlayerInfo>? PlayerInfos, Dictionary<Guid, Guid>? Map, ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>? Moves)>
+    public async Task<(Models.Tournament? Tournament, List<PlayerInfo>? PlayerInfos, Dictionary<Guid, Guid>? Map, ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>? Moves)>
         LoadTournamentStateAsync(Guid tournamentId)
     {
         if (_containerClient == null)
@@ -192,7 +193,7 @@ public class AzureStorageService : IAzureStorageService
         var tournament = await DownloadAsync<Models.Tournament>($"active/{folder}/tournament.json");
         var playerInfos = await DownloadAsync<List<PlayerInfo>>($"active/{folder}/players.json");
         var playerMap = await DownloadAsync<Dictionary<Guid, Guid>>($"active/{folder}/playerTournamentMap.json");
-        var moves = await DownloadAsync<ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>?>($"active/{folder}/pendingMoves.json");
+        var moves = await DownloadAsync<ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>?>($"active/{folder}/pendingMoves.json");
 
         return (tournament, playerInfos, playerMap, moves);
     }

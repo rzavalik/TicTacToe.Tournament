@@ -115,7 +115,7 @@ export function renderLeaderboard(players) {
     if (!container)
         return;
     const table = `<table class="table table-striped table-hover">
-        <thead><tr><th>Position</th><th>Player</th><th>Score</th></tr></thead>
+        <thead><tr><th title="Position">P</th><th title="Player">Player</th><th title="Score">Score</th><th title="Wins">W</th><th title="Draws">D</th><th title="Losses">L</th><th title="Walkovers">WO</th></tr></thead>
         <tbody>
             ${players.map((p, i) => {
         let medal = i === 0 ? '<i class="fas fa-medal" style="color:gold"></i>' :
@@ -123,7 +123,7 @@ export function renderLeaderboard(players) {
                 i === 2 ? '<i class="fas fa-medal" style="color:#cd7f32"></i>' :
                     (i + 1).toString();
         let rowClass = i === 0 ? "table-warning fw-bold" : "";
-        return `<tr class="${rowClass}"><td>${medal}</td><td>${p.name}</td><td>${p.score}</td></tr>`;
+        return `<tr class="${rowClass}"><td>${medal}</td><td>${p.playerName}</td><td>${p.totalPoints}</td><td>${p.wins}</td><td>${p.draws}</td><td>${p.losses}</td><td>${p.walkovers}</td></tr>`;
     }).join('')}
 
         </tbody>

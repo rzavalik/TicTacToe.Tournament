@@ -29,12 +29,7 @@ export async function loadTournamentDetails(tournamentId) {
         renderPlayers(Object.entries(tournament.registeredPlayers)
             .map(([id, name]) => ({ id, name }))
             .sort((a, b) => a.name.localeCompare(b.name)));
-        renderLeaderboard(Object.entries(tournament.leaderboard)
-            .map(([id, score]) => ({
-            name: tournament.registeredPlayers[id] ?? id,
-            score
-        }))
-            .sort((a, b) => b.score - a.score));
+        renderLeaderboard(tournament.leaderboard);
         updateTournamentUI(tournament.status, tournament);
     }
     catch (error) {
@@ -572,7 +567,8 @@ hub.onTournamentUpdated(async () => {
     await Promise.all([
         loadLeaderboard(),
         loadMatches(),
-        checkNoCurrentMatch(null)
+        checkNoCurrentMatch(null),
+        loadPlayers()
     ]);
 });
 hub.onPlayerRegistered(async () => {

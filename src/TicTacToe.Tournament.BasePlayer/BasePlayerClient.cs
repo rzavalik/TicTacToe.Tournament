@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Reflection;
+using Microsoft.AspNetCore.SignalR.Client;
 using TicTacToe.Tournament.Auth;
 using TicTacToe.Tournament.BasePlayer.Interfaces;
 using TicTacToe.Tournament.Models;
@@ -53,15 +53,7 @@ public abstract class BasePlayerClient : IBot
                 _consoleUI.MatchesPlanned = value?.Matches?.Count(m => m.Status == MatchStatus.Planned);
                 _consoleUI.MatchesOngoing = value?.Matches?.Count(m => m.Status == MatchStatus.Ongoing);
                 _consoleUI.MatchesCancelled = value?.Matches?.Count(m => m.Status == MatchStatus.Cancelled);
-                _consoleUI.Leaderboard = value
-                    ?.Leaderboard
-                    ?.Select(k =>
-                    new LeaderboardEntry
-                    {
-                        PlayerId = k.Key,
-                        PlayerName = GetPlayerName(k.Key),
-                        TotalPoints = k.Value
-                    }).ToList();
+                _consoleUI.Leaderboard = value?.Leaderboard?.ToList();
                 _consoleUI.TournamentStatus = value.Status;
             }
         }

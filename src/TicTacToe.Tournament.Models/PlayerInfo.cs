@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class PlayerInfo : BaseModel
     {
@@ -10,16 +12,18 @@
         {
         }
 
-        public PlayerInfo(Guid playerId, string name)
+        [JsonConstructor]
+        public PlayerInfo(Guid playerId, string name) : base()
         {
             _playerId = playerId;
             _name = name;
         }
 
+        [JsonInclude]
         public Guid PlayerId
         {
             get => _playerId;
-            set
+            private set
             {
                 if (_playerId != value)
                 {
@@ -29,6 +33,7 @@
             }
         }
 
+        [JsonInclude]
         public string Name
         {
             get => _name;

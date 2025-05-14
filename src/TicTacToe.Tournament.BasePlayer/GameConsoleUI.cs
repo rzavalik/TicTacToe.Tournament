@@ -1,11 +1,11 @@
 ﻿namespace TicTacToe.Tournament.BasePlayer
 {
-    using Spectre.Console;
     using System.Collections.Concurrent;
     using System.Text;
+    using Spectre.Console;
     using TicTacToe.Tournament.BasePlayer.Helpers;
     using TicTacToe.Tournament.Models;
-
+    using TicTacToe.Tournament.Models.DTOs;
 
     public class GameConsoleUI
     {
@@ -53,7 +53,7 @@
 
         public string MatchStatus { get; set; }
 
-        public List<LeaderboardEntry> Leaderboard { get; set; }
+        public List<LeaderboardDto> Leaderboard { get; set; }
 
         public void Log(string message)
         {
@@ -118,7 +118,7 @@
 
         private Panel RenderBoard()
         {
-            string boardText = "";
+            var boardText = "";
             if (Board != null && Board.All(row => row.Length == 3))
             {
                 using (var textWriter = new StringWriter())

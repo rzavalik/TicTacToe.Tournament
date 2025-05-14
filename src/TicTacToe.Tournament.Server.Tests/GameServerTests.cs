@@ -23,12 +23,7 @@ public class GameServerTests
         clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
         _hubContextMock.Setup(c => c.Clients).Returns(clientsMock.Object);
 
-        var tournament = new Models.Tournament
-        {
-            Id = _tournamentId,
-            Name = "Test Tournament",
-            MatchRepetition = 1
-        };
+        var tournament = new Models.Tournament(_tournamentId, "Test Tournament", 1);
 
         return new GameServer(
             tournament,
@@ -48,7 +43,7 @@ public class GameServerTests
 
         var tournament = GetTournament(sut);
         tournament.RegisteredPlayers.ShouldContainKey(playerId);
-        tournament.Leaderboard.ShouldContainKey(playerId);
+        tournament.Leaderboard.ShouldContain(p => p.PlayerId == playerId);
     }
 
     [Fact]
@@ -91,7 +86,7 @@ public class GameServerTests
         var moves = sut.GetPendingMoves();
 
         moves.ShouldNotBeNull();
-        moves.ShouldBeOfType<ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>>();
+        moves.ShouldBeOfType<ConcurrentDictionary<Guid, ConcurrentQueue<(byte, byte)>>>();
     }
 
     [Fact]
@@ -101,18 +96,18 @@ public class GameServerTests
 
         var playerId = Guid.NewGuid();
         var existing = sut.GetPendingMoves();
-        existing[playerId] = new ConcurrentQueue<(int, int)>();
+        existing[playerId] = new ConcurrentQueue<(byte, byte)>();
         existing[playerId].Enqueue((1, 1));
 
-        var newQueue = new ConcurrentQueue<(int, int)>();
+        var newQueue = new ConcurrentQueue<(byte, byte)>();
         newQueue.Enqueue((2, 2));
-        var replacement = new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>();
+        var replacement = new ConcurrentDictionary<Guid, ConcurrentQueue<(byte, byte)>>();
         replacement[playerId] = newQueue;
 
         sut.LoadPendingMoves(replacement);
 
         sut.GetPendingMoves()[playerId].TryDequeue(out var move);
-        move.ShouldBe((2, 2));
+        move.ShouldBe(((byte)2, (byte)2));
     }
 
     [Fact]
@@ -126,7 +121,7 @@ public class GameServerTests
         var queue = sut.GetPendingMoves()[playerId];
         queue.ShouldNotBeNull();
         queue.TryDequeue(out var move).ShouldBeTrue();
-        move.ShouldBe((1, 2));
+        move.ShouldBe(((byte)1, (byte)2));
     }
 
     [Fact]

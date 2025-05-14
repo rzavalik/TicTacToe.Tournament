@@ -304,15 +304,32 @@ namespace TicTacToe.Tournament.WebApp.Controllers
         {
             var tournament = await _orchestrator.GetTournamentAsync(tournamentId);
             if (tournament == null)
+            {
                 return NotFound();
+            }
 
             if (tournament.Status == TournamentStatus.Planned.ToString("G"))
+            {
                 return NoContent();
+            }
 
             var players = await _orchestrator.GetCurrentMatchPlayersAsync(tournamentId);
-            return players == null
-                ? NotFound()
-                : Ok(players);
+            if (players == null)
+            {
+                return NotFound();
+            }
+
+            var eTag = players.ETag;
+            if (Request?.Headers?.IfNoneMatch.Any(h => h == eTag) ?? false)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
+
+            if (Response?.Headers != null)
+            {
+                Response.Headers.ETag = eTag;
+            }
+            return Ok(players);
         }
 
         [HttpGet("tournament/{tournamentId}/match/current")]
@@ -376,13 +393,12 @@ namespace TicTacToe.Tournament.WebApp.Controllers
 
             var leaderboard = tournament
                 .Leaderboard
-                .Select(g => new
-                {
-                    id = g.Key,
-                    name = tournament.RegisteredPlayers[g.Key] ?? "Unknown",
-                    score = g.Value
-                })
-                .OrderByDescending(p => p.score)
+                .OrderByDescending(p => p.TotalPoints)
+                .ThenBy(p => p.Wins)
+                .ThenBy(p => p.Draws)
+                .ThenBy(p => p.Losses)
+                .ThenBy(p => p.Walkovers)
+                .ThenBy(p => p.PlayerName)
                 .ToList();
 
             var eTag = tournament.ETag;

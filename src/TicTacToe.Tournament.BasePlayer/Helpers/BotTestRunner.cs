@@ -86,22 +86,20 @@ public class BotTestRunner
         Console.ForegroundColor = ConsoleColor.White;
         var boardRenderer = new BoardRenderer(Console.Out);
         var hasFailed = false;
-        var matchId = Guid.NewGuid();
+        var match = new Match();
 
-        _bot.OnMatchStarted(matchId, Guid.NewGuid(), Guid.NewGuid(), Mark.X, true);
-
-        var board = new Board();
+        _bot.OnMatchStarted(match.Id, Guid.NewGuid(), Guid.NewGuid(), Mark.X, true);
 
         Console.WriteLine("");
-        boardRenderer.Draw(board.State);
+        boardRenderer.Draw(match.Board.State);
         Console.WriteLine("");
         Console.WriteLine("");
 
         for (var turn = 0; turn < 9; turn++)
         {
-            var (row, col) = await _bot.MakeMoveAsync(matchId, board.State);
+            var (row, col) = await _bot.MakeMoveAsync(match.Id, match.Board.State);
 
-            if (board.State[row][col] != Mark.Empty)
+            if (match.Board.State[row][col] != Mark.Empty)
             {
                 hasFailed = true;
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -109,25 +107,20 @@ public class BotTestRunner
                 continue;
             }
 
-            board.State[row][col] = turn % 2 == 0 ? Mark.X : Mark.O;
+            match.Board.State[row][col] = turn % 2 == 0 ? Mark.X : Mark.O;
 
-            _bot.OnOpponentMoved(matchId, row, col);
-            _bot.OnBoardUpdated(matchId, board.State);
+            _bot.OnOpponentMoved(match.Id, row, col);
+            _bot.OnBoardUpdated(match.Id, match.Board.State);
 
             Console.WriteLine("");
-            boardRenderer.Draw(board.State);
+            boardRenderer.Draw(match.Board.State);
             Console.WriteLine("");
             Console.WriteLine("");
         }
 
         Console.ForegroundColor = ConsoleColor.Green;
 
-        _bot.OnMatchEnded(new GameResult
-        {
-            WinnerId = null,
-            MatchId = Guid.Empty,
-            Board = board,
-        });
+        _bot.OnMatchEnded(new GameResult(match));
 
         if (hasFailed)
         {

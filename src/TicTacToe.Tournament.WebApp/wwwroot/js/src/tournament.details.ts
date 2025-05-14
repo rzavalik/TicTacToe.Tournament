@@ -31,12 +31,7 @@ export async function loadTournamentDetails(tournamentId: string): Promise<void>
         renderPlayers(Object.entries(tournament.registeredPlayers)
             .map(([id, name]) => ({ id, name }))
             .sort((a, b) => a.name.localeCompare(b.name)));
-        renderLeaderboard(Object.entries(tournament.leaderboard)
-            .map(([id, score]) => ({
-            name: tournament.registeredPlayers[id] ?? id,
-            score
-        }))
-            .sort((a, b) => b.score - a.score));
+        renderLeaderboard(tournament.leaderboard);
         updateTournamentUI(tournament.status, tournament);
     }
     catch (error) {
@@ -48,6 +43,7 @@ export async function loadTournamentDetails(tournamentId: string): Promise<void>
     }
 }
 export function toggleMatchesPanel(tournamentId: string): void {
+    const toggleMatchesBtn = document.getElementById('toggleMatchesBtn')!;
     const container = document.getElementById('matchesContainer');
     if (!container) {
         console.error("toggleMatchesPanel: matchesContainer not found.");
@@ -55,9 +51,11 @@ export function toggleMatchesPanel(tournamentId: string): void {
     }
     if (container.classList.contains('d-none')) {
         container.classList.remove('d-none');
+        toggleMatchesBtn.innerText = 'Hide Matches';
     }
     else {
         container.classList.add('d-none');
+        toggleMatchesBtn.innerText = 'Show Matches';
     }
 }
 async function loadMatches(): Promise<void> {
@@ -584,7 +582,7 @@ hub.onPlayerRegistered(async () => {
     await loadPlayers();
 });
 // === DOM EVENTS ===
-document.getElementById("toggleMatchesPanel")?.addEventListener('click', () => { toggleMatchesPanel(tournamentId); });
+document.getElementById("toggleMatchesBtn")?.addEventListener('click', () => { toggleMatchesPanel(tournamentId); });
 document.getElementById("reloadPlayersBtn")?.addEventListener("click", loadPlayers);
 document.getElementById("reloadLeaderboardBtn")?.addEventListener("click", loadLeaderboard);
 document.getElementById("reloadMatchesBtn")?.addEventListener("click", loadMatches);

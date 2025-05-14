@@ -1,16 +1,49 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class LeaderboardEntry : BaseModel
     {
         private string _playerName = string.Empty;
         private Guid _playerId = Guid.Empty;
         private int _totalPoints;
-        private int _wins;
-        private int _draws;
-        private int _losses;
-        private int _walkovers;
+        private uint _wins;
+        private uint _draws;
+        private uint _losses;
+        private uint _walkovers;
 
+        public LeaderboardEntry() : base()
+        {
+            _playerId = Guid.NewGuid();
+        }
+
+        public LeaderboardEntry(string playerName, Guid playerId) : base()
+        {
+            _playerName = playerName ?? throw new ArgumentNullException(nameof(playerName));
+            _playerId = playerId;
+        }
+
+        [JsonConstructor]
+        public LeaderboardEntry(
+            string playerName,
+            Guid playerId,
+            int totalPoints,
+            uint wins,
+            uint draws,
+            uint losses,
+            uint walkovers) : base()
+        {
+            _playerName = playerName ?? throw new ArgumentNullException(nameof(playerName));
+            _playerId = playerId;
+            _totalPoints = totalPoints;
+            _wins = wins;
+            _draws = draws;
+            _losses = losses;
+            _walkovers = walkovers;
+        }
+
+        [JsonInclude]
         public string PlayerName
         {
             get => _playerName;
@@ -24,10 +57,11 @@
             }
         }
 
+        [JsonInclude]
         public Guid PlayerId
         {
             get => _playerId;
-            set
+            private set
             {
                 if (_playerId != value)
                 {
@@ -37,10 +71,11 @@
             }
         }
 
+        [JsonInclude]
         public int TotalPoints
         {
             get => _totalPoints;
-            set
+            private set
             {
                 if (_totalPoints != value)
                 {
@@ -50,10 +85,11 @@
             }
         }
 
-        public int Wins
+        [JsonInclude]
+        public uint Wins
         {
             get => _wins;
-            set
+            private set
             {
                 if (_wins != value)
                 {
@@ -63,10 +99,11 @@
             }
         }
 
-        public int Draws
+        [JsonInclude]
+        public uint Draws
         {
             get => _draws;
-            set
+            private set
             {
                 if (_draws != value)
                 {
@@ -76,10 +113,11 @@
             }
         }
 
-        public int Losses
+        [JsonInclude]
+        public uint Losses
         {
             get => _losses;
-            set
+            private set
             {
                 if (_losses != value)
                 {
@@ -89,10 +127,11 @@
             }
         }
 
-        public int Walkovers
+        [JsonInclude]
+        public uint Walkovers
         {
             get => _walkovers;
-            set
+            private set
             {
                 if (_walkovers != value)
                 {
@@ -102,11 +141,11 @@
             }
         }
 
-        public int GamesPlayed => Wins + Draws + Losses + Walkovers;
+        public int GamesPlayed => (int)Wins + (int)Draws + (int)Losses + (int)Walkovers;
 
-        public void RegisterResult(MatchScore result)
+        public void RegisterResult(MatchScore score)
         {
-            switch (result)
+            switch (score)
             {
                 case MatchScore.Win:
                     Wins++;
@@ -121,9 +160,10 @@
                     break;
                 case MatchScore.Walkover:
                     Walkovers++;
+                    TotalPoints -= 1;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(result), $"Invalid match result: {result}");
+                    throw new ArgumentOutOfRangeException(nameof(score), $"Invalid match result: {score}");
             }
 
             OnChanged();

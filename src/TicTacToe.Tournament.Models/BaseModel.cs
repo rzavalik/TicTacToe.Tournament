@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class BaseModel
     {
@@ -11,8 +13,17 @@
             OnCreated();
         }
 
+        [JsonConstructor]
+        public BaseModel(DateTime created, DateTime? modified)
+        {
+            _created = created;
+            _modified = modified;
+        }
+
+        [JsonInclude]
         public DateTime Created { get => _created; }
 
+        [JsonInclude]
         public DateTime? Modified { get => _modified ?? _created; }
 
         public string ETag => $"\"{(Modified ?? Created).ToUniversalTime().Ticks}\"";

@@ -40,8 +40,10 @@ public class TournamentTests
 
         sut.InitializeLeaderboard();
 
-        sut.Leaderboard.ShouldContainKey(playerId);
-        sut.Leaderboard[playerId].ShouldBe(0);
+        sut.Leaderboard.ShouldContain(p => p.PlayerId == playerId);
+
+        var leaderboardEntry = sut.Leaderboard.First(p => p.PlayerId == playerId);
+        leaderboardEntry.TotalPoints.ShouldBe(0);
     }
 
     [Fact]
@@ -98,11 +100,18 @@ public class TournamentTests
     {
         var sut = MakeSut();
         var playerId = Guid.NewGuid();
+        var playerName = "Player1";
+
+        sut.RegisteredPlayers.Add(playerId, playerName);
+
+        sut.InitializeLeaderboard();
 
         sut.AgreggateScoreToPlayer(playerId, MatchScore.Win);
 
-        sut.Leaderboard.ContainsKey(playerId).ShouldBeTrue();
-        sut.Leaderboard[playerId].ShouldBe((int)MatchScore.Win);
+        sut.Leaderboard.ShouldContain(p => p.PlayerId == playerId);
+
+        var leaderboardEntry = sut.Leaderboard.First(p => p.PlayerId == playerId);
+        leaderboardEntry.TotalPoints.ShouldBe((int)MatchScore.Win);
     }
 
     [Fact]
@@ -110,10 +119,17 @@ public class TournamentTests
     {
         var sut = MakeSut();
         var playerId = Guid.NewGuid();
-        sut.Leaderboard[playerId] = 5;
+        var playerName = "Player1";
+
+        sut.RegisteredPlayers.Add(playerId, playerName);
+
+        sut.InitializeLeaderboard();
 
         sut.AgreggateScoreToPlayer(playerId, MatchScore.Draw);
 
-        sut.Leaderboard[playerId].ShouldBe(5 + (int)MatchScore.Draw);
+        sut.Leaderboard.ShouldContain(p => p.PlayerId == playerId);
+
+        var leaderboardEntry = sut.Leaderboard.First(p => p.PlayerId == playerId);
+        leaderboardEntry.TotalPoints.ShouldBe((int)MatchScore.Draw);
     }
 }

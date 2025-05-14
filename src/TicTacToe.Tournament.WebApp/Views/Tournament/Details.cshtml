@@ -41,8 +41,8 @@
 	</div>
 	<div class="row d-none" id="matchesPanel">
 		<div class="col-12">
-			<button class="btn btn-outline-primary" id="toggleMatchesPanel" onclick="toggleMatchesPanel('@ViewData["TournamentId"]')">
-				Show / Hide Matches
+			<button class="btn btn-outline-primary" id="toggleMatchesBtn">
+				Hide Matches
 			</button>
 			<div id="matchesContainer" class="mt-3 row"></div>
 		</div>
@@ -50,5 +50,5 @@
 </div>
 
 @section Scripts {
-	<script type="module" src="~/js/dist/tournament.details.js"></script>
+	<script type="module" src="~/js/dist/tournament.details.js" asp-append-version="true"></script>
 }

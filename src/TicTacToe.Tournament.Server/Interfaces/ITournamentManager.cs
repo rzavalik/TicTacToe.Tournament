@@ -8,7 +8,7 @@
         Task SaveTournamentAsync(Tournament tournament);
         Task InitializeTournamentAsync(Guid tournamentId, string? name, uint? matchRepetition);
         Task RegisterPlayerAsync(Guid tournamentId, IPlayerBot bot);
-        Task SubmitMove(Guid tournamentId, Guid playerId, int row, int col);
+        Task SubmitMove(Guid tournamentId, Guid playerId, byte row, byte col);
         Task StartTournamentAsync(Guid tournamentId);
         Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName);
         Task CancelTournamentAsync(Guid tournamentId);

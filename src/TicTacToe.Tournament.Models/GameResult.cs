@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class GameResult : BaseModel
     {
@@ -10,13 +12,43 @@
 
         public GameResult() : base()
         {
+            _matchId = Guid.NewGuid();
             _board = new Board();
         }
 
+        public GameResult(Match match) : base()
+        {
+            if (match == null)
+            {
+                throw new ArgumentNullException(nameof(match));
+            }
+
+            _matchId = match.Id;
+            _winnerId = match.WinnerMark == Mark.X
+                ? match.PlayerA
+                : match.PlayerB;
+            _board = match.Board;
+            _isDraw = false;
+        }
+
+        [JsonConstructor]
+        public GameResult(
+            Guid matchId,
+            Guid? winnerId,
+            Board board,
+            bool isDraw) : base()
+        {
+            _matchId = matchId;
+            _winnerId = winnerId;
+            _board = board ?? throw new ArgumentNullException(nameof(board));
+            _isDraw = isDraw;
+        }
+
+        [JsonInclude]
         public Guid MatchId
         {
             get => _matchId;
-            set
+            private set
             {
                 if (value != _matchId)
                 {
@@ -25,6 +57,8 @@
                 }
             }
         }
+
+        [JsonInclude]
         public Guid? WinnerId
         {
             get => _winnerId;
@@ -37,10 +71,12 @@
                 }
             }
         }
+
+        [JsonInclude]
         public Board Board
         {
             get => _board;
-            set
+            private set
             {
                 if (_board != value)
                 {
@@ -50,6 +86,7 @@
             }
         }
 
+        [JsonInclude]
         public bool IsDraw
         {
             get => _isDraw;

@@ -29,7 +29,16 @@ public class TournamentHub : Hub
             Name = tournament.Name,
             Status = tournament.Status.ToString(),
             RegisteredPlayers = tournament.RegisteredPlayers,
-            Leaderboard = tournament.Leaderboard,
+            Leaderboard = tournament.Leaderboard.Select(l => new LeaderboardDto()
+            {
+                PlayerId = l.PlayerId,
+                PlayerName = l.PlayerName,
+                TotalPoints = l.TotalPoints,
+                Wins = l.Wins,
+                Draws = l.Draws,
+                Losses = l.Losses,
+                Walkovers = l.Walkovers
+            }).ToList(),
             StartTime = tournament.StartTime,
             Duration = tournament.Duration,
             EndTime = tournament.EndTime,
@@ -122,14 +131,10 @@ public class TournamentHub : Hub
     {
         Console.WriteLine($"[TournamentHub] Received CreateTournament for ID: {tournamentId}");
 
-        var tournament = new Models.Tournament
-        {
-            Id = tournamentId,
-            Name = name ??= "Tournament",
-            MatchRepetition = matchRepetition ??= 1,
-        };
-
-        tournament.MatchRepetition = Math.Min(matchRepetition.Value, 9);
+        var tournament = new Models.Tournament(
+            tournamentId,
+            name ?? "Tournament",
+            matchRepetition ?? 1);
 
         await _tournamentManager.SaveTournamentAsync(tournament);
 
@@ -220,7 +225,7 @@ public class TournamentHub : Hub
         }).ToList();
     }
 
-    public async Task SubmitMoveAsync(Guid tournamentId, int row, int col)
+    public async Task SubmitMoveAsync(Guid tournamentId, byte row, byte col)
     {
         Console.WriteLine($"[TournamentHub] SubmitMove called: {tournamentId} ({row},{col})");
 

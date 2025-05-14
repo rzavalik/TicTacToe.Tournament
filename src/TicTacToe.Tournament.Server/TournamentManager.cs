@@ -53,13 +53,10 @@ namespace TicTacToe.Tournament.Server
                 }
 
 
-                var tournament = new Models.Tournament
-                {
-                    Id = tournamentId,
-                    Name = name ?? $"Tournament {DateTime.Now.ToShortDateString()}",
-                    Status = TournamentStatus.Planned,
-                    MatchRepetition = matchRepetition.Value,
-                };
+                var tournament = new Models.Tournament(
+                    tournamentId,
+                    name ?? $"Tournament {DateTime.Now.ToShortDateString()}",
+                    matchRepetition.Value);
 
                 tContext = await InitializeContextAsync(tournament);
             }
@@ -113,7 +110,7 @@ namespace TicTacToe.Tournament.Server
             await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard);
         }
 
-        public Task SubmitMove(Guid tournamentId, Guid player, int row, int col)
+        public Task SubmitMove(Guid tournamentId, Guid player, byte row, byte col)
         {
             if (!_tournamentContext.TryGetValue(tournamentId, out var tContext))
             {
@@ -367,7 +364,7 @@ namespace TicTacToe.Tournament.Server
         private async Task SaveStateUnsafeAsync(TournamentContext tContext)
         {
             var pendingMoves = tContext?.GameServer?.GetPendingMoves()
-                ?? new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>();
+                ?? new ConcurrentDictionary<Guid, ConcurrentQueue<(byte, byte)>>();
 
             await _storageService.SaveTournamentStateAsync(tContext);
         }
@@ -394,7 +391,16 @@ namespace TicTacToe.Tournament.Server
                 Name = tournament.Name,
                 Status = tournament.Status.ToString(),
                 RegisteredPlayers = tournament.RegisteredPlayers,
-                Leaderboard = tournament.Leaderboard,
+                Leaderboard = tournament.Leaderboard.Select(l => new LeaderboardDto()
+                {
+                    PlayerId = l.PlayerId,
+                    PlayerName = l.PlayerName,
+                    TotalPoints = l.TotalPoints,
+                    Wins = l.Wins,
+                    Draws = l.Draws,
+                    Losses = l.Losses,
+                    Walkovers = l.Walkovers
+                }).ToList(),
                 StartTime = tournament.StartTime,
                 Duration = tournament.Duration,
                 EndTime = tournament.EndTime,

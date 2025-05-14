@@ -15,7 +15,7 @@ export interface TournamentDetailsDto {
     name: string;
     status: string;
     registeredPlayers: Record<string, string>;
-    leaderboard: Record<string, number>;
+    leaderboard: LeaderboardEntryDto[];
     startTime?: string;
     endTime?: string;
     duration?: string;
@@ -63,6 +63,11 @@ export interface PlayerDto {
 }
 
 export interface LeaderboardEntryDto {
-    name: string;
-    score: number;
+    playerId: string;
+    playerName: string;
+    totalPoints: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    walkovers: number;
 }

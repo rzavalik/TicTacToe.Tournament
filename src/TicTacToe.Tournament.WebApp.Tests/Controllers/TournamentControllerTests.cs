@@ -1,14 +1,14 @@
 ﻿namespace TicTacToe.Tournament.WebApp.Tests.Controllers
 {
-    using TicTacToe.Tournament.Auth;
-    using TicTacToe.Tournament.Models.DTOs;
-    using TicTacToe.Tournament.Server.Interfaces;
-    using TicTacToe.Tournament.WebApp.Controllers;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Moq;
     using Shouldly;
+    using TicTacToe.Tournament.Auth;
+    using TicTacToe.Tournament.Models.DTOs;
+    using TicTacToe.Tournament.Server.Interfaces;
+    using TicTacToe.Tournament.WebApp.Controllers;
 
 
     public class TournamentControllerTests

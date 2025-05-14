@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class Movement : BaseModel
     {
@@ -12,10 +14,19 @@
 
         }
 
+        [JsonConstructor]
+        public Movement(byte row, byte col, Mark mark) : this()
+        {
+            Row = row;
+            Column = col;
+            Mark = mark;
+        }
+
+        [JsonInclude]
         public byte Column
         {
             get => _col;
-            set
+            private set
             {
                 if (value >= 0 && value <= 2)
                 {
@@ -29,10 +40,11 @@
             }
         }
 
+        [JsonInclude]
         public byte Row
         {
             get => _row;
-            set
+            private set
             {
                 if (value >= 0 && value <= 2)
                 {
@@ -46,10 +58,11 @@
             }
         }
 
+        [JsonInclude]
         public Mark Mark
         {
             get => _mark;
-            set
+            private set
             {
                 if (value == Mark.X || value == Mark.O)
                 {

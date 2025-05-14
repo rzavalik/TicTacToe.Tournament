@@ -10,10 +10,10 @@ public interface IAzureStorageService
     Task SaveTournamentStateAsync(TournamentContext tContext);
 
     Task<(
-        Models.Tournament? Tournament, 
-        List<PlayerInfo>? PlayerInfos, 
-        Dictionary<Guid, Guid>? Map, 
-        ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>>? Moves)>
+        Models.Tournament? Tournament,
+        List<PlayerInfo>? PlayerInfos,
+        Dictionary<Guid, Guid>? Map,
+        ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>? Moves)>
         LoadTournamentStateAsync(Guid tournamentId);
 
     Task DeleteTournamentAsync(Guid tournamentId);

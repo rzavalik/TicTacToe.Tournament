@@ -173,13 +173,7 @@
                 out var signalRClientMock,
                 out var signalRBuilderMock);
 
-            await sut.OnMatchEnded(new GameResult
-            {
-                MatchId = Guid.NewGuid(),
-                WinnerId = Guid.NewGuid(),
-                IsDraw = false,
-                Board = new Board()
-            });
+            await sut.OnMatchEnded(new GameResult(Guid.NewGuid(), Guid.NewGuid(), new Board(), false));
         }
     }
 }

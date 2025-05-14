@@ -13,7 +13,7 @@ namespace TicTacToe.Tournament.Server
         private readonly IHubContext<TournamentHub> _hubContext;
         private readonly Dictionary<Guid, IPlayerBot> _players = new();
         private readonly Action<Guid, MatchScore> _updateLeaderboard;
-        private readonly ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> _pendingMoves = new();
+        private readonly ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> _pendingMoves = new();
 
         public Models.Tournament Tournament => _tournament;
 
@@ -32,7 +32,8 @@ namespace TicTacToe.Tournament.Server
         public void RegisterPlayer(IPlayerBot player)
         {
             _players[player.Id] = player;
-            _tournament.RegisteredPlayers[player.Id] = player.Name;
+            _tournament.RegisterPlayer(player.Id, player.Name);
+
             InitializeLeaderboard();
             GenerateMatches();
         }
@@ -42,13 +43,13 @@ namespace TicTacToe.Tournament.Server
             _tournament.InitializeLeaderboard();
         }
 
-        public ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves() => _pendingMoves;
+        public ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> GetPendingMoves() => _pendingMoves;
 
-        public void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves)
+        public void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> moves)
         {
             _pendingMoves.Clear();
             foreach (var entry in moves)
-                _pendingMoves[entry.Key] = new ConcurrentQueue<(int, int)>(entry.Value);
+                _pendingMoves[entry.Key] = new ConcurrentQueue<(byte, byte)>(entry.Value);
         }
 
         public async Task StartTournamentAsync(Models.Tournament tournament)
@@ -61,9 +62,9 @@ namespace TicTacToe.Tournament.Server
             );
         }
 
-        public void SubmitMove(Guid playerId, int row, int col)
+        public void SubmitMove(Guid playerId, byte row, byte col)
         {
-            _pendingMoves.AddOrUpdate(playerId, new ConcurrentQueue<(int, int)>(new[] { (row, col) }), (key, oldValue) =>
+            _pendingMoves.AddOrUpdate(playerId, new ConcurrentQueue<(byte, byte)>(new[] { (row, col) }), (key, oldValue) =>
             {
                 oldValue.Enqueue((row, col));
                 return oldValue;
@@ -85,10 +86,8 @@ namespace TicTacToe.Tournament.Server
 
                     for (var r = 0; r < _tournament.MatchRepetition; r++)
                     {
-                        var match = new Models.Match
+                        var match = new Models.Match(ids[i], ids[j])
                         {
-                            PlayerA = ids[i],
-                            PlayerB = ids[j],
                             Status = MatchStatus.Planned
                         };
                         _tournament.Matches.Add(match);
@@ -124,7 +123,7 @@ namespace TicTacToe.Tournament.Server
 
                 await OnYourTurn(match.Id, currentPlayer.Id, match.Board.State);
 
-                (int row, int col)? move = null;
+                (byte row, byte col)? move = null;
                 try
                 {
                     move = await WaitForMoveAsync(currentPlayer.Id, 60000);
@@ -134,18 +133,14 @@ namespace TicTacToe.Tournament.Server
                     match.Status = MatchStatus.Finished;
                     match.WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
 
-                    _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB, MatchScore.Win);
-                    _updateLeaderboard(match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA, MatchScore.Walkover);
+                    var winnerId = match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB;
+                    var walkoverId = match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA;
+                    _updateLeaderboard(winnerId, MatchScore.Win);
+                    _updateLeaderboard(walkoverId, MatchScore.Walkover);
 
                     await OnTournamentUpdated(_tournament.Id);
 
-                    return new GameResult
-                    {
-                        MatchId = match.Id,
-                        WinnerId = match.PlayerA == currentPlayer.Id ? match.PlayerB : match.PlayerA,
-                        Board = match.Board,
-                        IsDraw = false
-                    };
+                    return new GameResult(match);
                 }
 
                 if (move.HasValue)
@@ -174,16 +169,15 @@ namespace TicTacToe.Tournament.Server
             match.Status = MatchStatus.Finished;
             match.EndTime = DateTime.UtcNow;
 
-            var gameResult = new GameResult
-            {
-                MatchId = match.Id,
-                WinnerId = match.WinnerMark.HasValue ? players[match.WinnerMark.Value].Id : null,
-                Board = match.Board,
-                IsDraw = !match.WinnerMark.HasValue
-            };
+            var gameResult = new GameResult(match);
 
             if (gameResult.WinnerId != null)
-                _updateLeaderboard(gameResult.WinnerId.Value, MatchScore.Win);
+            {
+                var winnerId = gameResult.WinnerId.Value;
+                var loserId = gameResult.WinnerId == match.PlayerA ? match.PlayerB : match.PlayerA;
+                _updateLeaderboard(winnerId, MatchScore.Win);
+                _updateLeaderboard(loserId, MatchScore.Lose);
+            }
             else
             {
                 _updateLeaderboard(match.PlayerA, MatchScore.Draw);
@@ -198,7 +192,7 @@ namespace TicTacToe.Tournament.Server
             return gameResult;
         }
 
-        private async Task<(int row, int col)?> WaitForMoveAsync(Guid playerId, int timeoutInMs)
+        private async Task<(byte row, byte col)?> WaitForMoveAsync(Guid playerId, int timeoutInMs)
         {
             var sw = Stopwatch.StartNew();
             Console.WriteLine($"[GameServer] Waiting for player {playerId} to submit the movement.");

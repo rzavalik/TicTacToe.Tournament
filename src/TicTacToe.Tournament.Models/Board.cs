@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class Board : BaseModel
     {
@@ -23,7 +25,16 @@
             _grid = board;
         }
 
-        public bool IsValidMove(int row, int col)
+        [JsonConstructor]
+        public Board(
+            Mark[][] board,
+            List<Movement> movements) : base()
+        {
+            _grid = board;
+            _movements = movements;
+        }
+
+        public bool IsValidMove(byte row, byte col)
         {
             return row >= 0
                 && row < 3
@@ -32,7 +43,7 @@
                 && _grid[row][col] == Mark.Empty;
         }
 
-        public void ApplyMove(int row, int col, Mark mark)
+        public void ApplyMove(byte row, byte col, Mark mark)
         {
             if (!IsValidMove(row, col))
             {
@@ -41,12 +52,7 @@
 
             _grid[row][col] = mark;
             _movements.Add(
-                new Movement
-                {
-                    Row = (byte)row,
-                    Column = (byte)col,
-                    Mark = mark
-                }
+                new Movement(row, col, mark)
             );
 
             OnChanged();
@@ -87,12 +93,25 @@
             return null;
         }
 
-        public Mark[][] State => _grid;
+        [JsonInclude]
+        public Mark[][] State
+        {
+            get => _grid;
+            private set
+            {
+                if (value != _grid)
+                {
+                    _grid = value;
+                    OnChanged();
+                }
+            }
+        }
 
+        [JsonInclude]
         public List<Movement> Movements
         {
             get => _movements;
-            set
+            private set
             {
                 if (value != _movements)
                 {

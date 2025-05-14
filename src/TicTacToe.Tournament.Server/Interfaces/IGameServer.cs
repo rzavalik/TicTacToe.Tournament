@@ -13,13 +13,13 @@
 
         void InitializeLeaderboard();
 
-        ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> GetPendingMoves();
+        ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> GetPendingMoves();
 
-        void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(int Row, int Col)>> moves);
+        void LoadPendingMoves(ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>> moves);
 
         Task StartTournamentAsync(Tournament tournament);
 
-        void SubmitMove(Guid playerId, int row, int col);
+        void SubmitMove(Guid playerId, byte row, byte col);
 
         IPlayerBot? GetBotById(Guid playerId);
 

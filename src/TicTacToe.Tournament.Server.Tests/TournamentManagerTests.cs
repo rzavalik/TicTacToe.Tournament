@@ -30,16 +30,10 @@
             storageServiceMock.Setup(s => s.LoadTournamentStateAsync(fixedTournamentId.Value))
                 .ReturnsAsync(
                     (
-                        new Models.Tournament
-                        {
-                            Id = fixedTournamentId.Value,
-                            Name = "Loaded Tournament",
-                            Status = TournamentStatus.Planned,
-                            MatchRepetition = 2
-                        },
+                        new Models.Tournament(fixedTournamentId.Value, "Loaded Tournament", 2),
                         new List<PlayerInfo>(),
                         new Dictionary<Guid, Guid>(),
-                        new ConcurrentDictionary<Guid, ConcurrentQueue<(int, int)>>()
+                        new ConcurrentDictionary<Guid, ConcurrentQueue<(byte, byte)>>()
                     )
                 );
             storageServiceMock.Setup(s => s.SaveTournamentStateAsync(It.IsAny<TournamentContext>())).Returns(Task.CompletedTask);
@@ -215,12 +209,7 @@
         public async Task SaveTournamentAsync_ShouldNotThrow()
         {
             var sut = MakeSut();
-            var tournament = new Models.Tournament
-            {
-                Id = Guid.NewGuid(),
-                Name = "Saving Tournament",
-                MatchRepetition = 1
-            };
+            var tournament = new Models.Tournament(Guid.NewGuid(), "Saving Tournament", 1);
 
             var exception = await Record.ExceptionAsync(async () =>
             {

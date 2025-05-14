@@ -1,5 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Models
 {
+    using System.Text.Json.Serialization;
+
     [Serializable]
     public class Tournament : BaseModel
     {
@@ -11,7 +13,7 @@
         private DateTime? _endTime;
         private uint _matchRepetition = 1;
         private IDictionary<Guid, string> _registeredPlayers = new Dictionary<Guid, string>();
-        private IDictionary<Guid, int> _leaderboard = new Dictionary<Guid, int>();
+        private List<LeaderboardEntry> _leaderboard = new List<LeaderboardEntry>();
         private Guid? _champion;
 
         public Tournament() : base()
@@ -19,10 +21,43 @@
 
         }
 
+        public Tournament(Guid id, string name, uint matchRepetition) : this()
+        {
+            _id = id;
+            _name = name;
+            _matchRepetition = Math.Min(matchRepetition, 9);
+        }
+
+        [JsonConstructor]
+        public Tournament(
+            Guid id,
+            string name,
+            List<Match> matches,
+            TournamentStatus status,
+            DateTime? startTime,
+            DateTime? endTime,
+            uint matchRepetition,
+            IDictionary<Guid, string> registeredPlayers,
+            IList<LeaderboardEntry> leaderboard,
+            Guid? champion) : base()
+        {
+            _id = id;
+            _name = name;
+            _matches = matches ?? new List<Match>();
+            _status = status;
+            _startTime = startTime;
+            _endTime = endTime;
+            _matchRepetition = matchRepetition;
+            _registeredPlayers = registeredPlayers ?? new Dictionary<Guid, string>();
+            _leaderboard = leaderboard?.ToList() ?? new List<LeaderboardEntry>();
+            _champion = champion;
+        }
+
+        [JsonInclude]
         public Guid Id
         {
             get => _id;
-            set
+            private set
             {
                 if (_id != value)
                 {
@@ -32,6 +67,7 @@
             }
         }
 
+        [JsonInclude]
         public string Name
         {
             get => _name;
@@ -45,16 +81,18 @@
             }
         }
 
+        [JsonInclude]
         public List<Match> Matches
         {
             get => _matches;
-            set
+            private set
             {
                 _matches = value ?? new List<Match>();
                 OnChanged();
             }
         }
 
+        [JsonInclude]
         public TournamentStatus Status
         {
             get => _status;
@@ -68,6 +106,7 @@
             }
         }
 
+        [JsonInclude]
         public DateTime? StartTime
         {
             get => _startTime;
@@ -81,6 +120,7 @@
             }
         }
 
+        [JsonInclude]
         public DateTime? EndTime
         {
             get => _endTime;
@@ -94,15 +134,17 @@
             }
         }
 
+        [JsonInclude]
         public TimeSpan? Duration =>
             StartTime.HasValue && EndTime.HasValue
                 ? EndTime - StartTime
                 : null;
 
+        [JsonInclude]
         public uint MatchRepetition
         {
             get => _matchRepetition;
-            set
+            private set
             {
                 if (_matchRepetition != value)
                 {
@@ -112,26 +154,29 @@
             }
         }
 
+        [JsonInclude]
         public IDictionary<Guid, string> RegisteredPlayers
         {
             get => _registeredPlayers;
-            set
+            private set
             {
                 _registeredPlayers = value ?? new Dictionary<Guid, string>();
                 OnChanged();
             }
         }
 
-        public IDictionary<Guid, int> Leaderboard
+        [JsonInclude]
+        public IList<LeaderboardEntry> Leaderboard
         {
             get => _leaderboard;
-            set
+            private set
             {
-                _leaderboard = value ?? new Dictionary<Guid, int>();
+                _leaderboard = value?.ToList() ?? new List<LeaderboardEntry>();
                 OnChanged();
             }
         }
 
+        [JsonInclude]
         public Guid? Champion
         {
             get => _champion;
@@ -147,22 +192,30 @@
 
         public void InitializeLeaderboard()
         {
-            Leaderboard = RegisteredPlayers.ToDictionary(
-                entry => entry.Key,
-                _ => 0
-            );
+            Leaderboard.Clear();
+            foreach (var player in RegisteredPlayers)
+            {
+                Leaderboard.Add(new LeaderboardEntry(player.Value, player.Key));
+            }
+            OnChanged();
         }
 
         public void AgreggateScoreToPlayer(Guid playerId, MatchScore score)
         {
-            var current = Leaderboard.ContainsKey(playerId) ? Leaderboard[playerId] : 0;
-            var updated = current + (int)score;
+            var current = Leaderboard.First(p => p.PlayerId == playerId);
+            current.RegisterResult(score);
+            OnChanged();
+        }
 
-            if (!Leaderboard.ContainsKey(playerId) || updated != current)
+        public void RegisterPlayer(Guid id, string name)
+        {
+            if (RegisteredPlayers.ContainsKey(id) && RegisteredPlayers[id] == name)
             {
-                Leaderboard[playerId] = updated;
-                OnChanged();
+                return;
             }
+
+            RegisteredPlayers[id] = name;
+            OnChanged();
         }
     }
 }

@@ -42,12 +42,7 @@
         public async Task GetTournament_WhenTournamentExists_ShouldReturnDto()
         {
             var tournamentId = Guid.NewGuid();
-            var tournament = new Tournament
-            {
-                Id = tournamentId,
-                Name = "Test",
-                Status = TournamentStatus.Planned,
-            };
+            var tournament = new Tournament(tournamentId, "Test", 1);
 
             var managerMock = new Mock<ITournamentManager>();
             managerMock.Setup(m => m.GetTournament(tournamentId))
@@ -69,11 +64,7 @@
             managerMock.Setup(m => m.GetAllTournaments())
                 .Returns(new List<Models.Tournament>
                 {
-                new Models.Tournament {
-                    Id = Guid.NewGuid(),
-                    Name = "A",
-                    Status = TournamentStatus.Planned,
-                }
+                    new Tournament(Guid.NewGuid(), "A", 1)
                 });
 
             var sut = MakeSut(managerMock, out _, out _, out _, out _);
