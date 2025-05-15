@@ -28,10 +28,10 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore src/TicTacToe.Tournament.sln
+        run: dotnet restore code/src/TicTacToe.Tournament.sln
 
       - name: Build solution
-        run: dotnet build src/TicTacToe.Tournament.sln --no-restore --configuration Release
+        run: dotnet build code/src/TicTacToe.Tournament.sln --no-restore --configuration Release
 
       - name: Run Unit Tests and Collect Coverage
         run: |

@@ -1,0 +1,181 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+.tic-cell {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table.table-borderless .border-right {
+    border-right: 2px solid black !important;
+}
+
+.table.table-borderless .border-bottom {
+    border-bottom: 2px solid black !important;
+}
+
+a.navbar-brand {
+    white-space: normal;
+    text-align: center;
+    word-break: break-all;
+}
+
+a {
+    color: #0077cc;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.border-top {
+    border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+    font-size: 1rem;
+    line-height: inherit;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    line-height: 60px;
+}
+
+.match-board {
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+    .match-board td {
+        border: 1px solid #ccc;
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+.hidden {
+    display: none;
+}
+
+table.match-board .no-left {
+    border-left:0;
+}
+table.match-board .no-top {
+    border-left: 0;
+}
+table.match-board .no-bottom {
+    border-left: 0;
+}
+table.match-board .no-right {
+    border-left: 0;
+}
+
+input[type=range].form-range::-webkit-slider-thumb {
+    background: #0d6efd;
+    border: none;
+    height: 1.5rem;
+    width: 1.5rem;
+    margin-top: -0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type=range].form-range::-moz-range-thumb {
+    background: #0d6efd;
+    border: none;
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type=range].form-range::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, #0d6efd var(--value, 0%), #dee2e6 var(--value, 0%));
+    height: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+input[type=range].form-range {
+    --value: 0%;
+}
+
+    input[type=range].form-range::-moz-range-track {
+        background: linear-gradient(to right, #0d6efd var(--value, 0%), #dee2e6 var(--value, 0%));
+        height: 0.5rem;
+        border-radius: 0.25rem;
+    }
+.flash-change {
+    animation: flashHighlight 1s ease-in-out;
+}
+
+@keyframes flashHighlight {
+    0% {
+        background-color: #ffff99;
+    }
+
+    50% {
+        background-color: transparent;
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}

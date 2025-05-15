@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TicTacToe.Tournament.BasePlayer": {
+      "commandName": "Project",
+      "commandLineArgs": "--test"
+    }
+  }
+}
