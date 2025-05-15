@@ -1,20 +1,26 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace TicTacToe.Tournament.Server.Security;
 
 public class SignalRAccessHelper
 {
     public static string GenerateSignalRAccessToken(
-        string endpoint,
-        string accessKey,
+        string signalrConnectionString,
         string hubName,
         string userId,
         Guid? tournamentId = null,
         TimeSpan? lifetime = null)
     {
+        var parts = signalrConnectionString
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split('=', 2))
+            .ToDictionary(p => p[0], p => p[1]);
+
+        var endpoint = parts["Endpoint"];
+        var accessKey = parts["AccessKey"];
         var audience = $"{endpoint}/client/?hub={hubName.ToLower()}";
         var expiry = DateTime.UtcNow.Add(lifetime ?? TimeSpan.FromDays(1));
 
@@ -23,7 +29,7 @@ public class SignalRAccessHelper
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(JwtRegisteredClaimNames.Sub, userId),       
+            new Claim(JwtRegisteredClaimNames.Sub, userId),
         };
 
         if (tournamentId.HasValue)

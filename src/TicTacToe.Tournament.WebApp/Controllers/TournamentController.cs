@@ -11,9 +11,8 @@ namespace TicTacToe.Tournament.WebApp.Controllers
     public class TournamentController : Controller
     {
         const string TournamentHubName = "tournamentHub";
-        private readonly string _signalREndpoint;
-        private readonly string _signalRAccessKey;
         private readonly ITournamentOrchestratorService _orchestrator;
+        private readonly string _signalrConnectionString;
         private readonly IConfiguration _configuration;
 
         public TournamentController(
@@ -24,10 +23,9 @@ namespace TicTacToe.Tournament.WebApp.Controllers
                 ?? throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
             _orchestrator = orchestrator
                 ?? throw new ArgumentNullException(nameof(orchestrator), "Orchestrator service cannot be null.");
-            _signalREndpoint = config["Azure:SignalR:Endpoint"]
-                ?? throw new ArgumentNullException(nameof(config), "SignalR Endpoint must be present in the ConnectionString.");
-            _signalRAccessKey = config["Azure:SignalR:AccessKey"]
-                ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
+
+            _signalrConnectionString = config["Azure:SignalR:ConnectionString"]
+            ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
         }
 
         [HttpGet("tournament")]
@@ -89,8 +87,7 @@ namespace TicTacToe.Tournament.WebApp.Controllers
             }
 
             var token = SignalRAccessHelper.GenerateSignalRAccessToken(
-                _signalREndpoint,
-                _signalRAccessKey,
+                _signalrConnectionString,
                 TournamentHubName,
                 playerId.ToString(),
                 tournamentId);

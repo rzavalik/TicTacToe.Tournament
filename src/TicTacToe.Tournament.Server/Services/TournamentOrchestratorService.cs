@@ -10,8 +10,7 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
 {
     private readonly HubConnection _connection;
     const string TournamentHubName = "tournamentHub";
-    private readonly string _signalREndpoint;
-    private readonly string _signalRAccessKey;
+    private readonly string _signalrConnectionString;
 
     public TournamentOrchestratorService(
         IConfiguration config)
@@ -21,18 +20,20 @@ public class TournamentOrchestratorService : ITournamentOrchestratorService
             throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
         }
 
-        _signalREndpoint = config["Azure:SignalR:Endpoint"]
-            ?? throw new ArgumentNullException(nameof(config), "SignalR Endpoint must be present in the ConnectionString.");
-        _signalRAccessKey = config["Azure:SignalR:AccessKey"]
+        _signalrConnectionString = config["Azure:SignalR:ConnectionString"]
             ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
 
         var authResponse = SignalRAccessHelper.GenerateSignalRAccessToken(
-            _signalREndpoint,
-            _signalRAccessKey,
+            _signalrConnectionString,
             TournamentHubName,
             "Server");
 
-        const string endpoint = "https://tictactoe-signalr.service.signalr.net/client/";
+        var parts = _signalrConnectionString
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split('=', 2))
+            .ToDictionary(p => p[0], p => p[1]);
+
+        var endpoint = $"{parts["Endpoint"]}/client/";
 
         _connection = new HubConnectionBuilder()
             .WithUrl($"{endpoint}?hub=tournamentHub", options =>
