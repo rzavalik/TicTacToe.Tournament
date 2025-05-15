@@ -9,6 +9,8 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
+        Console.Title = "Dumb Player";
+
         await BotTestRunner.Run<DumbPlayerClient>(args);
 
         var config = new ConfigurationBuilder()
@@ -16,21 +18,22 @@ internal class Program
             .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
             .Build();
 
-        string webAppEndpoint = config["Server:WebEndpoint"]!;
-        string signalrEndpoint = config["Server:SignalREndpoint"]!;
+        var webAppEndpoint = config["Server:WebEndpoint"]!;
+        var signalrEndpoint = config["Server:SignalREndpoint"]!;
 
         Console.WriteLine("Welcome to DumbPlayer!");
 
         Console.Write("Enter your Player Name: ");
         var name = Console.ReadLine();
 
+        Console.Title = $"Dumb Player: {name}";
+
         Console.Write("Enter the Tournament ID: ");
         var tournamentIdInput = Console.ReadLine();
 
-        Guid tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
+        var tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
             ? parsedId
             : throw new FormatException("Invalid TournamentId");
-
 
         var httpClient = (IHttpClient)new HttpClientWrapper();
         var signalrBuilder = new SignalRClientBuilder();

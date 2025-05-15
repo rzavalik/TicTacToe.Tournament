@@ -52,7 +52,14 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+.vs
 /src/BuildAndPushDockerImages.ps1
 /src/Deploy.ps1
 /src/.vs
 /src/UpdateContainerInstances.ps1
+
+# Terraform
+.terraform
+.terraform.lock.hcl
+.tfstate
+terraform.tfvars

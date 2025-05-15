@@ -9,6 +9,8 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
+        Console.Title = $"Smart Player";
+
         await BotTestRunner.Run<SmartPlayerClient>(args);
 
         var config = new ConfigurationBuilder()
@@ -16,18 +18,20 @@ internal class Program
             .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
             .Build();
 
-        string webAppEndpoint = config["Server:WebEndpoint"]!;
-        string signalrEndpoint = config["Server:SignalREndpoint"]!;
+        var webAppEndpoint = config["Server:WebEndpoint"]!;
+        var signalrEndpoint = config["Server:SignalREndpoint"]!;
 
         Console.WriteLine("Welcome to SmartPlayer!");
 
         Console.Write("Enter your Player Name: ");
         var name = Console.ReadLine();
 
+        Console.Title = $"OpenAI Player: {name}";
+
         Console.Write("Enter the Tournament ID: ");
         var tournamentIdInput = Console.ReadLine();
 
-        Guid tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
+        var tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
             ? parsedId
             : throw new FormatException("Invalid TournamentId");
 
@@ -37,9 +41,9 @@ internal class Program
         Console.Clear();
 
         var bot = new SmartPlayerClient(
-            name!, 
-            tournamentId, 
-            webAppEndpoint, 
+            name!,
+            tournamentId,
+            webAppEndpoint,
             signalrEndpoint,
             httpClient,
             signalrBuilder);

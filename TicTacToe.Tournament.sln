@@ -53,6 +53,30 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Tournament.Player
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{A7825EF0-3335-4437-B408-2F4339967180}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra", "Infra", "{E8F98394-94B7-48E1-8A23-9E08EC70E47F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Terraform", "Terraform", "{305DA847-9996-4993-B1EC-F958E34D2DA2}"
+	ProjectSection(SolutionItems) = preProject
+		infra\terraform\backend.tf = infra\terraform\backend.tf
+		infra\terraform\main.tf = infra\terraform\main.tf
+		infra\terraform\outputs.tf = infra\terraform\outputs.tf
+		infra\terraform\providers.tf = infra\terraform\providers.tf
+		infra\terraform\terraform.tfvars = infra\terraform\terraform.tfvars
+		infra\terraform\variables.tf = infra\terraform\variables.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "container_app", "container_app", "{0AFBBAE3-46FD-4239-A12E-8887D82DA9AE}"
+	ProjectSection(SolutionItems) = preProject
+		infra\terraform\modules\container_app\main.tf = infra\terraform\modules\container_app\main.tf
+		infra\terraform\modules\container_app\outputs.tf = infra\terraform\modules\container_app\outputs.tf
+		infra\terraform\modules\container_app\variables.tf = infra\terraform\modules\container_app\variables.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{0D00B276-F2AA-48F4-8352-F1A52BFCAB8B}"
+	ProjectSection(SolutionItems) = preProject
+		infra\terraform\terraform.tfvars = infra\terraform\terraform.tfvars
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -155,6 +179,9 @@ Global
 		{05457C2F-B67D-425E-89A2-08184980FF22} = {EBB234C1-F622-4571-A689-0888093F1994}
 		{BB40729C-7557-44D0-8CDE-2E2DEEC34ACC} = {EBB234C1-F622-4571-A689-0888093F1994}
 		{37C37718-6F6A-9E60-BBC5-BF39676D1782} = {262757F1-481A-4CA4-B046-95DA7C81F984}
+		{305DA847-9996-4993-B1EC-F958E34D2DA2} = {E8F98394-94B7-48E1-8A23-9E08EC70E47F}
+		{0AFBBAE3-46FD-4239-A12E-8887D82DA9AE} = {0D00B276-F2AA-48F4-8352-F1A52BFCAB8B}
+		{0D00B276-F2AA-48F4-8352-F1A52BFCAB8B} = {305DA847-9996-4993-B1EC-F958E34D2DA2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44DD7814-250D-44BB-A370-ECD331D398DC}
