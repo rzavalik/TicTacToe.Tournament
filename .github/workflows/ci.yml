@@ -250,7 +250,7 @@ jobs:
       - name: Configure ACR Retention Policy
         run: |
           az acr config retention update \
-            --name tictactoeacr \
+            --registry tictactoeacr \
             --resource-group TicTacToe \
             --status Enabled \
             --days 7 \
