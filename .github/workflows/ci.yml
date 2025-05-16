@@ -360,8 +360,9 @@ jobs:
       - name: Replace appSettings.json with URLs
         run: |
           for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
-            jq ".Server.WebEndpoint = \"$WEBAPP_URL\" | .Server.SignalREndpoint = \"$SIGNALR_URL\"" \
-              src/TicTacToe.Tournament.$proj/appSettings.json > tmp.json
+            jq --arg web "$WEBAPP_URL" --arg signalr "$SIGNALR_URL" \
+  '.Server.WebEndpoint = $web | .Server.SignalREndpoint = $signalr' \
+  src/TicTacToe.Tournament.$proj/appSettings.json > tmp.json
             mv tmp.json src/TicTacToe.Tournament.$proj/appSettings.json
           done
 
