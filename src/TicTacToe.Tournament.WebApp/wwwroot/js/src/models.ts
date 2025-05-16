@@ -33,16 +33,19 @@ export const MatchStatus: Record<number, string> = {
 
 export const SymbolMap: Record<string, string> = {
     "32": " ",
-    "88": "X",
-    "79": "O"
+    "88": `<i class="fa-solid fa-xmark" style="font-size:130%"></i>`,
+    "79": `<i class="fa-regular fa-circle"></i>`
 };
 
 export interface MatchDto {
     id: string;
-    playerAName: string;
-    playerBName: string;
     playerAId: string;
+    playerAName: string;
+    playerAMark: string;
     playerBId: string;
+    playerBName: string;
+    playerBMark: string;
+    winner: string;
     board: string[][];
     status: string;
     duration: string | null;

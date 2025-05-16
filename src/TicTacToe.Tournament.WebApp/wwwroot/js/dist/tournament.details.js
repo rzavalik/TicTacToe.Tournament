@@ -129,7 +129,7 @@ async function drawBoard(matchId, board, match) {
         for (let c = 0; c < 3; c++) {
             const cell = document.createElement("td");
             const raw = board[r]?.[c];
-            cell.textContent = SymbolMap[raw] ?? raw ?? " ";
+            cell.innerHTML = SymbolMap[raw] ?? raw ?? " ";
             cell.classList.add("tic-cell");
             if (c < 2)
                 cell.classList.add("border-right");
@@ -165,7 +165,7 @@ async function drawBoard(matchId, board, match) {
                 subtitle.classList.remove("d-none");
             }
         }
-        subtitle.textContent = `${playerA} (X) vs ${playerB} (O)`;
+        subtitle.innerHTML = `${playerA} (<i class="fa-solid fa-xmark"></i>) vs ${playerB} (<i class="fa- regular fa-circle"></i>)`;
     }
 }
 function renderPodium(sorted, players) {

@@ -131,7 +131,7 @@ async function drawBoard(matchId: string, board: string[][], match: MatchDto | n
         for (let c = 0; c < 3; c++) {
             const cell = document.createElement("td");
             const raw = board[r]?.[c];
-            cell.textContent = SymbolMap[raw] ?? raw ?? " ";
+            cell.innerHTML = SymbolMap[raw] ?? raw ?? " ";
             cell.classList.add("tic-cell");
             if (c < 2)
                 cell.classList.add("border-right");
@@ -167,7 +167,7 @@ async function drawBoard(matchId: string, board: string[][], match: MatchDto | n
                 subtitle.classList.remove("d-none");
             }
         }
-        subtitle.textContent = `${playerA} (X) vs ${playerB} (O)`;
+        subtitle.innerHTML = `${playerA} (<i class="fa-solid fa-xmark"></i>) vs ${playerB} (<i class="fa- regular fa-circle"></i>)`;
     }
 }
 function renderPodium(sorted: [string, number][], players: Record<string, string>) {
@@ -369,20 +369,23 @@ async function checkNoCurrentMatch(res: any) {
     try {
         res = res ?? await fetch(`/tournament/${tournamentId}/match/current`);
         if (res.status != 200) {
-            const center = document.getElementById("center");
-            let container = document.getElementById("boardContainer");
-            if (!container) {
-                container = document.createElement("div");
-                container.id = "boardContainer";
-                const center = document.getElementById("center")!;
-                center.appendChild(container);
+            const center = document.getElementById("center")!;
+            if (center.classList.contains("ongoing")) {
+                let container = document.getElementById("boardContainer");
+                if (!container) {
+                    container = document.createElement("div");
+                    container.id = "boardContainer";
+                    const center = document.getElementById("center")!;
+                    center.appendChild(container);
+                }
+                container.innerHTML = `
+                    <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px;">
+                        <div class="display-1 text-muted">🕒</div>
+                        <div class="text-muted">Waiting for the next match...</div>
+                    </div>
+                `;
             }
-            container.innerHTML = `
-                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px;">
-                    <div class="display-1 text-muted">🕒</div>
-                    <div class="text-muted">Waiting for the next match...</div>
-                </div>
-            `;
+
             return true;
         }
         return false;

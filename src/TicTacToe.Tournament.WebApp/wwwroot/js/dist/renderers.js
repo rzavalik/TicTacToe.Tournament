@@ -6,7 +6,7 @@ import { MatchStatus } from "./models.js";
     * @param board The board data.
     */
 export function renderMatchBoard(board) {
-    const boardSymbolMap = { "32": " ", "88": "X", "79": "O" };
+    const boardSymbolMap = { "32": " ", "88": `<i class="fa-solid fa-xmark" style="font-size:130%"></i>`, "79": `<i class="fa-regular fa-circle"></i>` };
     const empty = ["", "", ""];
     if (!board || board.every(row => row === null))
         board = [empty, empty, empty];
@@ -41,21 +41,32 @@ export function renderMatch(match, matchIndex) {
     if (!container)
         return;
     let matchDiv = container.querySelector(`[data-match-id="${match.id}"]`);
-    let cardColor = "bg-light";
+    let badgeColor = "text-bg-light";
     const status = MatchStatus[Number(match.status)];
     if (status === "Ongoing")
-        cardColor = "bg-success text-white";
+        badgeColor = "text-bg-success";
     else if (status === "Cancelled")
-        cardColor = "bg-danger text-white";
+        badgeColor = "text-bg-danger";
     else if (status === "Finished")
-        cardColor = "bg-secondary text-white";
+        badgeColor = "text-bg-secondary";
     else if (status === "Planned")
-        cardColor = "bg-info text-dark";
+        badgeColor = "text-bg-info";
+    var winnerPlayer = 'draw';
+    if (match.winner == match.playerAMark) {
+        winnerPlayer = match.playerAName;
+    }
+    else if (match.winner == match.playerBMark) {
+        winnerPlayer = match.playerBName;
+    }
     const matchHtml = `
-        <div class="card col-3 m-2 ${cardColor} flash-change" data-match-id="${match.id}" data-status="${status}">
-            <strong>Match ${matchIndex !== undefined ? matchIndex + 1 : ''}:</strong> ${match.playerAName} (X) vs ${match.playerBName} (O)<br>
-            <strong>Status:</strong> ${status}<br>
-            <strong>Duration:</strong> ${match.duration || '-'}
+        <div class="card m-2 flash-change" style="width: 250px;" data-match-id="${match.id}" data-status="${status}">
+            <h6>Match ${matchIndex !== undefined ? matchIndex + 1 : ''}</h6>
+            <div class="small"><span class="badge ${badgeColor}">${status}</span></div>
+            <div class="small">${match.playerAName} as <i class="fa-solid fa-xmark ${match.winner == match.playerAMark ? 'text-success' : ''}" style="font-size:130%"></i></div>
+            <div class="small">${match.playerBName} as <i class="fa-regular fa-circle ${match.winner == match.playerBMark ? 'text-success' : ''}"></i></div>
+            <div class="small">Result: ${winnerPlayer}</div>
+            <div class="small">Duration: ${match.duration || '-'}</div>
+            <br>
             ${renderMatchBoard(match.board)}
         </div>
     `;

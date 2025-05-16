@@ -8,6 +8,6 @@ export const MatchStatus = {
 };
 export const SymbolMap = {
     "32": " ",
-    "88": "X",
-    "79": "O"
+    "88": `<i class="fa-solid fa-xmark" style="font-size:130%"></i>`,
+    "79": `<i class="fa-regular fa-circle"></i>`
 };
