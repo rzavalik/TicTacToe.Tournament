@@ -25,7 +25,7 @@ Real-time .NET 8 Tic Tac Toe Tournament platform powered by SignalR, Azure, Dock
 ![Bots playing against each other](https://github.com/user-attachments/assets/24b26135-a5b2-4b31-8f95-50ea728a7d96)
 
 **TicTacToe Tournament** is a real-time, cloud-native tournament system built with **.NET 8** and **SignalR**.  
-It allows multiple bot players (or future human players) to connect, play matches, and orchestrates tournaments automatically.
+It allows multiple bot players (or human players if using SmartPlayer bot or any other custom made) to connect, play matches, and orchestrates tournaments automatically.
 
 Built for scalability and AI integration.
 
@@ -37,7 +37,7 @@ Built for scalability and AI integration.
 - ☁️ Azure-ready architecture
 - 🐳 Docker-friendly deployment
 - 🧠 OpenAI-powered Bot Player
-- 🎯 Fully tested with xUnit, Moq, and Shouldly
+- 🎯 Tested with xUnit, Moq, and Shouldly
 - 🛡️ Clean architecture and extensible design
 - 📈 Easy to add your own bots and strategies
 
