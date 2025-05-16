@@ -10,7 +10,7 @@ RUN npx tsc
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY src/TicTacToe.Tournament.sln ./
+COPY TicTacToe.Tournament.sln ./
 COPY Directory.Build.props ./
 COPY src/TicTacToe.Tournament.Models/ ./TicTacToe.Tournament.Models/
 COPY src/TicTacToe.Tournament.Auth/ ./TicTacToe.Tournament.Auth/
