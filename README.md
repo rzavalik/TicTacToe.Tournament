@@ -88,5 +88,3 @@ See [LICENSE](./LICENSE) for more information.
 # ❤️ Sponsor
 
 If you find this project useful, please consider [buying me a coffee](https://www.buymeacoffee.com/rzavalik)! ☕
-
----
