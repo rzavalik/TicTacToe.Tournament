@@ -60,12 +60,31 @@ flowchart LR
 
 ```
 TicTacToe.Tournament
-├── Models/            # Core models: Tournament, Match, Player, etc.
-├── Server/            # Server-side logic (SignalR Hub, GameServer)
-├── WebApp/            # Web-based administration UI
-├── Player/            # BasePlayer + DumbPlayer + SmartPlayer + OpenAIClientPlayer
-├── Tests/             # Unit tests and Playwright tests
-└── docs/              # Documentation (this folder)
+├── docs/                                  # Project documentation (architecture, how-to guides)
+├── infra/                                 # Terraform scripts for Azure infrastructure
+├── src/                                   # All source code projects
+│   ├── TicTacToe.Tournament.Auth/                   # Authentication and identity utilities
+│   ├── TicTacToe.Tournament.BasePlayer/            # Base class and strategy interface for building bots
+│   ├── TicTacToe.Tournament.DumbPlayer/            # Auto-play bot that selects random moves
+│   ├── TicTacToe.Tournament.Models/                # Shared models and DTOs (e.g., Tournament, Match)
+│   ├── TicTacToe.Tournament.MyBotPlayer/           # Sample custom bot for development/testing
+│   ├── TicTacToe.Tournament.OpenAIClientPlayer/    # Bot that uses OpenAI's API to play
+│   ├── TicTacToe.Tournament.Server/                # Domain logic for managing players and matches
+│   ├── TicTacToe.Tournament.Server.App/            # SignalR Hub and real-time game orchestration
+│   ├── TicTacToe.Tournament.SmartPlayer/           # Console-driven player (user inputs row/column)
+│   └── TicTacToe.Tournament.WebApp/                # Admin web UI for tournament control and monitoring
+├── tests/                                # Unit and BDD test projects
+│   ├── TicTacToe.Tournament.Auth.Tests/
+│   ├── TicTacToe.Tournament.Models.Tests/
+│   ├── TicTacToe.Tournament.Player.Tests/
+│   ├── TicTacToe.Tournament.Server.App.Tests/
+│   ├── TicTacToe.Tournament.Server.Tests/
+│   ├── TicTacToe.Tournament.WebApp.SpecTests/       # Reqnroll/SpecFlow BDD tests
+│   └── TicTacToe.Tournament.WebApp.Tests/           # WebApp unit and integration tests
+├── .github/                              # GitHub workflows and issue templates
+├── Directory.Build.props                 # Shared MSBuild properties for all projects
+├── README.md                             # Project overview and usage instructions
+└── TicTacToe.Tournament.sln              # Visual Studio solution file
 ```
 
 
