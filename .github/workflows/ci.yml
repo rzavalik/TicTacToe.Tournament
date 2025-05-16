@@ -65,11 +65,12 @@ jobs:
         run: dotnet build TicTacToe.Tournament.sln --no-restore --configuration Release
 
       - name: Commit updated Directory.Build.props
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          REPO_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}"
-          git remote set-url origin "$REPO_URL"
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           git pull origin ${{ github.ref_name }}
           git add Directory.Build.props
           git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
@@ -235,10 +236,12 @@ jobs:
 
       - name: Tag deployed version
         if: env.VERSION != ''
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          REPO_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}"
-          git clone "$REPO_URL" .
-          git tag $VERSION
-          git push "$REPO_URL" $VERSION
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          git fetch origin
+          git tag "$VERSION"
+          git push origin "$VERSION"
