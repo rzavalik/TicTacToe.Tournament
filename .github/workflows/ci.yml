@@ -209,6 +209,7 @@ jobs:
     outputs:
       webui_url: ${{ steps.tfoutput.outputs.WEBUI_URL }}
       webui_hub_url: ${{ steps.tfoutput.outputs.WEBUI_HUB_URL }}
+      signalr_endpoint: ${{ steps.tfoutput.outputs.SIGNALR_URL }}
     steps:
       - name: Log in to Azure
         uses: azure/login@v1
@@ -253,6 +254,7 @@ jobs:
           echo "SERVER_URL=$(terraform output -raw server_url)" >> $GITHUB_OUTPUT
           echo "WEBUI_URL=$(terraform output -raw webui_url)" >> $GITHUB_OUTPUT
           echo "WEBUI_HUB_URL=$(terraform output -raw webui_hub_url)" >> $GITHUB_OUTPUT
+          echo "SIGNALR_URL=$(terraform output -raw signalr_endpoint)" >> $GITHUB_OUTPUT
 
       - name: Force reload server
         run: |
@@ -332,7 +334,7 @@ jobs:
               az acr repository delete \
                 --name tictactoeacr \
                 --image "$repo:$tag" \
-                --yes
+                --yes || true
             done
           done
 
@@ -342,8 +344,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build.outputs.version }}
-      SIGNALR_URL: ${{ needs.deploy.outputs.webui_hub_url }}
-      WEBAPP_URL: ${{ needs.deploy.outputs.webui_url }}
+      SIGNALR_URL: ${{ needs.deploy.outputs.SIGNALR_URL }}
+      WEBAPP_URL: ${{ needs.deploy.outputs.WEBUI_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

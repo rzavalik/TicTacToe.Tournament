@@ -35,3 +35,8 @@ output "webui_url" {
 output "webui_hub_url" {
   value = "https://${module.tictactoe_server.fqdn}/tournamentHub"
 }
+
+output "signalr_endpoint" {
+  description = "SignalR service endpoint"
+  value       = "https://${azurerm_signalr_service.tictactoe_signalr.name}.service.signalr.net"
+}
