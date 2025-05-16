@@ -306,7 +306,6 @@ async function updateTournamentUI(status, data) {
     }
     else if (status === "Cancelled") {
         renderCancelledTournamentUI();
-        loadMatches();
     }
     const meta = document.getElementById("tournamentMeta");
     if (meta != null) {
