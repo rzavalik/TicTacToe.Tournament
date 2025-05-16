@@ -175,11 +175,13 @@ jobs:
         run: |
           docker build -t tictactoeacr.azurecr.io/tictactoe-server:$VERSION -f src/TicTacToe.Tournament.Server.App/Dockerfile .
           docker push tictactoeacr.azurecr.io/tictactoe-server:$VERSION
+          docker push tictactoeacr.azurecr.io/tictactoe-server:latest
 
       - name: Build and Push WebUI image
         run: |
           docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f src/TicTacToe.Tournament.WebApp/Dockerfile .
           docker push tictactoeacr.azurecr.io/tictactoe-webui:$VERSION
+          docker push tictactoeacr.azurecr.io/tictactoe-webui:latest
 
   deploy:
     name: Deploying
@@ -247,16 +249,6 @@ jobs:
              --image tictactoeacr.azurecr.io/tictactoe-webui:$VERSION \
              --revision-suffix $REVISION_SUFFIX
 
-      - name: Configure ACR Retention Policy
-        run: |
-          az acr config retention update \
-            --registry tictactoeacr \
-            --resource-group TicTacToe \
-            --status Enabled \
-            --days 7 \
-            --type UntaggedManifests \
-            --policy-name delete-untagged-after-7-days
-
       - name: Tag deployed version
         if: env.VERSION != ''
         env:
@@ -268,3 +260,57 @@ jobs:
           git fetch origin
           git tag "$VERSION"
           git push origin "$VERSION"
+
+  clean:
+    name: Cleaning
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    continue-on-error: true
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      REVISION_SUFFIX: ${{ needs.build.outputs.revision_suffix }}
+      ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+      ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+      ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+      ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Clean up old ACR images (keep 3 + latest)
+        run: |
+          REPO_LIST=$(az acr repository list --name tictactoeacr --output tsv)
+          
+          for repo in $REPO_LIST; do
+            echo "Processing repo: $repo"
+      
+            TAGS=$(az acr repository show-tags \
+              --name tictactoeacr \
+              --repository $repo \
+              --orderby time_desc \
+              --output tsv)
+      
+            COUNT=0
+            for tag in $TAGS; do
+              if [[ "$tag" == "latest" ]]; then
+                echo "Skipping tag: latest"
+                continue
+              fi
+      
+              COUNT=$((COUNT + 1))
+              if [ $COUNT -le 3 ]; then
+                echo "Keeping tag: $tag"
+                continue
+              fi
+      
+              echo "Deleting $repo:$tag"
+              az acr repository delete \
+                --name tictactoeacr \
+                --image "$repo:$tag" \
+                --yes
+            done
+          done
