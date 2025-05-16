@@ -3,10 +3,10 @@ WORKDIR /src
 
 COPY TicTacToe.Tournament.sln ./
 COPY Directory.Build.props ./
-COPY TicTacToe.Tournament.Models/ ./TicTacToe.Tournament.Models/
-COPY TicTacToe.Tournament.Auth/ ./TicTacToe.Tournament.Auth/
-COPY TicTacToe.Tournament.Server/ ./TicTacToe.Tournament.Server/
-COPY TicTacToe.Tournament.Server.App/ ./TicTacToe.Tournament.Server.App/
+COPY src/TicTacToe.Tournament.Models/ ./TicTacToe.Tournament.Models/
+COPY src/TicTacToe.Tournament.Auth/ ./TicTacToe.Tournament.Auth/
+COPY src/TicTacToe.Tournament.Server/ ./TicTacToe.Tournament.Server/
+COPY src/TicTacToe.Tournament.Server.App/ ./TicTacToe.Tournament.Server.App/
 
 WORKDIR /src/TicTacToe.Tournament.Server.App
 
