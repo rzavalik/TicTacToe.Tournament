@@ -359,11 +359,11 @@ jobs:
 
       - name: Replace appSettings.json with URLs
         run: |
-          for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
+          for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do 
             jq --arg web "$WEBAPP_URL" --arg signalr "$SIGNALR_URL" \
-  '.Server.WebEndpoint = $web | .Server.SignalREndpoint = $signalr' \
-  src/TicTacToe.Tournament.$proj/appSettings.json > tmp.json
-            mv tmp.json src/TicTacToe.Tournament.$proj/appSettings.json
+                '.Server.WebEndpoint = $web | .Server.SignalREndpoint = $signalr' \
+                src/TicTacToe.Tournament.$proj/appSettings.json > src/TicTacToe.Tournament.$proj/tmp.json
+            mv src/TicTacToe.Tournament.$proj/tmp.json src/TicTacToe.Tournament.$proj/appSettings.json
           done
 
       - name: Publish bots for Windows and Linux
