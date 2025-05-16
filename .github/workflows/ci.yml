@@ -14,10 +14,13 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build, Test, and Coverage
-    runs-on: ubuntu-latest
 
+  build:
+    name: Building
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      revision_suffix: ${{ steps.version.outputs.revision_suffix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,11 +30,52 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Read and generate version
+        id: version
+        run: |
+          RAW_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" Directory.Build.props)
+          COMMIT_HASH="${GITHUB_SHA::8}"
+          RUN_NUMBER="${GITHUB_RUN_NUMBER}"
+      
+          NEW_VERSION="${RAW_VERSION}.${RUN_NUMBER}+${COMMIT_HASH}"
+          REV_SUFFIX="build-${RUN_NUMBER}-${COMMIT_HASH}"
+      
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "REVISION_SUFFIX=$REV_SUFFIX" >> $GITHUB_ENV
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "revision_suffix=$REV_SUFFIX" >> $GITHUB_OUTPUT
+
+      - name: Update Directory.Build.props with new version
+        run: |
+          xmlstarlet ed -L \
+            -u "//Version" -v "$(echo "$VERSION" | cut -d+ -f1)" \
+            -u "//AssemblyVersion" -v "$(echo "$VERSION" | cut -d+ -f1).0" \
+            -u "//FileVersion" -v "$(echo "$VERSION" | cut -d+ -f1).0" \
+            -u "//InformationalVersion" -v "$VERSION" \
+            Directory.Build.props
+      
       - name: Restore dependencies
         run: dotnet restore TicTacToe.Tournament.sln
 
       - name: Build solution
         run: dotnet build TicTacToe.Tournament.sln --no-restore --configuration Release
+
+      - name: Commit updated Directory.Build.props
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git pull origin ${{ github.ref_name }}
+          git add Directory.Build.props
+          git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+
+  test:
+    name: Testing
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Run Unit Tests and Collect Coverage
         run: |
@@ -91,7 +135,17 @@ jobs:
         if: always()
         with:
           files: TestResults/*.trx
-          
+
+  pack:
+    name: Packing
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
@@ -99,10 +153,6 @@ jobs:
 
       - name: Log in to ACR
         run: az acr login --name tictactoeacr
-
-      - name: Set version
-        id: version
-        run: echo "VERSION=1.1.${{ github.run_number }}.${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Build and Push Server image
         run: |
@@ -113,6 +163,17 @@ jobs:
         run: |
           docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f src/TicTacToe.Tournament.WebApp/Dockerfile .
           docker push tictactoeacr.azurecr.io/tictactoe-webui:$VERSION
+
+  deploy:
+    name: Deploying
+    needs: [build, pack]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      REVISION_SUFFIX: ${{ needs.build.outputs.revision_suffix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Persist image version to terraform.tfvars
         run: |
@@ -143,18 +204,18 @@ jobs:
       - name: Force reload server
         run: |
           az containerapp update \
-             --name tictactoe-server \
-             --resource-group TicTacToe \
-             --image tictactoeacr.azurecr.io/tictactoe-server:$VERSION \
-             --revision-suffix $VERSION
-
+            --name tictactoe-server \
+            --resource-group TicTacToe \
+            --image tictactoeacr.azurecr.io/tictactoe-server:$VERSION \
+            --revision-suffix $REVISION_SUFFIX
+      
       - name: Force reload webui
         run: |
           az containerapp update \
              --name tictactoe-webui \
              --resource-group TicTacToe \
              --image tictactoeacr.azurecr.io/tictactoe-webui:$VERSION \
-             --revision-suffix $VERSION
+             --revision-suffix $REVISION_SUFFIX
 
       - name: Configure ACR Retention Policy
         run: |
@@ -165,3 +226,12 @@ jobs:
             --days 7 \
             --type UntaggedManifests \
             --policy-name delete-untagged-after-7-days
+
+      - name: Tag deployed version
+        if: env.VERSION != ''
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} .
+          git tag $VERSION
+          git push origin $VERSION
