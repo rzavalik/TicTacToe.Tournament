@@ -56,12 +56,38 @@
             IHttpClient httpClient,
             ISignalRClientBuilder signalRBuilder)
         {
-            _botName = botName;
+            _botName = botName?.Trim();
+            if (string.IsNullOrEmpty(_botName))
+            {
+                _botName = Environment.MachineName;
+            }
+
             _tournamentId = tournamentId;
+
             _webAppEndpoint = webAppEndpoint.TrimEnd('/');
+            if (string.IsNullOrEmpty(_webAppEndpoint))
+            {
+                throw new ArgumentNullException(nameof(webAppEndpoint), "Web app endpoint cannot be null or empty.");
+            }
+            else
+            {
+                var uri = new Uri(_webAppEndpoint);
+                _webAppEndpoint = uri.GetLeftPart(UriPartial.Authority) + "/client/?hub=tournamentHub";
+            }
+
             _signalREndpoint = signalrEndpoint;
-            _httpClient = httpClient;
-            _signalRBuilder = signalRBuilder;
+            if (string.IsNullOrEmpty(_signalREndpoint))
+            {
+                throw new ArgumentNullException(nameof(webAppEndpoint), "SignalR endpoint cannot be null or empty.");
+            }
+            else
+            {
+                var uri = new Uri(_signalREndpoint);
+                _signalREndpoint = uri.GetLeftPart(UriPartial.Authority) + "/client/?hub=tournamentHub";
+            }
+
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _signalRBuilder = signalRBuilder ?? throw new ArgumentNullException(nameof(signalRBuilder));
         }
 
         public async Task StartAsync()
