@@ -68,11 +68,13 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+
           REPO_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}"
+          git remote set-url origin "$REPO_URL"
           git pull "$REPO_URL" main
           git add Directory.Build.props
           git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
-          git push "$REPO_URL" HEAD:main
+          git push origin HEAD:main
 
   test:
     name: Testing
