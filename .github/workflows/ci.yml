@@ -209,7 +209,7 @@ jobs:
     outputs:
       webui_url: ${{ steps.tfoutput.outputs.WEBUI_URL }}
       webui_hub_url: ${{ steps.tfoutput.outputs.WEBUI_HUB_URL }}
-      signalr_endpoint: ${{ steps.tfoutput.outputs.signalr_endpoint }}
+      SIGNALR_URL: ${{ steps.tfoutput.outputs.SIGNALR_URL }}
     steps:
       - name: Log in to Azure
         uses: azure/login@v1
@@ -344,7 +344,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build.outputs.version }}
-      SIGNALR_URL: ${{ needs.deploy.outputs.SIGNALR_URL }}
+      SIGNALR_URL: ${{ needs.deploy.outputs.signalr_endpoint }}
       WEBAPP_URL: ${{ needs.deploy.outputs.WEBUI_URL }}
     steps:
       - name: Checkout repository
