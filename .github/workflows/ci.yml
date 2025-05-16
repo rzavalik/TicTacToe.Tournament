@@ -39,7 +39,7 @@ jobs:
         id: version
         run: |
           RAW_VERSION=$(xmlstarlet sel -t -v "//Project/PropertyGroup/Version" Directory.Build.props)
-          BASE_VERSION=$(echo "$RAW_VERSION" | cut -d. -f1-2) # só major.minor
+          BASE_VERSION=$(echo "$RAW_VERSION" | cut -d. -f1-2) 
           COMMIT_HASH="${GITHUB_SHA::8}"
           RUN_NUMBER="${GITHUB_RUN_NUMBER}"
           
@@ -54,9 +54,9 @@ jobs:
       - name: Update Directory.Build.props with new version
         run: |
           xmlstarlet ed -L \
-            -u "//Version" -v "$CLEAN_VERSION" \
-            -u "//AssemblyVersion" -v "$CLEAN_VERSION" \
-            -u "//FileVersion" -v "$CLEAN_VERSION" \
+            -u "//Version" -v "$VERSION" \
+            -u "//AssemblyVersion" -v "$VERSION" \
+            -u "//FileVersion" -v "$VERSION" \
             -u "//InformationalVersion" -v "$VERSION" \
             Directory.Build.props
       
