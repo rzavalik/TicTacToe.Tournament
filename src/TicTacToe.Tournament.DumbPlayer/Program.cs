@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using TicTacToe.Tournament.BasePlayer;
 using TicTacToe.Tournament.BasePlayer.Helpers;
 using TicTacToe.Tournament.BasePlayer.Interfaces;
 using TicTacToe.Tournament.Player.Tests;
@@ -23,17 +24,10 @@ internal class Program
 
         Console.WriteLine("Welcome to DumbPlayer!");
 
-        Console.Write("Enter your Player Name: ");
-        var name = Console.ReadLine();
+        var name = BasePlayerClient.GetPlayerName(args);
+        var tournamentId = BasePlayerClient.GetTournamentId(args);
 
-        Console.Title = $"Dumb Player: {name}";
-
-        Console.Write("Enter the Tournament ID: ");
-        var tournamentIdInput = Console.ReadLine();
-
-        var tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
-            ? parsedId
-            : throw new FormatException("Invalid TournamentId");
+        Console.Title = $"{name}: Dumb Player";
 
         var httpClient = (IHttpClient)new HttpClientWrapper();
         var signalrBuilder = new SignalRClientBuilder();

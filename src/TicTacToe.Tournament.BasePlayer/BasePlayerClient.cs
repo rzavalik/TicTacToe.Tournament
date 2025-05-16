@@ -548,4 +548,49 @@ public abstract class BasePlayerClient : IBot
 
         return UserId == match.PlayerBId || UserId == match.PlayerAId;
     }
+
+
+    public static string GetPlayerName(string[] args)
+    {
+        var name = "Bot";
+
+        if (args.Contains("--name"))
+        {
+            var nameInput = args[Array.IndexOf(args, "--name") + 1]?.Trim();
+            if (!string.IsNullOrEmpty(nameInput))
+            {
+                name = nameInput;
+            }
+        }
+        else
+        {
+            Console.Write("Enter your Player Name: ");
+            name = Console.ReadLine();
+        }
+
+        return name ?? Environment.MachineName;
+    }
+
+    public static Guid GetTournamentId(string[] args)
+    {
+        Guid tournamentId;
+
+        if (args.Contains("--tournament-id"))
+        {
+            var tournamentIdInput = args[Array.IndexOf(args, "--tournament-id") + 1]?.Trim();
+            tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
+                ? parsedId
+                : throw new FormatException("Invalid TournamentId");
+        }
+        else
+        {
+            Console.Write("Enter the Tournament ID: ");
+            var tournamentIdInput = Console.ReadLine();
+            tournamentId = Guid.TryParse(tournamentIdInput, out var parsedId)
+                ? parsedId
+                : throw new FormatException("Invalid TournamentId");
+        }
+
+        return tournamentId;
+    }
 }

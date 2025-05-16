@@ -174,12 +174,14 @@ jobs:
       - name: Build and Push Server image
         run: |
           docker build -t tictactoeacr.azurecr.io/tictactoe-server:$VERSION -f src/TicTacToe.Tournament.Server.App/Dockerfile .
+          docker tag tictactoeacr.azurecr.io/tictactoe-server:$VERSION tictactoeacr.azurecr.io/tictactoe-server:latest
           docker push tictactoeacr.azurecr.io/tictactoe-server:$VERSION
           docker push tictactoeacr.azurecr.io/tictactoe-server:latest
 
       - name: Build and Push WebUI image
         run: |
           docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f src/TicTacToe.Tournament.WebApp/Dockerfile .
+          docker tag tictactoeacr.azurecr.io/tictactoe-webui:$VERSION tictactoeacr.azurecr.io/tictactoe-webui:latest
           docker push tictactoeacr.azurecr.io/tictactoe-webui:$VERSION
           docker push tictactoeacr.azurecr.io/tictactoe-webui:latest
 
@@ -232,6 +234,14 @@ jobs:
       - name: Terraform Apply
         working-directory: infra/terraform
         run: terraform apply -auto-approve -var-file=terraform.tfvars
+
+      - name: Capture Terraform Outputs
+        id: tfoutput
+        working-directory: infra/terraform
+        run: |
+          echo "SERVER_URL=$(terraform output -raw server_url)" >> $GITHUB_OUTPUT
+          echo "WEBUI_URL=$(terraform output -raw webui_url)" >> $GITHUB_OUTPUT
+          echo "WEBUI_HUB_URL=$(terraform output -raw webui_hub_url)" >> $GITHUB_OUTPUT
 
       - name: Force reload server
         run: |
@@ -314,3 +324,69 @@ jobs:
                 --yes
             done
           done
+
+  release:
+    name: Release Clients
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      SIGNALR_URL: ${{ needs.deploy.outputs.webui_hub_url }}
+      WEBAPP_URL: ${{ needs.deploy.outputs.webui_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Replace appSettings.json with URLs
+        run: |
+          for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
+            jq ".Server.WebEndpoint = \"$WEBAPP_URL\" | .Server.SignalREndpoint = \"$SIGNALR_URL\"" \
+              src/TicTacToe.Tournament.$proj/appsettings.json > tmp.json
+            mv tmp.json src/TicTacToe.Tournament.$proj/appsettings.json
+          done
+
+      - name: Publish bots for Windows and Linux
+        run: |
+          mkdir -p artifacts
+          for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
+            dotnet publish src/TicTacToe.Tournament.$proj/TicTacToe.Tournament.$proj.csproj \
+              -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
+              -o artifacts/${proj}_win-x64
+            dotnet publish src/TicTacToe.Tournament.$proj/TicTacToe.Tournament.$proj.csproj \
+              -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true \
+              -o artifacts/${proj}_linux-x64
+          done
+
+      - name: Publish and package bots for Windows and Linux
+        run: |
+          mkdir -p artifacts
+          for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
+            win_dir="artifacts/${proj}_win-x64"
+            linux_dir="artifacts/${proj}_linux-x64"
+
+            dotnet publish src/TicTacToe.Tournament.$proj/TicTacToe.Tournament.$proj.csproj \
+              -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
+              -o $win_dir
+            dotnet publish src/TicTacToe.Tournament.$proj/TicTacToe.Tournament.$proj.csproj \
+              -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true \
+              -o $linux_dir
+
+            zip -j artifacts/${proj}_win-x64.zip $win_dir/*
+            zip -j artifacts/${proj}_linux-x64.zip $linux_dir/*
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Bot Clients ${{ needs.build.outputs.version }}
+          tag_name: ${{ needs.build.outputs.version }}
+          files: artifacts/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
