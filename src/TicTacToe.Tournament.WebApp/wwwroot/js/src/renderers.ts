@@ -61,7 +61,7 @@ export function renderMatch(match: MatchDto, matchIndex?: number): void {
     }
 
     const matchHtml = `
-        <div class="card m-2 flash-change" style="width: 250px;" data-match-id="${match.id}" data-status="${status}">
+        <div class="card m-2 p-2 flash-change" style="width: 250px;" data-match-id="${match.id}" data-status="${status}">
             <h6>Match ${matchIndex !== undefined ? matchIndex + 1 : ''}</h6>
             <div class="small"><span class="badge ${badgeColor}">${status}</span></div>
             <div class="small">${match.playerAName} as <i class="fa-solid fa-xmark ${match.winner == match.playerAMark ? 'text-success' : ''}" style="font-size:130%"></i></div>
