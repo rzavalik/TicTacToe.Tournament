@@ -66,7 +66,7 @@ jobs:
 
       - name: Commit updated Directory.Build.props
         env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ github.token }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -237,7 +237,7 @@ jobs:
       - name: Tag deployed version
         if: env.VERSION != ''
         env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ github.token }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
