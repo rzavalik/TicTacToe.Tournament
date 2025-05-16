@@ -30,19 +30,19 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Install xmllint
-        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+      - name: Install xmlstarlet
+        run: sudo apt-get update && sudo apt-get install -y xmlstarlet
 
       - name: Read and generate version
         id: version
         run: |
-          RAW_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" Directory.Build.props)
+          RAW_VERSION=$(xmlstarlet sel -t -v "//Project/PropertyGroup/Version" Directory.Build.props)
           COMMIT_HASH="${GITHUB_SHA::8}"
           RUN_NUMBER="${GITHUB_RUN_NUMBER}"
-      
+          
           NEW_VERSION="${RAW_VERSION}.${RUN_NUMBER}+${COMMIT_HASH}"
           REV_SUFFIX="build-${RUN_NUMBER}-${COMMIT_HASH}"
-      
+          
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "REVISION_SUFFIX=$REV_SUFFIX" >> $GITHUB_ENV
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
