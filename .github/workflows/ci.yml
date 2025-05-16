@@ -107,13 +107,13 @@ jobs:
       - name: Build and Push Server image
         run: |
           cd TicTacToe.Tournament
-          docker build -t tictactoeacr.azurecr.io/tictactoe-server:$VERSION -f src/TicTacToe.Tournament.Server.App/Dockerfile src
+          docker build -t tictactoeacr.azurecr.io/tictactoe-server:$VERSION -f src/TicTacToe.Tournament.Server.App/Dockerfile .
           docker push tictactoeacr.azurecr.io/tictactoe-server:$VERSION
 
       - name: Build and Push WebUI image
         run: |
           cd TicTacToe.Tournament
-          docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f src/TicTacToe.Tournament.WebApp/Dockerfile src
+          docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f src/TicTacToe.Tournament.WebApp/Dockerfile .
           docker push tictactoeacr.azurecr.io/tictactoe-webui:$VERSION
 
       - name: Persist image version to terraform.tfvars
