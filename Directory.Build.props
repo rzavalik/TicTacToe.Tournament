@@ -1,9 +1,10 @@
+<?xml version="1.0"?>
 <!-- Directory.Build.props -->
 <Project>
   <PropertyGroup>
-    <Version>1.1.74</Version>
-    <AssemblyVersion>1.1.74.0</AssemblyVersion>
-    <FileVersion>1.1.74.0</FileVersion>
-    <InformationalVersion>1.1.74.698c116f6f21f7f83d8abf71822fa91cb21abe29</InformationalVersion>
+    <Version/>
+    <AssemblyVersion/>
+    <FileVersion/>
+    <InformationalVersion>1.1.87.eae0234e</InformationalVersion>
   </PropertyGroup>
 </Project>
