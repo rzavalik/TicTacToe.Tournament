@@ -206,6 +206,9 @@ jobs:
       ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
       ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
       ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+    outputs:
+      webui_url: ${{ steps.tfoutput.outputs.WEBUI_URL }}
+      webui_hub_url: ${{ steps.tfoutput.outputs.WEBUI_HUB_URL }}
     steps:
       - name: Log in to Azure
         uses: azure/login@v1
