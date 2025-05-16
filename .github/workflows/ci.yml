@@ -106,11 +106,13 @@ jobs:
 
       - name: Build and Push Server image
         run: |
+          cd TicTacToe.Tournament
           docker build -t tictactoeacr.azurecr.io/tictactoe-server:$VERSION -f ./src/Server/Dockerfile ./src/Server
           docker push tictactoeacr.azurecr.io/tictactoe-server:$VERSION
 
       - name: Build and Push WebUI image
         run: |
+          cd TicTacToe.Tournament
           docker build -t tictactoeacr.azurecr.io/tictactoe-webui:$VERSION -f ./src/WebUI/Dockerfile ./src/WebUI
           docker push tictactoeacr.azurecr.io/tictactoe-webui:$VERSION
 
