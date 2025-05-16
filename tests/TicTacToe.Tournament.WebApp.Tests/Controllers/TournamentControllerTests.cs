@@ -19,8 +19,7 @@
         {
             orchestratorMock = new Mock<ITournamentOrchestratorService>();
             configMock = new Mock<IConfiguration>();
-            configMock.Setup(c => c["Azure:SignalR:Endpoint"]).Returns("https://signalr.endpoint");
-            configMock.Setup(c => c["Azure:SignalR:AccessKey"]).Returns("mysupersecurekey!mysupersecurekey!mysupersecurekey!");
+            configMock.Setup(c => c["Azure:SignalR:ConnectionString"]).Returns("Endpoint=https://fake-signalr.service.signalr.net;AccessKey=FakeAccessKeyFakeAccessKeyFakeAccessKey;Version=1.0;");
 
             return new TournamentController(configMock.Object, orchestratorMock.Object);
         }
