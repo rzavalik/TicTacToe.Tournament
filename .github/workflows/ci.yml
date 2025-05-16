@@ -155,3 +155,13 @@ jobs:
              --resource-group TicTacToe \
              --image tictactoeacr.azurecr.io/tictactoe-webui:$VERSION \
              --revision-suffix $VERSION
+
+      - name: Configure ACR Retention Policy
+        run: |
+          az acr config retention update \
+            --name tictactoeacr \
+            --resource-group TicTacToe \
+            --status Enabled \
+            --days 7 \
+            --type UntaggedManifests \
+            --policy-name delete-untagged-after-7-days
