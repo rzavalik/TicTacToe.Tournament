@@ -327,7 +327,7 @@ jobs:
 
   release:
     name: Release Clients
-    needs: build
+    needs: [build, test, deploy]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build.outputs.version }}
