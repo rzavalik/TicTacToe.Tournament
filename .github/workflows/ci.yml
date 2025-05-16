@@ -149,7 +149,7 @@ jobs:
 
   pack:
     name: Packing
-    needs: test
+    needs: [build, test]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build.outputs.version }}
