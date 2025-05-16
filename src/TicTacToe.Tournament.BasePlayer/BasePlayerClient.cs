@@ -72,7 +72,7 @@
             else
             {
                 var uri = new Uri(_webAppEndpoint);
-                _webAppEndpoint = uri.GetLeftPart(UriPartial.Authority) + "/client/?hub=tournamentHub";
+                _webAppEndpoint = uri.GetLeftPart(UriPartial.Authority);
             }
 
             _signalREndpoint = signalrEndpoint;
