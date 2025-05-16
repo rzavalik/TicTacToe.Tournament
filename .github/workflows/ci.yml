@@ -37,10 +37,11 @@ jobs:
         id: version
         run: |
           RAW_VERSION=$(xmlstarlet sel -t -v "//Project/PropertyGroup/Version" Directory.Build.props)
+          BASE_VERSION=$(echo "$RAW_VERSION" | cut -d. -f1-2) # só major.minor
           COMMIT_HASH="${GITHUB_SHA::8}"
           RUN_NUMBER="${GITHUB_RUN_NUMBER}"
           
-          CLEAN_VERSION="${RAW_VERSION}.${RUN_NUMBER}.${COMMIT_HASH}"
+          CLEAN_VERSION="${BASE_VERSION}.${RUN_NUMBER}.${COMMIT_HASH}"
           REV_SUFFIX="build-${RUN_NUMBER}-${COMMIT_HASH}"
           
           echo "VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
@@ -67,7 +68,7 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git pull origin ${{ github.ref_name }}
+          git pull https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} ${{ github.ref_name }}
           git add Directory.Build.props
           git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
