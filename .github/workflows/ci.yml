@@ -4,9 +4,17 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'infra/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'infra/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: write
@@ -348,8 +356,8 @@ jobs:
         run: |
           for proj in DumbPlayer SmartPlayer OpenAIClientPlayer; do
             jq ".Server.WebEndpoint = \"$WEBAPP_URL\" | .Server.SignalREndpoint = \"$SIGNALR_URL\"" \
-              src/TicTacToe.Tournament.$proj/appsettings.json > tmp.json
-            mv tmp.json src/TicTacToe.Tournament.$proj/appsettings.json
+              src/TicTacToe.Tournament.$proj/appSettings.json > tmp.json
+            mv tmp.json src/TicTacToe.Tournament.$proj/appSettings.json
           done
 
       - name: Publish bots for Windows and Linux
