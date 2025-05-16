@@ -124,3 +124,9 @@ jobs:
         with:
           name: terraform-vars
           path: infra/terraform/terraform.tfvars
+
+      - name: Terraform Init & Apply
+        working-directory: infra/terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve -var-file=terraform.tfvars
