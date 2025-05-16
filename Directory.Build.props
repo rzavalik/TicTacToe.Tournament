@@ -2,9 +2,9 @@
 <!-- Directory.Build.props -->
 <Project>
   <PropertyGroup>
-    <Version/>
-    <AssemblyVersion/>
-    <FileVersion/>
+    <Version>1.1.87.eae0234e</Version>
+    <AssemblyVersion>1.1.87.eae0234e</AssemblyVersion>
+    <FileVersion>1.1.87.eae0234e</FileVersion>
     <InformationalVersion>1.1.87.eae0234e</InformationalVersion>
   </PropertyGroup>
 </Project>
