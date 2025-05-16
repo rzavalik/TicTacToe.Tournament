@@ -1,7 +1,6 @@
-﻿using TicTacToe.Tournament.Models.DTOs;
-
-namespace TicTacToe.Tournament.Server.Interfaces
+﻿namespace TicTacToe.Tournament.Server.Interfaces
 {
+    using TicTacToe.Tournament.Models.DTOs;
     public interface ITournamentOrchestratorService
     {
         Task<TournamentDto?> GetTournamentAsync(Guid tournamentId);

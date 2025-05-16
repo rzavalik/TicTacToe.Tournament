@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TicTacToe.Tournament.Auth;
-using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Models.DTOs;
-using TicTacToe.Tournament.Server.Interfaces;
-using TicTacToe.Tournament.Server.Security;
-using TicTacToe.Tournament.WebApp.Models;
-
-namespace TicTacToe.Tournament.WebApp.Controllers
+﻿namespace TicTacToe.Tournament.WebApp.Controllers
 {
+    using Microsoft.AspNetCore.Mvc;
+    using TicTacToe.Tournament.Auth;
+    using TicTacToe.Tournament.Models;
+    using TicTacToe.Tournament.Models.DTOs;
+    using TicTacToe.Tournament.Server.Interfaces;
+    using TicTacToe.Tournament.Server.Security;
+    using TicTacToe.Tournament.WebApp.Models;
     public class TournamentController : Controller
     {
         const string TournamentHubName = "tournamentHub";

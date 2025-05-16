@@ -1,176 +1,177 @@
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Configuration;
-using TicTacToe.Tournament.Models.DTOs;
-using TicTacToe.Tournament.Server.Interfaces;
-using TicTacToe.Tournament.Server.Security;
-
-namespace TicTacToe.Tournament.Server.Services;
-
-public class TournamentOrchestratorService : ITournamentOrchestratorService
+namespace TicTacToe.Tournament.Server.Services
 {
-    private readonly HubConnection _connection;
-    const string TournamentHubName = "tournamentHub";
-    private readonly string _signalrConnectionString;
+    using Microsoft.AspNetCore.SignalR.Client;
+    using Microsoft.Extensions.Configuration;
+    using TicTacToe.Tournament.Models.DTOs;
+    using TicTacToe.Tournament.Server.Interfaces;
+    using TicTacToe.Tournament.Server.Security;
 
-    public TournamentOrchestratorService(
-        IConfiguration config)
+    public class TournamentOrchestratorService : ITournamentOrchestratorService
     {
-        if (config == null)
+        private readonly HubConnection _connection;
+        const string TournamentHubName = "tournamentHub";
+        private readonly string _signalrConnectionString;
+
+        public TournamentOrchestratorService(
+            IConfiguration config)
         {
-            throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config), "Configuration service cannot be null.");
+            }
+
+            _signalrConnectionString = config["Azure:SignalR:ConnectionString"]
+                ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
+
+            var authResponse = SignalRAccessHelper.GenerateSignalRAccessToken(
+                _signalrConnectionString,
+                TournamentHubName,
+                "Server");
+
+            var parts = _signalrConnectionString
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Split('=', 2))
+                .ToDictionary(p => p[0], p => p[1]);
+
+            var endpoint = $"{parts["Endpoint"]}/client/";
+
+            _connection = new HubConnectionBuilder()
+                .WithUrl($"{endpoint}?hub=tournamentHub", options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult((string?)authResponse);
+                })
+                .WithAutomaticReconnect()
+                .Build();
+
+            _connection
+                .StartAsync()
+                .GetAwaiter()
+                .GetResult();
         }
 
-        _signalrConnectionString = config["Azure:SignalR:ConnectionString"]
-            ?? throw new ArgumentNullException(nameof(config), "SignalR AccessKey must be present in the ConnectionString.");
+        public async Task SpectateTournamentAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
 
-        var authResponse = SignalRAccessHelper.GenerateSignalRAccessToken(
-            _signalrConnectionString,
-            TournamentHubName,
-            "Server");
-
-        var parts = _signalrConnectionString
-            .Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Select(p => p.Split('=', 2))
-            .ToDictionary(p => p[0], p => p[1]);
-
-        var endpoint = $"{parts["Endpoint"]}/client/";
-
-        _connection = new HubConnectionBuilder()
-            .WithUrl($"{endpoint}?hub=tournamentHub", options =>
-            {
-                options.AccessTokenProvider = () => Task.FromResult((string?)authResponse);
-            })
-            .WithAutomaticReconnect()
-            .Build();
-
-        _connection
-            .StartAsync()
-            .GetAwaiter()
-            .GetResult();
-    }
-
-    public async Task SpectateTournamentAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-
-        await _connection.InvokeAsync<TournamentDto>(
-            "SpectateTournamentAsync",
-            tournamentId
-        );
-    }
-
-    public async Task<TournamentDto?> GetTournamentAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-
-        var tournament = await _connection.InvokeAsync<TournamentDto>(
-                "GetTournamentAsync",
+            await _connection.InvokeAsync<TournamentDto>(
+                "SpectateTournamentAsync",
                 tournamentId
             );
-
-        return tournament;
-    }
-
-    public async Task<IEnumerable<TournamentSummaryDto>> GetAllTournamentsAsync()
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<IEnumerable<TournamentSummaryDto>>("GetAllTournamentsAsync");
-    }
-
-    public async Task CreateTournamentAsync(Guid tournamentId, string name, uint matchRepetition)
-    {
-        await EnsureConnectionAsync();
-        await _connection.InvokeAsync("CreateTournamentAsync", tournamentId, name, matchRepetition);
-    }
-
-    public async Task DeleteTournamentAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        await _connection.InvokeAsync("DeleteTournamentAsync", tournamentId);
-    }
-
-    public async Task StartTournamentAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        await _connection.InvokeAsync("StartTournamentAsync", tournamentId);
-    }
-
-    public async Task CancelTournamentAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        await _connection.InvokeAsync("CancelTournamentAsync", tournamentId);
-    }
-
-    public async Task<bool> TournamentExistsAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<bool>("TournamentExistsAsync", tournamentId);
-    }
-
-    public async Task RenameTournamentAsync(Guid tournamentId, string newName)
-    {
-        var tournament = await GetTournamentAsync(tournamentId);
-        if (tournament == null)
-        {
-            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
         }
 
-        tournament.Name = newName;
-        await _connection.InvokeAsync("RenameTournamentAsync", tournamentId, newName);
-    }
-
-    public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
-    {
-        var tournament = await GetTournamentAsync(tournamentId);
-        if (tournament == null)
+        public async Task<TournamentDto?> GetTournamentAsync(Guid tournamentId)
         {
-            throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+            await EnsureConnectionAsync();
+
+            var tournament = await _connection.InvokeAsync<TournamentDto>(
+                    "GetTournamentAsync",
+                    tournamentId
+                );
+
+            return tournament;
         }
 
-        await _connection.InvokeAsync("RenamePlayerAsync", tournamentId, playerId, newName);
-    }
-
-    private async Task EnsureConnectionAsync()
-    {
-        if (_connection.State == HubConnectionState.Disconnected)
+        public async Task<IEnumerable<TournamentSummaryDto>> GetAllTournamentsAsync()
         {
-            await _connection.StartAsync();
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<IEnumerable<TournamentSummaryDto>>("GetAllTournamentsAsync");
         }
-    }
 
-    public async Task<IEnumerable<MatchDto>> GetMatchesAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<IEnumerable<MatchDto>>("GetMatchesAsync", tournamentId);
-    }
+        public async Task CreateTournamentAsync(Guid tournamentId, string name, uint matchRepetition)
+        {
+            await EnsureConnectionAsync();
+            await _connection.InvokeAsync("CreateTournamentAsync", tournamentId, name, matchRepetition);
+        }
 
-    public async Task<MatchBoardDto?> GetCurrentMatchBoardAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<MatchBoardDto>("GetCurrentMatchBoardAsync", tournamentId);
-    }
+        public async Task DeleteTournamentAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            await _connection.InvokeAsync("DeleteTournamentAsync", tournamentId);
+        }
 
-    public async Task<MatchPlayersDto?> GetCurrentMatchPlayersAsync(Guid tournamentId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<MatchPlayersDto>("GetCurrentMatchPlayersAsync", tournamentId);
-    }
+        public async Task StartTournamentAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            await _connection.InvokeAsync("StartTournamentAsync", tournamentId);
+        }
 
-    public async Task<MatchBoardDto?> GetMatchBoardAsync(Guid tournamentId, Guid matchId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<MatchBoardDto>("GetMatchBoardAsync", tournamentId, matchId);
-    }
+        public async Task CancelTournamentAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            await _connection.InvokeAsync("CancelTournamentAsync", tournamentId);
+        }
 
-    public async Task<MatchPlayersDto?> GetMatchPlayersAsync(Guid tournamentId, Guid matchId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<MatchPlayersDto>("GetMatchPlayersAsync", tournamentId, matchId);
-    }
+        public async Task<bool> TournamentExistsAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<bool>("TournamentExistsAsync", tournamentId);
+        }
 
-    public async Task<PlayerDto?> GetPlayerAsync(Guid tournamentId, Guid playerId)
-    {
-        await EnsureConnectionAsync();
-        return await _connection.InvokeAsync<PlayerDto>("GetPlayerAsync", tournamentId, playerId);
+        public async Task RenameTournamentAsync(Guid tournamentId, string newName)
+        {
+            var tournament = await GetTournamentAsync(tournamentId);
+            if (tournament == null)
+            {
+                throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+            }
+
+            tournament.Name = newName;
+            await _connection.InvokeAsync("RenameTournamentAsync", tournamentId, newName);
+        }
+
+        public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
+        {
+            var tournament = await GetTournamentAsync(tournamentId);
+            if (tournament == null)
+            {
+                throw new InvalidOperationException($"Tournament {tournamentId} not found.");
+            }
+
+            await _connection.InvokeAsync("RenamePlayerAsync", tournamentId, playerId, newName);
+        }
+
+        private async Task EnsureConnectionAsync()
+        {
+            if (_connection.State == HubConnectionState.Disconnected)
+            {
+                await _connection.StartAsync();
+            }
+        }
+
+        public async Task<IEnumerable<MatchDto>> GetMatchesAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<IEnumerable<MatchDto>>("GetMatchesAsync", tournamentId);
+        }
+
+        public async Task<MatchBoardDto?> GetCurrentMatchBoardAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<MatchBoardDto>("GetCurrentMatchBoardAsync", tournamentId);
+        }
+
+        public async Task<MatchPlayersDto?> GetCurrentMatchPlayersAsync(Guid tournamentId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<MatchPlayersDto>("GetCurrentMatchPlayersAsync", tournamentId);
+        }
+
+        public async Task<MatchBoardDto?> GetMatchBoardAsync(Guid tournamentId, Guid matchId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<MatchBoardDto>("GetMatchBoardAsync", tournamentId, matchId);
+        }
+
+        public async Task<MatchPlayersDto?> GetMatchPlayersAsync(Guid tournamentId, Guid matchId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<MatchPlayersDto>("GetMatchPlayersAsync", tournamentId, matchId);
+        }
+
+        public async Task<PlayerDto?> GetPlayerAsync(Guid tournamentId, Guid playerId)
+        {
+            await EnsureConnectionAsync();
+            return await _connection.InvokeAsync<PlayerDto>("GetPlayerAsync", tournamentId, playerId);
+        }
     }
 }

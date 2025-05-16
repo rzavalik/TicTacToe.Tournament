@@ -1,7 +1,8 @@
-﻿namespace TicTacToe.Tournament.WebApp.Models;
-
-public class CreateTournamentRequest
+﻿namespace TicTacToe.Tournament.WebApp.Models
 {
-    public string Name { get; set; }
-    public uint MatchRepetition { get; set; }
+    public class CreateTournamentRequest
+    {
+        public string Name { get; set; }
+        public uint MatchRepetition { get; set; }
+    }
 }

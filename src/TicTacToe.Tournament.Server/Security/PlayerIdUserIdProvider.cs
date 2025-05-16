@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
-
-namespace TicTacToe.Tournament.Server.Security;
-
-public class PlayerIdUserIdProvider : IUserIdProvider
+﻿namespace TicTacToe.Tournament.Server.Security
 {
-    public string? GetUserId(HubConnectionContext connection)
+    using System.Security.Claims;
+    using Microsoft.AspNetCore.SignalR;
+
+    public class PlayerIdUserIdProvider : IUserIdProvider
     {
-        return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        public string? GetUserId(HubConnectionContext connection)
+        {
+            return connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        }
     }
 }

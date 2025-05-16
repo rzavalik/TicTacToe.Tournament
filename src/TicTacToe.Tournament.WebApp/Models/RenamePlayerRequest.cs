@@ -1,6 +1,7 @@
-﻿namespace TicTacToe.Tournament.WebApp.Models;
-
-public class RenamePlayerRequest
+﻿namespace TicTacToe.Tournament.WebApp.Models
 {
-    public string NewName { get; set; }
+    public class RenamePlayerRequest
+    {
+        public string NewName { get; set; }
+    }
 }

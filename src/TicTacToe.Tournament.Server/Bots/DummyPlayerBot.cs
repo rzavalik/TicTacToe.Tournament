@@ -1,8 +1,8 @@
-﻿using TicTacToe.Tournament.Models;
-using TicTacToe.Tournament.Models.Interfaces;
-
-namespace TicTacToe.Tournament.Server.Bots
+﻿namespace TicTacToe.Tournament.Server.Bots
 {
+    using TicTacToe.Tournament.Models;
+    using TicTacToe.Tournament.Models.Interfaces;
+
     public class DummyPlayerBot : IPlayerBot
     {
         public Guid Id { get; }

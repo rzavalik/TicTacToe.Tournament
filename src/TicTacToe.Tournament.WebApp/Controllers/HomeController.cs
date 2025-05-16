@@ -1,31 +1,31 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using TicTacToe.Tournament.WebApp.Models;
-
-namespace TicTacToe.Tournament.WebApp.Controllers;
-
-public class HomeController : Controller
+namespace TicTacToe.Tournament.WebApp.Controllers
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
+    using System.Diagnostics;
+    using Microsoft.AspNetCore.Mvc;
+    using TicTacToe.Tournament.WebApp.Models;
+    public class HomeController : Controller
     {
-        _logger = logger;
-    }
+        private readonly ILogger<HomeController> _logger;
 
-    public IActionResult Index()
-    {
-        return Redirect("/tournament");
-    }
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+        public IActionResult Index()
+        {
+            return Redirect("/tournament");
+        }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
     }
 }

@@ -1,22 +1,23 @@
-﻿using System.Collections.Concurrent;
-using TicTacToe.Tournament.Models;
-
-namespace TicTacToe.Tournament.Server.Interfaces;
-
-public interface IAzureStorageService
+﻿namespace TicTacToe.Tournament.Server.Interfaces
 {
-    Task<IEnumerable<Guid>> ListTournamentsAsync();
+    using System.Collections.Concurrent;
+    using TicTacToe.Tournament.Models;
 
-    Task SaveTournamentStateAsync(TournamentContext tContext);
+    public interface IAzureStorageService
+    {
+        Task<IEnumerable<Guid>> ListTournamentsAsync();
 
-    Task<(
-        Models.Tournament? Tournament,
-        List<PlayerInfo>? PlayerInfos,
-        Dictionary<Guid, Guid>? Map,
-        ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>? Moves)>
-        LoadTournamentStateAsync(Guid tournamentId);
+        Task SaveTournamentStateAsync(TournamentContext tContext);
 
-    Task DeleteTournamentAsync(Guid tournamentId);
+        Task<(
+            Models.Tournament? Tournament,
+            List<PlayerInfo>? PlayerInfos,
+            Dictionary<Guid, Guid>? Map,
+            ConcurrentDictionary<Guid, ConcurrentQueue<(byte Row, byte Col)>>? Moves)>
+            LoadTournamentStateAsync(Guid tournamentId);
 
-    Task<bool> TournamentExistsAsync(Guid tournamentId);
+        Task DeleteTournamentAsync(Guid tournamentId);
+
+        Task<bool> TournamentExistsAsync(Guid tournamentId);
+    }
 }
