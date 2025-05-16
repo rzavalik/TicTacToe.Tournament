@@ -227,8 +227,7 @@ namespace TicTacToe.Tournament.Server
                 await RunMatchAsync(tournament.Id, match);
             }
 
-            tournament.Status = TournamentStatus.Finished;
-            tournament.EndTime = DateTime.UtcNow;
+            tournament.Finish();
 
             await OnTournamentUpdated(tournament.Id);
         }
@@ -237,7 +236,7 @@ namespace TicTacToe.Tournament.Server
         {
             match.Start();
 
-            var result = await PlayMatchAsync(match);
+            await PlayMatchAsync(match);
 
             match.Finish();
 

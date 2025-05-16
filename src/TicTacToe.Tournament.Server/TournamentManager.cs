@@ -142,8 +142,7 @@ namespace TicTacToe.Tournament.Server
                 return;
             }
 
-            tContext.Tournament.Status = TournamentStatus.Ongoing;
-            tContext.Tournament.StartTime = DateTime.UtcNow;
+            tContext.Tournament.Start();
             tContext.Tournament.InitializeLeaderboard();
 
             await SaveStateAsync(tContext);
@@ -151,10 +150,13 @@ namespace TicTacToe.Tournament.Server
             Console.WriteLine($"[TournamentManager] Starting tournament {tournamentId} with {tContext.Tournament.RegisteredPlayers.Count} players.");
 
             await Task.WhenAll(
-                tContext.GameServer.StartTournamentAsync(tContext.Tournament),
                 _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard),
-                OnTournamentStarted(tContext.Tournament)
+                OnTournamentStarted(tContext.Tournament),
+                SaveStateAsync(tContext)
             );
+
+            //this will hold the game process
+            await tContext.GameServer.StartTournamentAsync(tContext.Tournament);
         }
 
         public async Task RenamePlayerAsync(Guid tournamentId, Guid playerId, string newName)
@@ -189,18 +191,7 @@ namespace TicTacToe.Tournament.Server
                 return;
             }
 
-            tContext.Tournament.EndTime = DateTime.UtcNow;
-            tContext.Tournament.Status = TournamentStatus.Cancelled;
-            foreach (var match in tContext.Tournament.Matches)
-            {
-                if (match.Status == MatchStatus.Finished ||
-                    match.Status == MatchStatus.Cancelled)
-                {
-                    continue;
-                }
-
-                match.Status = MatchStatus.Cancelled;
-            }
+            tContext.Tournament.Cancel();
 
             await SaveStateAsync(tContext);
 
@@ -303,10 +294,15 @@ namespace TicTacToe.Tournament.Server
                     }
                 }
             }
-            else if (tournament.Status == TournamentStatus.Ongoing &&
+            else if (tournament.Status != TournamentStatus.Finished &&
                      tournament.Matches.All(m => m.Status == MatchStatus.Finished))
             {
                 tournament.Status = TournamentStatus.Finished;
+            }
+
+            if (tContext != null)
+            {
+                SaveStateAsync(tContext).Wait();
             }
 
             return tournament;

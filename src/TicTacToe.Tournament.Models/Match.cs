@@ -272,5 +272,11 @@
             Status = MatchStatus.Finished;
             EndTime = DateTime.UtcNow;
         }
+
+        public void Cancel()
+        {
+            Status = MatchStatus.Cancelled;
+            EndTime = DateTime.UtcNow;
+        }
     }
 }

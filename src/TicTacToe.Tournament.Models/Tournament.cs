@@ -195,6 +195,35 @@
             }
         }
 
+        public void Cancel()
+        {
+            EndTime = DateTime.UtcNow;
+            Status = TournamentStatus.Cancelled;
+
+            foreach (var match in Matches)
+            {
+                if (match.Status == MatchStatus.Finished ||
+                    match.Status == MatchStatus.Cancelled)
+                {
+                    continue;
+                }
+
+                match.Cancel();
+            }
+        }
+
+        public void Start()
+        {
+            Status = TournamentStatus.Ongoing;
+            StartTime = DateTime.UtcNow;
+        }
+
+        public void Finish()
+        {
+            Status = TournamentStatus.Finished;
+            EndTime = DateTime.UtcNow;
+        }
+
         public void InitializeLeaderboard()
         {
             Leaderboard.Clear();

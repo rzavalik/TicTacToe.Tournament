@@ -106,9 +106,8 @@ namespace TicTacToe.Tournament.Server.Hubs
         {
             Console.WriteLine($"[TournamentHub] Request to start tournament {tournamentId}");
 
+            // this is a fire and forget process
             _ = Task.Run(() => _tournamentManager.StartTournamentAsync(tournamentId));
-
-            await OnTournamentUpdated(tournamentId);
         }
 
         public async Task CancelTournamentAsync(Guid tournamentId)
