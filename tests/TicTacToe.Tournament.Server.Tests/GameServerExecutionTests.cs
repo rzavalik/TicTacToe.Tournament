@@ -108,21 +108,20 @@
             sut.InitializeLeaderboard();
             await sut.StartTournamentAsync(tournament);
 
-            Thread.Sleep(tournament.Matches.Count * 1100);
-
             var fisrtMatch = tournament.Matches.First();
             var secondMatch = tournament.Matches.Last();
 
             tournament.Status.ShouldBe(TournamentStatus.Finished);
 
-            fisrtMatch.WinnerMark.ShouldBe(Mark.O);
-            secondMatch.WinnerMark.ShouldBe(Mark.X);
+            fisrtMatch.WinnerMark.ShouldBe(Mark.X);
+            secondMatch.WinnerMark.ShouldBe(Mark.O);
 
             var leaderboardPlayerA = tournament.Leaderboard.First(p => p.PlayerId == playerA);
-            var leaderboardPlayerB = tournament.Leaderboard.First(p => p.PlayerId == playerA);
+            var leaderboardPlayerB = tournament.Leaderboard.First(p => p.PlayerId == playerB);
 
             leaderboardPlayerA.GamesPlayed.ShouldBe(2);
-            leaderboardPlayerA.Walkovers.ShouldBe((uint)1);
+            leaderboardPlayerA.Wins.ShouldBe((uint)2);
+            leaderboardPlayerA.Walkovers.ShouldBe((uint)0);
 
             leaderboardPlayerB.GamesPlayed.ShouldBe(2);
             leaderboardPlayerB.Walkovers.ShouldBe((uint)1);
@@ -300,13 +299,14 @@
             match1.Status.ShouldBe(MatchStatus.Finished);
             match2.Status.ShouldBe(MatchStatus.Finished);
 
-            match1.WinnerMark.ShouldBe(Mark.O);
-            match2.WinnerMark.ShouldBe(Mark.O);
+            match1.WinnerMark.ShouldBe(Mark.X);
+            match2.WinnerMark.ShouldBe(Mark.X);
 
-            var winner1 = match1.PlayerA; // Bot A
-            var winner2 = match2.PlayerA; // Bot B
+            match1.WinnerMark.ShouldBe(Mark.X);
+            match1.PlayerA.ShouldBe(botAId);
 
-            winner1.ShouldNotBe(winner2);
+            match2.WinnerMark.ShouldBe(Mark.X);
+            match2.PlayerA.ShouldBe(botBId);
 
             var lbA = tournament.Leaderboard.First(p => p.PlayerId == botAId);
             var lbB = tournament.Leaderboard.First(p => p.PlayerId == botBId);

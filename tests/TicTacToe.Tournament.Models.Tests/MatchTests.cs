@@ -215,7 +215,7 @@
             sut.Finish(Mark.X);
 
             sut.Status.ShouldBe(MatchStatus.Finished);
-            sut.WinnerMark.ShouldBe(Mark.O);
+            sut.WinnerMark.ShouldBe(Mark.X);
             sut.EndTime.ShouldNotBeNull();
         }
 

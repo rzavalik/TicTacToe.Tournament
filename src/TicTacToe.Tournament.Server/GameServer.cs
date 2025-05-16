@@ -140,10 +140,10 @@ namespace TicTacToe.Tournament.Server
                 }
                 catch (TimeoutException)
                 {
-                    match.Walkover(mark == Mark.X ? Mark.O : Mark.X);
+                    match.Walkover(mark);
 
                     var winnerId = match.WinnerMark == Mark.X ? match.PlayerA : match.PlayerB;
-                    var walkoverId = match.WinnerMark == Mark.X ? match.PlayerB : match.PlayerA;
+                    var walkoverId = winnerId == match.PlayerA ? match.PlayerB : match.PlayerA;
                     _updateLeaderboard(winnerId, MatchScore.Win);
                     _updateLeaderboard(walkoverId, MatchScore.Walkover);
 
@@ -168,32 +168,30 @@ namespace TicTacToe.Tournament.Server
 
                 if (match.Board.IsGameOver())
                 {
-                    match.Finish(match.Board.GetWinner());
+                    var winnerMark = match.Board.GetWinner();
+                    if (winnerMark == null || winnerMark == Mark.Empty)
+                    {
+                        _updateLeaderboard(match.PlayerA, MatchScore.Draw);
+                        _updateLeaderboard(match.PlayerB, MatchScore.Draw);
+                        match.Draw();
+                    }
+                    else
+                    {
+                        match.WinnerMark = winnerMark.Value;
+                        var winnerId = winnerMark == Mark.X ? match.PlayerA : match.PlayerB;
+                        var looserId = winnerMark == Mark.X ? match.PlayerB : match.PlayerA;
+                        _updateLeaderboard(winnerId, MatchScore.Win);
+                        _updateLeaderboard(looserId, MatchScore.Lose);
+                        match.Finish();
+                    }
+
                     break;
                 }
 
                 await Task.Delay(100);
             }
 
-            match.Status = MatchStatus.Finished;
-            match.EndTime = DateTime.UtcNow;
-
             var gameResult = new GameResult(match);
-
-            if (gameResult.WinnerId != null)
-            {
-                var winnerId = gameResult.WinnerId.Value;
-                var loserId = gameResult.WinnerId == match.PlayerA ? match.PlayerB : match.PlayerA;
-                _updateLeaderboard(winnerId, MatchScore.Win);
-                _updateLeaderboard(loserId, MatchScore.Lose);
-            }
-            else
-            {
-                match.Draw();
-                _updateLeaderboard(match.PlayerA, MatchScore.Draw);
-                _updateLeaderboard(match.PlayerB, MatchScore.Draw);
-            }
-
             await Task.WhenAll(
                 OnMatchEnded(gameResult, match.PlayerA),
                 OnMatchEnded(gameResult, match.PlayerB),

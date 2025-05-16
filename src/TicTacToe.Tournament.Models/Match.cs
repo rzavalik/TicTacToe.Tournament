@@ -250,12 +250,14 @@
 
         public void Walkover(Mark mark)
         {
-            Finish(mark);
+            Finish(mark == Mark.X
+                ? Mark.O
+                : Mark.X);
         }
 
         public void Finish(Mark? mark)
         {
-            WinnerMark = mark == Mark.X ? Mark.O : Mark.X;
+            WinnerMark = mark;
             Finish();
         }
 
