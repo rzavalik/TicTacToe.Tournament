@@ -209,7 +209,7 @@ jobs:
     outputs:
       webui_url: ${{ steps.tfoutput.outputs.WEBUI_URL }}
       webui_hub_url: ${{ steps.tfoutput.outputs.WEBUI_HUB_URL }}
-      signalr_endpoint: ${{ steps.tfoutput.outputs.SIGNALR_URL }}
+      signalr_endpoint: ${{ steps.tfoutput.outputs.signalr_endpoint }}
     steps:
       - name: Log in to Azure
         uses: azure/login@v1
