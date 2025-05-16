@@ -134,7 +134,7 @@ private static async Task Main(string[] args)
 Then run:
 
 ```bash
-dotnet run --project MyBot -- --test
+dotnet run --project MyBot --test
 ```
 
 ---
@@ -144,7 +144,7 @@ dotnet run --project MyBot -- --test
 Once ready, use the following CLI format to play against others:
 
 ```bash
-dotnet run --project MyBot -- --name "MyBot" --tournament <TOURNAMENT_ID> --server <WEBAPP_URL> --hub <SIGNALR_URL>
+dotnet run --project MyBot --name "MyBot" --tournament-id <TOURNAMENT_ID>
 ```
 
 Replace values with:
