@@ -1,7 +1,6 @@
-﻿using Shouldly;
-
-namespace TicTacToe.Tournament.Models.Tests
+﻿namespace TicTacToe.Tournament.Models.Tests
 {
+    using Shouldly;
     public class MatchTests
     {
         private readonly Guid _playerA = Guid.NewGuid();

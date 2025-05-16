@@ -1,5 +1,7 @@
-﻿namespace TicTacToe.Tournament.BasePlayer.Interfaces;
-public interface IConsoleReader
+﻿namespace TicTacToe.Tournament.BasePlayer.Interfaces
 {
-    string ReadLine();
+    public interface IConsoleReader
+    {
+        string ReadLine();
+    }
 }

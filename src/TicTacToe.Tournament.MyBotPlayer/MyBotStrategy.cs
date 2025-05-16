@@ -1,8 +1,8 @@
-﻿using TicTacToe.Tournament.BasePlayer.Interfaces;
-using TicTacToe.Tournament.Models;
-
-namespace TicTacToe.Tournament.MyBotPlayer
+﻿namespace TicTacToe.Tournament.MyBotPlayer
 {
+    using TicTacToe.Tournament.BasePlayer.Interfaces;
+    using TicTacToe.Tournament.Models;
+
     public class MyBotStrategy : IPlayerStrategy
     {
         private readonly Mark _playerMark;

@@ -1,11 +1,10 @@
-﻿using System.Net;
-using System.Text.Json;
-using Moq;
-using Shouldly;
-using TicTacToe.Tournament.Models.Interfaces;
-
-namespace TicTacToe.Tournament.Auth.Tests
+﻿namespace TicTacToe.Tournament.Auth.Tests
 {
+    using System.Net;
+    using System.Text.Json;
+    using Moq;
+    using Shouldly;
+    using TicTacToe.Tournament.Models.Interfaces;
     public class AuthenticationProviderTests
     {
         private const string BaseEndpoint = "http://test";
@@ -139,7 +138,7 @@ namespace TicTacToe.Tournament.Auth.Tests
         private AuthenticationProvider MakeSut(Mock<IHttpClient> clientMock)
         {
             return new AuthenticationProvider(
-                clientMock.Object, 
+                clientMock.Object,
                 BaseEndpoint);
         }
     }

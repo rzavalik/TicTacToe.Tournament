@@ -1,46 +1,47 @@
-﻿using Microsoft.Extensions.Configuration;
-using TicTacToe.Tournament.BasePlayer;
-using TicTacToe.Tournament.BasePlayer.Helpers;
-using TicTacToe.Tournament.BasePlayer.Interfaces;
-using TicTacToe.Tournament.Player.Tests;
-
-namespace TicTacToe.Tournament.DumbPlayer;
-
-internal class Program
+﻿namespace TicTacToe.Tournament.DumbPlayer
 {
-    private static async Task Main(string[] args)
+    using Microsoft.Extensions.Configuration;
+    using TicTacToe.Tournament.BasePlayer;
+    using TicTacToe.Tournament.BasePlayer.Helpers;
+    using TicTacToe.Tournament.BasePlayer.Interfaces;
+    using TicTacToe.Tournament.Player.Tests;
+
+    internal class Program
     {
-        Console.Title = "Dumb Player";
+        private static async Task Main(string[] args)
+        {
+            Console.Title = "Dumb Player";
 
-        await BotTestRunner.Run<DumbPlayerClient>(args);
+            await BotTestRunner.Run<DumbPlayerClient>(args);
 
-        var config = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-            .Build();
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .Build();
 
-        var webAppEndpoint = config["Server:WebEndpoint"]!;
-        var signalrEndpoint = config["Server:SignalREndpoint"]!;
+            var webAppEndpoint = config["Server:WebEndpoint"]!;
+            var signalrEndpoint = config["Server:SignalREndpoint"]!;
 
-        Console.WriteLine("Welcome to DumbPlayer!");
+            Console.WriteLine("Welcome to DumbPlayer!");
 
-        var name = BasePlayerClient.GetPlayerName(args);
-        var tournamentId = BasePlayerClient.GetTournamentId(args);
+            var name = BasePlayerClient.GetPlayerName(args);
+            var tournamentId = BasePlayerClient.GetTournamentId(args);
 
-        Console.Title = $"{name}: Dumb Player";
+            Console.Title = $"{name}: Dumb Player";
 
-        var httpClient = (IHttpClient)new HttpClientWrapper();
-        var signalrBuilder = new SignalRClientBuilder();
+            var httpClient = (IHttpClient)new HttpClientWrapper();
+            var signalrBuilder = new SignalRClientBuilder();
 
-        var bot = new DumbPlayerClient(
-            name!,
-            tournamentId,
-            webAppEndpoint,
-            signalrEndpoint,
-            httpClient,
-            signalrBuilder);
+            var bot = new DumbPlayerClient(
+                name!,
+                tournamentId,
+                webAppEndpoint,
+                signalrEndpoint,
+                httpClient,
+                signalrBuilder);
 
-        await bot.AuthenticateAsync();
-        await bot.StartAsync();
+            await bot.AuthenticateAsync();
+            await bot.StartAsync();
+        }
     }
 }

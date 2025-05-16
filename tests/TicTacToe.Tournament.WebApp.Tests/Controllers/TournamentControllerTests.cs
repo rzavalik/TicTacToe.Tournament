@@ -10,7 +10,6 @@
     using TicTacToe.Tournament.Server.Interfaces;
     using TicTacToe.Tournament.WebApp.Controllers;
 
-
     public class TournamentControllerTests
     {
         private TournamentController MakeSut(

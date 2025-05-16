@@ -8,6 +8,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Drivers\**" />
+    <Compile Remove="Support\**" />
+    <EmbeddedResource Remove="Drivers\**" />
+    <EmbeddedResource Remove="Support\**" />
+    <None Remove="Drivers\**" />
+    <None Remove="Support\**" />
+    <ReqnrollFeatureFiles Remove="Drivers\**" />
+    <ReqnrollFeatureFiles Remove="Support\**" />
+    <ReqnrollObsoleteCodeBehindFiles Remove="Drivers\**" />
+    <ReqnrollObsoleteCodeBehindFiles Remove="Support\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="Microsoft.Playwright" Version="1.51.0" />
     <PackageReference Include="Reqnroll" Version="2.4.0" />
@@ -18,11 +31,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Drivers\" />
-    <Folder Include="Support\" />
   </ItemGroup>
 
   <ItemGroup>

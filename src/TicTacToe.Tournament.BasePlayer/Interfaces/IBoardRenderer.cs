@@ -1,8 +1,9 @@
-﻿using TicTacToe.Tournament.Models;
-
-namespace TicTacToe.Tournament.BasePlayer.Interfaces;
-
-public interface IBoardRenderer
+﻿namespace TicTacToe.Tournament.BasePlayer.Interfaces
 {
-    void Draw(Mark[][] board);
+    using TicTacToe.Tournament.Models;
+
+    public interface IBoardRenderer
+    {
+        void Draw(Mark[][] board);
+    }
 }

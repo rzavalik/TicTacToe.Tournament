@@ -1,6 +1,7 @@
-﻿namespace TicTacToe.Tournament.BasePlayer.Interfaces;
-
-public interface ISignalRClientBuilder
+﻿namespace TicTacToe.Tournament.BasePlayer.Interfaces
 {
-    ISignalRClient? Build(string endpoint, Func<Task<string?>> accessTokenProvider);
+    public interface ISignalRClientBuilder
+    {
+        ISignalRClient? Build(string endpoint, Func<Task<string?>> accessTokenProvider);
+    }
 }
