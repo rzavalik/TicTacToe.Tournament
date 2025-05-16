@@ -139,3 +139,19 @@ jobs:
       - name: Terraform Apply
         working-directory: infra/terraform
         run: terraform apply -auto-approve -var-file=terraform.tfvars
+
+      - name: Force reload server
+        run: |
+          az containerapp update \
+             --name tictactoe-server \
+             --resource-group TicTacToe \
+             --image tictactoeacr.azurecr.io/tictactoe-server:$VERSION \
+             --revision-suffix $VERSION
+
+      - name: Force reload webui
+        run: |
+          az containerapp update \
+             --name tictactoe-webui \
+             --resource-group TicTacToe \
+             --image tictactoeacr.azurecr.io/tictactoe-webui:$VERSION \
+             --revision-suffix $VERSION
