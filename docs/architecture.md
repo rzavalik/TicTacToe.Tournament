@@ -63,7 +63,7 @@ TicTacToe.Tournament
 ├── docs/                                  # Project documentation (architecture, how-to guides)
 ├── infra/                                 # Terraform scripts for Azure infrastructure
 ├── src/                                   # All source code projects
-│   ├── TicTacToe.Tournament.Auth/                   # Authentication and identity utilities
+│   ├── TicTacToe.Tournament.Auth/                  # Authentication and identity utilities
 │   ├── TicTacToe.Tournament.BasePlayer/            # Base class and strategy interface for building bots
 │   ├── TicTacToe.Tournament.DumbPlayer/            # Auto-play bot that selects random moves
 │   ├── TicTacToe.Tournament.Models/                # Shared models and DTOs (e.g., Tournament, Match)
