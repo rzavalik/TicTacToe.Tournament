@@ -40,20 +40,23 @@ jobs:
           COMMIT_HASH="${GITHUB_SHA::8}"
           RUN_NUMBER="${GITHUB_RUN_NUMBER}"
           
-          NEW_VERSION="${RAW_VERSION}.${RUN_NUMBER}+${COMMIT_HASH}"
+          BASE_VERSION="${RAW_VERSION}.${RUN_NUMBER}"
+          CLEAN_VERSION=$(echo "$BASE_VERSION" | cut -d. -f1-4)
+          FULL_VERSION="${BASE_VERSION}+${COMMIT_HASH}"
           REV_SUFFIX="build-${RUN_NUMBER}-${COMMIT_HASH}"
           
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
           echo "REVISION_SUFFIX=$REV_SUFFIX" >> $GITHUB_ENV
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
+          echo "version=$FULL_VERSION" >> $GITHUB_OUTPUT
           echo "revision_suffix=$REV_SUFFIX" >> $GITHUB_OUTPUT
 
       - name: Update Directory.Build.props with new version
         run: |
           xmlstarlet ed -L \
-            -u "//Version" -v "$(echo "$VERSION" | cut -d+ -f1)" \
-            -u "//AssemblyVersion" -v "$(echo "$VERSION" | cut -d+ -f1).0" \
-            -u "//FileVersion" -v "$(echo "$VERSION" | cut -d+ -f1).0" \
+            -u "//Version" -v "$CLEAN_VERSION" \
+            -u "//AssemblyVersion" -v "$CLEAN_VERSION" \
+            -u "//FileVersion" -v "$CLEAN_VERSION" \
             -u "//InformationalVersion" -v "$VERSION" \
             Directory.Build.props
       
