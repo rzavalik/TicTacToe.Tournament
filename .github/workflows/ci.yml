@@ -18,6 +18,8 @@ jobs:
   build:
     name: Building
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
       revision_suffix: ${{ steps.version.outputs.revision_suffix }}
@@ -75,6 +77,8 @@ jobs:
           git add Directory.Build.props
           git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref_name }}
+
+
 
   test:
     name: Testing
@@ -175,6 +179,8 @@ jobs:
     name: Deploying
     needs: [build, pack]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       VERSION: ${{ needs.build.outputs.version }}
       REVISION_SUFFIX: ${{ needs.build.outputs.revision_suffix }}
