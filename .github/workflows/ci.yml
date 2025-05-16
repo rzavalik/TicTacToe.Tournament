@@ -39,24 +39,26 @@ jobs:
         id: version
         run: |
           RAW_VERSION=$(xmlstarlet sel -t -v "//Project/PropertyGroup/Version" Directory.Build.props)
-          BASE_VERSION=$(echo "$RAW_VERSION" | cut -d. -f1-2) 
+          BASE_VERSION=$(echo "$RAW_VERSION" | cut -d. -f1-2)
           COMMIT_HASH="${GITHUB_SHA::8}"
           RUN_NUMBER="${GITHUB_RUN_NUMBER}"
           
-          CLEAN_VERSION="${BASE_VERSION}.${RUN_NUMBER}.${COMMIT_HASH}"
+          CLEAN_VERSION="${BASE_VERSION}.${RUN_NUMBER}.0"
+          VERSION="${BASE_VERSION}.${RUN_NUMBER}.${COMMIT_HASH}"
           REV_SUFFIX="build-${RUN_NUMBER}-${COMMIT_HASH}"
           
-          echo "VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
           echo "REVISION_SUFFIX=$REV_SUFFIX" >> $GITHUB_ENV
-          echo "version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "revision_suffix=$REV_SUFFIX" >> $GITHUB_OUTPUT
 
       - name: Update Directory.Build.props with new version
         run: |
           xmlstarlet ed -L \
-            -u "//Version" -v "$VERSION" \
-            -u "//AssemblyVersion" -v "$VERSION" \
-            -u "//FileVersion" -v "$VERSION" \
+            -u "//Version" -v "$CLEAN_VERSION" \
+            -u "//AssemblyVersion" -v "$CLEAN_VERSION" \
+            -u "//FileVersion" -v "$CLEAN_VERSION" \
             -u "//InformationalVersion" -v "$VERSION" \
             Directory.Build.props
       
