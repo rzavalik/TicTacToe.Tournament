@@ -344,7 +344,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build.outputs.version }}
-      SIGNALR_URL: ${{ needs.deploy.outputs.signalr_endpoint }}
+      SIGNALR_URL: ${{ needs.deploy.outputs.SIGNALR_URL }}
       WEBAPP_URL: ${{ needs.deploy.outputs.WEBUI_URL }}
     steps:
       - name: Checkout repository
