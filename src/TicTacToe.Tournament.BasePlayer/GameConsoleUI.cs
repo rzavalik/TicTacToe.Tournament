@@ -258,12 +258,12 @@
                 .ShowHeaders();
 
             Leaderboard = Leaderboard
-                .OrderByDescending(item => item.TotalPoints)
-                .ThenByDescending(item => item.Wins)
-                .ThenByDescending(item => item.Draws)
-                .ThenByDescending(item => item.Losses)
-                .ThenByDescending(item => item.Walkovers)
-                .ThenByDescending(item => item.PlayerName)
+                .OrderByDescending(l => l.TotalPoints)
+                .ThenByDescending(l => l.Wins)
+                .ThenByDescending(l => l.Draws)
+                .ThenByDescending(l => l.Losses)
+                .ThenByDescending(l => l.Walkovers)
+                .ThenByDescending(l => l.PlayerName)
                 .ToList();
 
             var position = 0;

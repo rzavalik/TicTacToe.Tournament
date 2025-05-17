@@ -396,12 +396,12 @@
                 }
             });
 
-            await _signalRClient.SubscribeAsync<Dictionary<Guid, int>>("OnRefreshLeaderboard", leaderboard =>
+            await _signalRClient.SubscribeAsync<IList<LeaderboardDto>>("OnRefreshLeaderboard", leaderboard =>
             {
                 _consoleUI?.Log("Leaderboard updated.");
-                foreach (var entry in leaderboard.OrderByDescending(e => e.Value))
+                foreach (var entry in leaderboard)
                 {
-                    _consoleUI?.Log($" - {entry.Key}: {entry.Value} pts");
+                    _consoleUI?.Log($" - {entry.PlayerName}: {entry.TotalPoints} pts ({entry.Wins}W {entry.Draws}D {entry.Losses}L {entry.Walkovers}WO)");
                 }
             });
 

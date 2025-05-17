@@ -112,7 +112,7 @@ namespace TicTacToe.Tournament.Server
             //lets notify the tournament
             await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRegistered", bot.Id);
             //leaderboard updated
-            await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard);
+            await _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", new TournamentDto(tContext.Tournament).Leaderboard);
         }
 
         public async Task SubmitMoveAsync(Guid tournamentId, Guid player, byte row, byte col)
@@ -150,7 +150,7 @@ namespace TicTacToe.Tournament.Server
             Console.WriteLine($"[TournamentManager] Starting tournament {tournamentId} with {tContext.Tournament.RegisteredPlayers.Count} players.");
 
             await Task.WhenAll(
-                _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", tContext.Tournament.Leaderboard),
+                _hubContext.Clients.Group(tournamentId.ToString()).SendAsync("OnRefreshLeaderboard", new TournamentDto(tContext.Tournament).Leaderboard),
                 OnTournamentStarted(tContext.Tournament),
                 SaveStateAsync(tContext)
             );

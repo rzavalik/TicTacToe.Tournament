@@ -21,6 +21,12 @@
                 .ToDictionary();
             Leaderboard = tournament
                 .Leaderboard
+                .OrderByDescending(l => l.TotalPoints)
+                .ThenByDescending(l => l.Wins)
+                .ThenByDescending(l => l.Draws)
+                .ThenByDescending(l => l.Losses)
+                .ThenByDescending(l => l.Walkovers)
+                .ThenByDescending(l => l.PlayerName)
                 .Select(l => new LeaderboardDto(l))
                 .ToList();
             Matches = tournament

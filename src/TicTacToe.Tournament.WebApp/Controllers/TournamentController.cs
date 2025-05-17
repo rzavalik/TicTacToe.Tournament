@@ -389,12 +389,12 @@
 
             var leaderboard = tournament
                 .Leaderboard
-                .OrderByDescending(p => p.TotalPoints)
-                .ThenBy(p => p.Wins)
-                .ThenBy(p => p.Draws)
-                .ThenBy(p => p.Losses)
-                .ThenBy(p => p.Walkovers)
-                .ThenBy(p => p.PlayerName)
+                .OrderByDescending(l => l.TotalPoints)
+                .ThenByDescending(l => l.Wins)
+                .ThenByDescending(l => l.Draws)
+                .ThenByDescending(l => l.Losses)
+                .ThenByDescending(l => l.Walkovers)
+                .ThenByDescending(l => l.PlayerName)
                 .ToList();
 
             var eTag = tournament.ETag;

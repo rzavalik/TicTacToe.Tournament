@@ -194,7 +194,7 @@ namespace TicTacToe.Tournament.Server.Hubs
             }
         }
 
-        private Task OnRefreshLeaderboard(Models.Tournament tournament) => Clients.Group(tournament.Id.ToString()).SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
+        private Task OnRefreshLeaderboard(Models.Tournament tournament) => Clients.Group(tournament.Id.ToString()).SendAsync("OnRefreshLeaderboard", new TournamentDto(tournament).Leaderboard);
         private Task OnTournamentUpdated(Guid tournamentId) => Clients.All.SendAsync("OnTournamentUpdated", tournamentId);
         private Task OnTournamentDeleted(Guid tournamentId) => Clients.All.SendAsync("OnTournamentDeleted", tournamentId);
         private Task OnTournamentCreated(Guid tournamentId) => Clients.All.SendAsync("OnTournamentCreated", tournamentId);

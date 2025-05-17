@@ -1,6 +1,7 @@
 ﻿namespace TicTacToe.Tournament.Server
 {
     using Microsoft.AspNetCore.SignalR;
+    using TicTacToe.Tournament.Models.DTOs;
     using TicTacToe.Tournament.Models.Interfaces;
     using TicTacToe.Tournament.Server.Hubs;
 
@@ -38,7 +39,7 @@
                     await _hubContext
                         .Clients
                         .Group(tournament.Id.ToString())
-                        .SendAsync("OnRefreshLeaderboard", tournament.Leaderboard);
+                        .SendAsync("OnRefreshLeaderboard", new TournamentDto(tournament).Leaderboard);
                 },
                 () =>
                 {
