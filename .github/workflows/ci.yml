@@ -99,6 +99,7 @@ jobs:
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           git pull origin ${{ github.ref_name }}
           git add Directory.Build.props
+          git add LicensesReport.json
           git commit -m "chore: updated license report and version to $VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref_name }}
 
