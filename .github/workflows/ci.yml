@@ -76,6 +76,20 @@ jobs:
       - name: Build solution
         run: dotnet build TicTacToe.Tournament.sln --no-restore --configuration Release
 
+      - name: Install nuget-license
+        run: dotnet tool install --global nuget-license
+
+      - name: Collect licenses from solution
+        run: |
+          mkdir -p LicenseReport
+          nuget-license --input TicTacToe.Tournament.sln --output LicensesReport.json --format json
+
+      - name: Upload License Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: LicensesReport.json
+
       - name: Commit updated Directory.Build.props
         env:
           TOKEN: ${{ github.token }}
@@ -85,9 +99,8 @@ jobs:
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           git pull origin ${{ github.ref_name }}
           git add Directory.Build.props
-          git commit -m "chore: update version to $VERSION [skip ci]" || echo "No changes to commit"
+          git commit -m "chore: updated license report and version to $VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref_name }}
-
 
 
   test:
