@@ -2,7 +2,6 @@
 
 Real-time .NET 8 Tic Tac Toe Tournament platform powered by SignalR, Azure, Docker, and OpenAI bots.
 
-![License](https://img.shields.io/github/license/rzavalik/TicTacToe.Tournament?color=blue)
 ![.NET](https://img.shields.io/badge/.NET-8.0-blue)
 ![Build Status](https://github.com/rzavalik/TicTacToe.Tournament/actions/workflows/ci.yml/badge.svg)
 
