@@ -1,0 +1,296 @@
+[
+  {
+    "PackageId": "Azure.Storage.Blobs",
+    "PackageVersion": "12.24.0",
+    "PackageProjectUrl": "https://github.com/Azure/azure-sdk-for-net/blob/Azure.Storage.Blobs_12.24.0/sdk/storage/Azure.Storage.Blobs/README.md",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "coverlet.collector",
+    "PackageVersion": "6.0.4",
+    "PackageProjectUrl": "https://github.com/coverlet-coverage/coverlet",
+    "Authors": "tonerdo",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "coverlet.msbuild",
+    "PackageVersion": "6.0.4",
+    "PackageProjectUrl": "https://github.com/coverlet-coverage/coverlet",
+    "Authors": "tonerdo",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.Http.Features",
+    "PackageVersion": "5.0.17",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.ResponseCompression",
+    "PackageVersion": "2.3.0",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseUrl": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseInformationOrigin": 1
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.SignalR",
+    "PackageVersion": "1.2.0",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseUrl": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseInformationOrigin": 1
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.SignalR.Client",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.SignalR.Client.Core",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.AspNetCore.SignalR.Core",
+    "PackageVersion": "1.2.0",
+    "PackageProjectUrl": "https://asp.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseUrl": "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+    "LicenseInformationOrigin": 1
+  },
+  {
+    "PackageId": "Microsoft.Azure.SignalR",
+    "PackageVersion": "1.30.3",
+    "PackageProjectUrl": "https://aka.ms/signalr_service",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Azure.SignalR.Management",
+    "PackageVersion": "1.30.3",
+    "PackageProjectUrl": "https://aka.ms/signalr_service",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Configuration",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Configuration.Abstractions",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Configuration.FileExtensions",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Configuration.Json",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.DependencyInjection.Abstractions",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Hosting",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Extensions.Logging.Console",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.NET.Test.Sdk",
+    "PackageVersion": "17.13.0",
+    "PackageProjectUrl": "https://github.com/microsoft/vstest",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Microsoft.Playwright",
+    "PackageVersion": "1.51.0",
+    "PackageProjectUrl": "https://github.com/microsoft/playwright-dotnet",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Moq",
+    "PackageVersion": "4.20.72",
+    "PackageProjectUrl": "https://github.com/moq/moq",
+    "Copyright": "Copyright (c) 2007, Clarius Consulting, Manas Technology Solutions, InSTEDD, and Contributors. All rights reserved.",
+    "Authors": "Daniel Cazzulino, kzu",
+    "License": "BSD-3-Clause",
+    "LicenseUrl": "https://licenses.nuget.org/BSD-3-Clause",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Reqnroll",
+    "PackageVersion": "2.4.0",
+    "PackageProjectUrl": "https://www.reqnroll.net/",
+    "Copyright": "Copyright \u00A9 Reqnroll",
+    "Authors": "Reqnroll",
+    "License": "BSD-3-Clause",
+    "LicenseUrl": "https://licenses.nuget.org/BSD-3-Clause",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Reqnroll.xUnit",
+    "PackageVersion": "2.4.0",
+    "PackageProjectUrl": "https://www.reqnroll.net/",
+    "Copyright": "Copyright \u00A9 Reqnroll",
+    "Authors": "Reqnroll",
+    "License": "BSD-3-Clause",
+    "LicenseUrl": "https://licenses.nuget.org/BSD-3-Clause",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Shouldly",
+    "PackageVersion": "4.3.0",
+    "PackageProjectUrl": "https://docs.shouldly.org/",
+    "Authors": "Jake Ginnivan, Joseph Woodward, Simon Cropp",
+    "License": "BSD-3-Clause",
+    "LicenseUrl": "https://licenses.nuget.org/BSD-3-Clause",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "Spectre.Console",
+    "PackageVersion": "0.50.0",
+    "PackageProjectUrl": "https://github.com/spectreconsole/spectre.console",
+    "Copyright": "Patrik Svensson, Phil Scott, Nils Andresen, C\u00E9dric Luthi, Frank Ray",
+    "Authors": "Patrik Svensson, Phil Scott, Nils Andresen, C\u00E9dric Luthi, Frank Ray",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "System.IdentityModel.Tokens.Jwt",
+    "PackageVersion": "8.9.0",
+    "PackageProjectUrl": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "System.Text.Json",
+    "PackageVersion": "9.0.4",
+    "PackageProjectUrl": "https://dot.net/",
+    "Copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+    "Authors": "Microsoft",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "xunit",
+    "PackageVersion": "2.9.3",
+    "Copyright": "Copyright (C) .NET Foundation",
+    "Authors": "jnewkirk,bradwilson",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "xunit.extensibility.core",
+    "PackageVersion": "2.9.3",
+    "Copyright": "Copyright (C) .NET Foundation",
+    "Authors": "jnewkirk,bradwilson",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0",
+    "LicenseInformationOrigin": 0
+  },
+  {
+    "PackageId": "xunit.runner.visualstudio",
+    "PackageVersion": "3.0.2",
+    "Copyright": "Copyright (C) .NET Foundation",
+    "Authors": "jnewkirk,bradwilson",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0",
+    "LicenseInformationOrigin": 0
+  }
+]
