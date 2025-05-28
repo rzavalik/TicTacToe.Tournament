@@ -27,13 +27,13 @@ resource "azurerm_container_app" "this" {
 
   template {
     min_replicas = 1
-    max_replicas = 3
+    max_replicas = 1
 
     container {
       name   = var.name
       image  = var.image
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
 
       env {
         name  = "Azure__SignalR__ConnectionString"
