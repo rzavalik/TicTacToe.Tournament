@@ -28,7 +28,7 @@ resource "azurerm_log_analytics_workspace" "tictactoe_logs" {
   location            = azurerm_resource_group.tictactoe_rg.location
   resource_group_name = azurerm_resource_group.tictactoe_rg.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30
+  retention_in_days = 7
 }
 
 # Prepare the Container Environment (tictactoe_env)
@@ -45,7 +45,7 @@ resource "azurerm_signalr_service" "tictactoe_signalr" {
   location            = azurerm_resource_group.tictactoe_rg.location
   resource_group_name = azurerm_resource_group.tictactoe_rg.name
   sku {
-    name     = "Standard_S1"
+    name     = "Free_F1"
     capacity = 1
   }
   cors {

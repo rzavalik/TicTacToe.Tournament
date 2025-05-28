@@ -31,7 +31,7 @@ variable "acr_name" {
 variable "acr_sku" {
   description = "SKU of the ACR (Basic, Standard, Premium)"
   type        = string
-  default     = "Standard"
+  default     = "Basic"
 }
 
 variable "log_analytics_workspace_name" {
